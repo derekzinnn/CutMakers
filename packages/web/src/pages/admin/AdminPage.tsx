@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard,
@@ -6,7 +6,6 @@ import {
   IconBriefcase,
   IconCreditCard,
   IconCrown,
-  IconShieldCheck,
   IconCamera,
   IconMovie,
   IconLogout,
@@ -394,21 +393,28 @@ const NAV_ITEMS: { id: AdminSection; label: string; Icon: React.ElementType }[] 
   { id: 'subscriptions', label: 'Assinaturas', Icon: IconCrown },
 ]
 
-const VIEW_MODES: { id: ViewMode; label: string; Icon: React.ElementType }[] = [
-  { id: 'ADMIN', label: 'Admin', Icon: IconShieldCheck },
-  { id: 'CREATOR', label: 'Creator', Icon: IconCamera },
-  { id: 'EDITOR', label: 'Editor', Icon: IconMovie },
-]
-
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export function AdminPage() {
   const navigate = useNavigate()
   const [section, setSection] = useState<AdminSection>('dashboard')
   const [viewMode, setViewMode] = useState<ViewMode>('ADMIN')
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
 
   const storedUser = localStorage.getItem('user')
   const user = storedUser ? JSON.parse(storedUser) : { name: 'Admin' }
+
+  useEffect(() => {
+    if (!profileMenuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setProfileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [profileMenuOpen])
 
   function handleLogout() {
     localStorage.clear()
@@ -472,42 +478,6 @@ export function AdminPage() {
               >
                 <Icon size={16} stroke={1.5} />
                 {label}
-              </button>
-            )
-          })}
-
-          {/* Separador */}
-          <div className="my-4 mx-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
-
-          {/* Visualizar como */}
-          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Visualizar como
-          </p>
-          {VIEW_MODES.map(({ id, label, Icon }) => {
-            const active = viewMode === id
-            return (
-              <button
-                key={id}
-                onClick={() => setViewMode(id)}
-                className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
-                style={{
-                  background: active ? 'rgba(244,99,30,0.12)' : 'transparent',
-                  color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                  border: active ? '1px solid rgba(244,99,30,0.2)' : '1px solid transparent',
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: active ? 500 : 400,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <Icon size={16} stroke={1.5} />
-                {label}
-                {active && (
-                  <span
-                    className="ml-auto h-1.5 w-1.5 rounded-full"
-                    style={{ background: '#F4631E' }}
-                  />
-                )}
               </button>
             )
           })}
@@ -592,11 +562,86 @@ export function AdminPage() {
             >
               <IconBell size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.6)' }} />
             </button>
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-full font-heading text-sm font-bold text-white"
-              style={{ background: '#F4631E' }}
-            >
-              {user.name?.charAt(0).toUpperCase()}
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                onClick={() => setProfileMenuOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={profileMenuOpen}
+                className="flex h-9 w-9 items-center justify-center rounded-full font-heading text-sm font-bold text-white transition-transform"
+                style={{ background: '#F4631E', border: 'none', cursor: 'pointer' }}
+              >
+                {user.name?.charAt(0).toUpperCase()}
+              </button>
+
+              {profileMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-[12px] shadow-xl"
+                  style={{
+                    background: '#162436',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}
+                >
+                  <div
+                    className="px-4 py-3"
+                    style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                  >
+                    <p className="truncate text-sm font-medium text-white">{user.name}</p>
+                    <p
+                      className="text-[10px] uppercase tracking-widest"
+                      style={{ color: 'rgba(255,255,255,0.4)' }}
+                    >
+                      Administrador
+                    </p>
+                  </div>
+
+                  <button
+                    role="menuitem"
+                    onClick={() => { setViewMode('CREATOR'); setProfileMenuOpen(false) }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                    style={{
+                      background: viewMode === 'CREATOR' ? 'rgba(244,99,30,0.1)' : 'transparent',
+                      color: viewMode === 'CREATOR' ? '#F4631E' : 'rgba(255,255,255,0.8)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: "'DM Sans', sans-serif",
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (viewMode !== 'CREATOR') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+                    }}
+                    onMouseLeave={(e) => {
+                      if (viewMode !== 'CREATOR') e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <IconCamera size={16} stroke={1.5} />
+                    Visualizar como Creator
+                  </button>
+
+                  <button
+                    role="menuitem"
+                    onClick={() => { setViewMode('EDITOR'); setProfileMenuOpen(false) }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                    style={{
+                      background: viewMode === 'EDITOR' ? 'rgba(244,99,30,0.1)' : 'transparent',
+                      color: viewMode === 'EDITOR' ? '#F4631E' : 'rgba(255,255,255,0.8)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: "'DM Sans', sans-serif",
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (viewMode !== 'EDITOR') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+                    }}
+                    onMouseLeave={(e) => {
+                      if (viewMode !== 'EDITOR') e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <IconMovie size={16} stroke={1.5} />
+                    Visualizar como Editor
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>
