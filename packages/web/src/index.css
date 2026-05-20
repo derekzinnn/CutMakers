@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0d1b2a;
+  --navy-mid: #162436;
+  --navy-light: #1e3045;
+  --orange: #f4631e;
+  --orange-hover: #e0551a;
+  --white-80: rgba(255, 255, 255, 0.8);
+  --white-40: rgba(255, 255, 255, 0.4);
+  --white-10: rgba(255, 255, 255, 0.08);
+  --white-06: rgba(255, 255, 255, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--navy);
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .input-field {
+    @apply w-full h-[42px] rounded-[8px] text-sm text-white placeholder:text-white/40 outline-none transition-colors;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0 14px;
+  }
+
+  .input-field:focus {
+    border-color: rgba(244, 99, 30, 0.5);
+  }
+
+  .btn-primary {
+    @apply w-full h-11 text-white rounded-[8px] font-heading text-sm font-semibold cursor-pointer transition-all border-none;
+    background: var(--orange);
+  }
+
+  .btn-primary:hover {
+    background: var(--orange-hover);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}

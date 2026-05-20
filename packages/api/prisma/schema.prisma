@@ -1,0 +1,270 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  CREATOR
+  EDITOR
+  BOTH
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  DELIVERED
+  REVISION_REQUESTED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum TransactionStatus {
+  PENDING
+  HELD
+  RELEASED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum RevisionStatus {
+  PENDING
+  ADDRESSED
+}
+
+enum NotificationType {
+  NEW_ORDER
+  NEW_MESSAGE
+  DELIVERY_RECEIVED
+  REVISION_REQUESTED
+  PAYMENT_RELEASED
+  ORDER_ACCEPTED
+  ORDER_CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CREATOR)
+  avatarUrl    String?
+  bio          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  editorProfile          EditorProfile?
+  ordersAsCreator        Order[]        @relation("CreatorOrders")
+  ordersAsEditor         Order[]        @relation("EditorOrders")
+  sentMessages           Message[]
+  conversationsAsCreator Conversation[] @relation("ConversationCreator")
+  conversationsAsEditor  Conversation[] @relation("ConversationEditor")
+  reviewsGiven           Review[]       @relation("ReviewerUser")
+  reviewsReceived        Review[]       @relation("RevieweeUser")
+  notifications          Notification[]
+  revisionsRequested     Revision[]
+  transactionsAsPayer    Transaction[]  @relation("Payer")
+  transactionsAsPayee    Transaction[]  @relation("Payee")
+}
+
+model EditorProfile {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+  isPremium        Boolean   @default(false)
+  premiumExpiresAt DateTime?
+  avgRating        Float     @default(0)
+  totalJobs        Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  categories     EditorCategory[]
+  portfolioItems PortfolioItem[]
+  subscriptions  Subscription[]
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String @unique
+
+  editorCategories EditorCategory[]
+  portfolioItems   PortfolioItem[]
+  orders           Order[]
+}
+
+model EditorCategory {
+  editorProfileId String
+  categoryId      String
+  editorProfile   EditorProfile @relation(fields: [editorProfileId], references: [id])
+  category        Category      @relation(fields: [categoryId], references: [id])
+
+  @@id([editorProfileId, categoryId])
+}
+
+model PortfolioItem {
+  id              String        @id @default(uuid())
+  editorProfileId String
+  editorProfile   EditorProfile @relation(fields: [editorProfileId], references: [id])
+  categoryId      String
+  category        Category      @relation(fields: [categoryId], references: [id])
+  title           String
+  videoUrl        String
+  thumbnailUrl    String?
+  basePrice       Decimal       @db.Decimal(10, 2)
+  description     String?
+  createdAt       DateTime      @default(now())
+
+  orders Order[]
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  creatorId       String
+  creator         User           @relation("CreatorOrders", fields: [creatorId], references: [id])
+  editorId        String
+  editor          User           @relation("EditorOrders", fields: [editorId], references: [id])
+  categoryId      String
+  category        Category       @relation(fields: [categoryId], references: [id])
+  portfolioItemId String?
+  portfolioItem   PortfolioItem? @relation(fields: [portfolioItemId], references: [id])
+  title           String
+  description     String
+  budget          Decimal        @db.Decimal(10, 2)
+  platformFee     Decimal        @db.Decimal(10, 2)
+  status          OrderStatus    @default(PENDING)
+  deadline        DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  files         OrderFile[]
+  deliveries    Delivery[]
+  revisions     Revision[]
+  transaction   Transaction?
+  conversation  Conversation?
+  review        Review?
+  notifications Notification[]
+}
+
+model OrderFile {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  fileUrl    String
+  fileName   String
+  fileType   String
+  uploadedAt DateTime @default(now())
+}
+
+model Delivery {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  videoUrl  String
+  message   String?
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+
+  revisions Revision[]
+}
+
+model Revision {
+  id            String         @id @default(uuid())
+  orderId       String
+  order         Order          @relation(fields: [orderId], references: [id])
+  deliveryId    String
+  delivery      Delivery       @relation(fields: [deliveryId], references: [id])
+  requestedById String
+  requestedBy   User           @relation(fields: [requestedById], references: [id])
+  description   String
+  status        RevisionStatus @default(PENDING)
+  createdAt     DateTime       @default(now())
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  orderId           String            @unique
+  order             Order             @relation(fields: [orderId], references: [id])
+  payerId           String
+  payer             User              @relation("Payer", fields: [payerId], references: [id])
+  payeeId           String
+  payee             User              @relation("Payee", fields: [payeeId], references: [id])
+  amount            Decimal           @db.Decimal(10, 2)
+  platformFee       Decimal           @db.Decimal(10, 2)
+  netAmount         Decimal           @db.Decimal(10, 2)
+  status            TransactionStatus @default(PENDING)
+  externalPaymentId String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model Subscription {
+  id                     String             @id @default(uuid())
+  editorProfileId        String
+  editorProfile          EditorProfile      @relation(fields: [editorProfileId], references: [id])
+  status                 SubscriptionStatus @default(ACTIVE)
+  startedAt              DateTime           @default(now())
+  expiresAt              DateTime
+  externalSubscriptionId String?
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  creatorId String
+  creator   User     @relation("ConversationCreator", fields: [creatorId], references: [id])
+  editorId  String
+  editor    User     @relation("ConversationEditor", fields: [editorId], references: [id])
+  orderId   String?  @unique
+  order     Order?   @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now())
+
+  messages Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  content        String
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  reviewerId String
+  reviewer   User     @relation("ReviewerUser", fields: [reviewerId], references: [id])
+  revieweeId String
+  reviewee   User     @relation("RevieweeUser", fields: [revieweeId], references: [id])
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id])
+  type           NotificationType
+  title          String
+  body           String
+  readAt         DateTime?
+  relatedOrderId String?
+  relatedOrder   Order?           @relation(fields: [relatedOrderId], references: [id])
+  createdAt      DateTime         @default(now())
+}
