@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { AdminPage } from './pages/admin/AdminPage'
+import { EditorDashboard } from './pages/editor/EditorDashboard'
+import { CreatorDashboard } from './pages/creator/CreatorDashboard'
+import { EditorPublicProfile } from './pages/EditorPublicProfile'
 
 // ─── Guards ───────────────────────────────────────────────────────────────────
 
@@ -10,46 +13,23 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return token ? <>{children}</> : <Navigate to="/login" replace />
 }
 
-function AdminRoute({ children }: { children: React.ReactNode }) {
+function RoleRoute({
+  children,
+  allowed,
+}: {
+  children: React.ReactNode
+  allowed: ('CREATOR' | 'EDITOR' | 'BOTH' | 'ADMIN')[]
+}) {
   const token = localStorage.getItem('token')
   if (!token) return <Navigate to="/login" replace />
 
   const stored = localStorage.getItem('user')
   const user = stored ? JSON.parse(stored) : null
-  if (user?.role !== 'ADMIN') return <Navigate to="/login" replace />
+  if (!user || !allowed.includes(user.role)) {
+    return <Navigate to="/login" replace />
+  }
 
   return <>{children}</>
-}
-
-// ─── Placeholder para Fase 2 ──────────────────────────────────────────────────
-
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center gap-4"
-      style={{ background: '#0D1B2A' }}
-    >
-      <div className="text-center">
-        <h1
-          className="text-3xl font-bold text-white"
-          style={{ fontFamily: "'Syne', sans-serif" }}
-        >
-          {title}
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-          Em desenvolvimento — Fase 2
-        </p>
-      </div>
-      <a
-        href="/login"
-        className="text-sm hover:underline"
-        style={{ color: '#F4631E' }}
-        onClick={() => { localStorage.clear() }}
-      >
-        ← Sair
-      </a>
-    </div>
-  )
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -62,33 +42,43 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Admin — apenas role ADMIN */}
+        {/* Perfil público do editor — qualquer autenticado pode ver */}
+        <Route
+          path="/editors/:id"
+          element={
+            <PrivateRoute>
+              <EditorPublicProfile />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Admin */}
         <Route
           path="/admin"
           element={
-            <AdminRoute>
+            <RoleRoute allowed={['ADMIN']}>
               <AdminPage />
-            </AdminRoute>
+            </RoleRoute>
           }
         />
 
-        {/* Creator — Fase 2 */}
+        {/* Creator dashboard */}
         <Route
           path="/dashboard/creator"
           element={
-            <PrivateRoute>
-              <ComingSoon title="Dashboard Creator" />
-            </PrivateRoute>
+            <RoleRoute allowed={['CREATOR', 'BOTH', 'ADMIN']}>
+              <CreatorDashboard />
+            </RoleRoute>
           }
         />
 
-        {/* Editor — Fase 2 */}
+        {/* Editor dashboard */}
         <Route
           path="/dashboard/editor"
           element={
-            <PrivateRoute>
-              <ComingSoon title="Dashboard Editor" />
-            </PrivateRoute>
+            <RoleRoute allowed={['EDITOR', 'BOTH', 'ADMIN']}>
+              <EditorDashboard />
+            </RoleRoute>
           }
         />
 
