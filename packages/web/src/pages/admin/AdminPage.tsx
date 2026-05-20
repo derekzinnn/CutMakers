@@ -9,21 +9,24 @@ import {
   IconCamera,
   IconMovie,
   IconLogout,
-  IconArrowLeft,
+  IconX,
   IconTrendingUp,
   IconCheck,
   IconClock,
-  IconAlertTriangle,
   IconDots,
   IconSearch,
   IconBell,
   IconChevronRight,
+  IconRss,
+  IconFolder,
+  IconUserCircle,
 } from '@tabler/icons-react'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 type ViewMode = 'ADMIN' | 'CREATOR' | 'EDITOR'
 type AdminSection = 'dashboard' | 'users' | 'orders' | 'transactions' | 'subscriptions'
+type UserSection = 'feed' | 'projects' | 'account'
 
 // ─── Dados mock (substituir por fetch na Fase 2) ──────────────────────────────
 
@@ -282,21 +285,27 @@ function SubscriptionsSection() {
   )
 }
 
-// ─── Creator & Editor views (simulação) ──────────────────────────────────────
+// ─── Seções Creator / Editor (placeholder por enquanto) ──────────────────────
 
-function CreatorView() {
+function FeedSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
+  const title = role === 'CREATOR' ? 'Feed de Projetos' : 'Feed de Projetos'
+  const subtitle =
+    role === 'CREATOR'
+      ? 'Encontre o editor perfeito para o seu projeto'
+      : 'Pedidos disponíveis publicados por criadores'
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-xl font-bold text-white">Feed de Editores</h2>
-          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Encontre o editor perfeito para o seu projeto
-          </p>
+          <h2 className="font-heading text-xl font-bold text-white">{title}</h2>
+          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>{subtitle}</p>
         </div>
-        <button className="btn-primary" style={{ width: 'auto', padding: '0 20px' }}>
-          + Nova Ordem
-        </button>
+        {role === 'CREATOR' && (
+          <button className="btn-primary" style={{ width: 'auto', padding: '0 20px' }}>
+            + Novo Projeto
+          </button>
+        )}
       </div>
 
       {/* Filtros por categoria */}
@@ -316,42 +325,74 @@ function CreatorView() {
         ))}
       </div>
 
-      {/* Grid de editores (empty state) */}
       <div
         className="rounded-card p-6"
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <EmptyState message="Editores disponíveis aparecerão aqui — Fase 2" />
-      </div>
-
-      {/* Meus pedidos */}
-      <div
-        className="rounded-card p-6"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-      >
-        <SectionHeader title="Meus Pedidos Recentes" />
-        <EmptyState message="Seus pedidos aparecerão aqui" />
+        <EmptyState
+          message={
+            role === 'CREATOR'
+              ? 'Editores disponíveis aparecerão aqui'
+              : 'Projetos abertos aparecerão aqui'
+          }
+        />
       </div>
     </div>
   )
 }
 
-function EditorView() {
+function MyProjectsSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
+  if (role === 'CREATOR') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="font-heading text-xl font-bold text-white">Meus Projetos</h2>
+          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            Acompanhe o status dos seus pedidos de edição
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {['Todos', 'Pendentes', 'Em andamento', 'Em revisão', 'Concluídos'].map((f) => (
+            <button
+              key={f}
+              className="rounded-full px-3 py-1 text-xs"
+              style={{
+                background: f === 'Todos' ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.05)',
+                color: f === 'Todos' ? '#F4631E' : 'rgba(255,255,255,0.6)',
+                border: `1px solid ${f === 'Todos' ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+              }}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <div
+          className="rounded-card p-6"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <EmptyState message="Seus pedidos aparecerão aqui" />
+        </div>
+      </div>
+    )
+  }
+
+  // EDITOR
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-xl font-bold text-white">Dashboard do Editor</h2>
+          <h2 className="font-heading text-xl font-bold text-white">Meus Projetos</h2>
           <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Gerencie seus pedidos e portfólio
+            Pedidos aceitos, portfólio e métricas
           </p>
         </div>
         <button className="btn-primary" style={{ width: 'auto', padding: '0 20px' }}>
-          + Adicionar Projeto
+          + Adicionar ao Portfólio
         </button>
       </div>
 
-      {/* Stats do editor */}
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: 'Pedidos Ativos', value: '0', icon: IconClock },
@@ -362,7 +403,6 @@ function EditorView() {
         ))}
       </div>
 
-      {/* Pedidos recebidos */}
       <div
         className="rounded-card p-6"
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -371,13 +411,33 @@ function EditorView() {
         <EmptyState message="Pedidos de criadores aparecerão aqui" />
       </div>
 
-      {/* Portfólio */}
       <div
         className="rounded-card p-6"
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
         <SectionHeader title="Meu Portfólio" />
-        <EmptyState message="Adicione projetos ao seu portfólio — Fase 2" />
+        <EmptyState message="Adicione projetos ao seu portfólio" />
+      </div>
+    </div>
+  )
+}
+
+function AccountSection() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-heading text-xl font-bold text-white">Conta</h2>
+        <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          Configurações da sua conta e perfil
+        </p>
+      </div>
+
+      <div
+        className="rounded-card p-6"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <SectionHeader title="Em construção" />
+        <EmptyState message="Configurações de conta em breve" />
       </div>
     </div>
   )
@@ -393,14 +453,27 @@ const NAV_ITEMS: { id: AdminSection; label: string; Icon: React.ElementType }[] 
   { id: 'subscriptions', label: 'Assinaturas', Icon: IconCrown },
 ]
 
+const USER_NAV_ITEMS: { id: UserSection; label: string; Icon: React.ElementType }[] = [
+  { id: 'feed', label: 'Feed de Projetos', Icon: IconRss },
+  { id: 'projects', label: 'Meus Projetos', Icon: IconFolder },
+  { id: 'account', label: 'Conta', Icon: IconUserCircle },
+]
+
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export function AdminPage() {
   const navigate = useNavigate()
   const [section, setSection] = useState<AdminSection>('dashboard')
+  const [userSection, setUserSection] = useState<UserSection>('feed')
   const [viewMode, setViewMode] = useState<ViewMode>('ADMIN')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
+
+  function enterViewMode(mode: 'CREATOR' | 'EDITOR') {
+    setViewMode(mode)
+    setUserSection('feed')
+    setProfileMenuOpen(false)
+  }
 
   const storedUser = localStorage.getItem('user')
   const user = storedUser ? JSON.parse(storedUser) : { name: 'Admin' }
@@ -429,8 +502,59 @@ export function AdminPage() {
     subscriptions: 'Assinaturas',
   }
 
+  const userSectionTitles: Record<UserSection, string> = {
+    feed: 'Feed de Projetos',
+    projects: 'Meus Projetos',
+    account: 'Conta',
+  }
+
+  const sidebarBadge =
+    viewMode === 'ADMIN' ? 'ADMIN' : viewMode === 'CREATOR' ? 'CREATOR' : 'EDITOR'
+
+  const topbarTitle =
+    viewMode === 'ADMIN' ? sectionTitles[section] : userSectionTitles[userSection]
+
+  const topbarSubtitle =
+    viewMode === 'ADMIN'
+      ? 'Painel de administração'
+      : `Visualização de ${viewMode === 'CREATOR' ? 'creator' : 'editor'}`
+
   return (
     <div className="flex min-h-screen" style={{ background: '#0D1B2A' }}>
+      {/* ── Toast flutuante de modo de visualização ── */}
+      {viewMode !== 'ADMIN' && (
+        <div
+          className="fixed left-1/2 top-4 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full px-4 py-2 shadow-lg"
+          style={{
+            background: 'rgba(244,99,30,0.15)',
+            border: '1px solid rgba(244,99,30,0.35)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          {viewMode === 'CREATOR'
+            ? <IconCamera size={14} color="#F4631E" stroke={1.5} />
+            : <IconMovie size={14} color="#F4631E" stroke={1.5} />}
+          <span className="text-xs" style={{ color: '#F4631E' }}>
+            Visualizando como <strong>{viewMode === 'CREATOR' ? 'Creator' : 'Editor'}</strong>
+          </span>
+          <button
+            onClick={() => setViewMode('ADMIN')}
+            aria-label="Sair do modo de visualização"
+            className="flex h-5 w-5 items-center justify-center rounded-full transition-colors"
+            style={{
+              background: 'rgba(244,99,30,0.2)',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#F4631E',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(244,99,30,0.35)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(244,99,30,0.2)' }}
+          >
+            <IconX size={12} stroke={2} />
+          </button>
+        </div>
+      )}
+
       {/* ── Sidebar ── */}
       <aside
         className="flex w-64 shrink-0 flex-col"
@@ -450,37 +574,61 @@ export function AdminPage() {
             className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
             style={{ background: 'rgba(244,99,30,0.15)', color: '#F4631E', fontFamily: "'Syne', sans-serif" }}
           >
-            ADMIN
+            {sidebarBadge}
           </span>
         </div>
 
         {/* Nav principal */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Gerenciamento
+            {viewMode === 'ADMIN' ? 'Gerenciamento' : 'Navegação'}
           </p>
-          {NAV_ITEMS.map(({ id, label, Icon }) => {
-            const active = viewMode === 'ADMIN' && section === id
-            return (
-              <button
-                key={id}
-                onClick={() => { setViewMode('ADMIN'); setSection(id) }}
-                className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
-                style={{
-                  background: active ? 'rgba(244,99,30,0.12)' : 'transparent',
-                  color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                  border: active ? '1px solid rgba(244,99,30,0.2)' : '1px solid transparent',
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: active ? 500 : 400,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <Icon size={16} stroke={1.5} />
-                {label}
-              </button>
-            )
-          })}
+
+          {viewMode === 'ADMIN'
+            ? NAV_ITEMS.map(({ id, label, Icon }) => {
+                const active = section === id
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setSection(id)}
+                    className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
+                    style={{
+                      background: active ? 'rgba(244,99,30,0.12)' : 'transparent',
+                      color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
+                      border: active ? '1px solid rgba(244,99,30,0.2)' : '1px solid transparent',
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontWeight: active ? 500 : 400,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Icon size={16} stroke={1.5} />
+                    {label}
+                  </button>
+                )
+              })
+            : USER_NAV_ITEMS.map(({ id, label, Icon }) => {
+                const active = userSection === id
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setUserSection(id)}
+                    className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
+                    style={{
+                      background: active ? 'rgba(244,99,30,0.12)' : 'transparent',
+                      color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
+                      border: active ? '1px solid rgba(244,99,30,0.2)' : '1px solid transparent',
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontWeight: active ? 500 : 400,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Icon size={16} stroke={1.5} />
+                    {label}
+                  </button>
+                )
+              })}
         </nav>
 
         {/* Footer: usuário + logout */}
@@ -494,7 +642,13 @@ export function AdminPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-white">{user.name}</p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Administrador</p>
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                {viewMode === 'ADMIN'
+                  ? 'Administrador'
+                  : viewMode === 'CREATOR'
+                  ? 'Vendo como Creator'
+                  : 'Vendo como Editor'}
+              </p>
             </div>
           </div>
           <button
@@ -519,41 +673,14 @@ export function AdminPage() {
       {/* ── Conteúdo principal ── */}
       <div className="flex flex-1 flex-col overflow-hidden">
 
-        {/* Banner de modo de visualização */}
-        {viewMode !== 'ADMIN' && (
-          <div
-            className="flex items-center justify-between px-6 py-2.5"
-            style={{ background: 'rgba(244,99,30,0.1)', borderBottom: '1px solid rgba(244,99,30,0.2)' }}
-          >
-            <div className="flex items-center gap-2">
-              {viewMode === 'CREATOR' ? <IconCamera size={14} color="#F4631E" stroke={1.5} /> : <IconMovie size={14} color="#F4631E" stroke={1.5} />}
-              <span className="text-xs" style={{ color: '#F4631E' }}>
-                Visualizando como <strong>{viewMode === 'CREATOR' ? 'Creator' : 'Editor'}</strong> — modo de administrador
-              </span>
-            </div>
-            <button
-              onClick={() => setViewMode('ADMIN')}
-              className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-xs transition-colors"
-              style={{ color: '#F4631E', background: 'rgba(244,99,30,0.15)', border: 'none', cursor: 'pointer' }}
-            >
-              <IconArrowLeft size={12} stroke={1.5} />
-              Voltar ao Admin
-            </button>
-          </div>
-        )}
-
         {/* Top bar */}
         <header
           className="flex items-center justify-between px-6 py-4"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
         >
           <div>
-            <h1 className="font-heading text-lg font-bold text-white">
-              {viewMode === 'ADMIN' ? sectionTitles[section] : viewMode === 'CREATOR' ? 'Dashboard Creator' : 'Dashboard Editor'}
-            </h1>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              {viewMode === 'ADMIN' ? 'Painel de administração' : `Visualização de ${viewMode.toLowerCase()}`}
-            </p>
+            <h1 className="font-heading text-lg font-bold text-white">{topbarTitle}</h1>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{topbarSubtitle}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -597,7 +724,7 @@ export function AdminPage() {
 
                   <button
                     role="menuitem"
-                    onClick={() => { setViewMode('CREATOR'); setProfileMenuOpen(false) }}
+                    onClick={() => enterViewMode('CREATOR')}
                     className="flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors"
                     style={{
                       background: viewMode === 'CREATOR' ? 'rgba(244,99,30,0.1)' : 'transparent',
@@ -620,7 +747,7 @@ export function AdminPage() {
 
                   <button
                     role="menuitem"
-                    onClick={() => { setViewMode('EDITOR'); setProfileMenuOpen(false) }}
+                    onClick={() => enterViewMode('EDITOR')}
                     className="flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors"
                     style={{
                       background: viewMode === 'EDITOR' ? 'rgba(244,99,30,0.1)' : 'transparent',
@@ -657,8 +784,13 @@ export function AdminPage() {
               {section === 'subscriptions' && <SubscriptionsSection />}
             </>
           )}
-          {viewMode === 'CREATOR' && <CreatorView />}
-          {viewMode === 'EDITOR' && <EditorView />}
+          {viewMode !== 'ADMIN' && (
+            <>
+              {userSection === 'feed' && <FeedSection role={viewMode} />}
+              {userSection === 'projects' && <MyProjectsSection role={viewMode} />}
+              {userSection === 'account' && <AccountSection />}
+            </>
+          )}
         </main>
       </div>
     </div>
