@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
-  IconLayoutDashboard,
   IconUsers,
   IconBriefcase,
   IconSearch,
@@ -12,7 +11,9 @@ import {
 import { DashboardShell, type NavItem } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
 import { useCategories } from '@/hooks/use-categories'
+import { useOrders } from '@/hooks/use-orders'
 import { api } from '@/lib/api'
+import { OrderCard } from '@/components/orders/OrderCard'
 
 const NAV: NavItem[] = [
   { id: 'feed', label: 'Buscar editores', Icon: IconUsers },
@@ -42,13 +43,23 @@ interface ListResponse {
 export function CreatorDashboard() {
   const { user } = useAuth()
   const { categories } = useCategories()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [section, setSection] = useState<'feed' | 'orders'>('feed')
+  const initialSection = (searchParams.get('section') === 'orders' ? 'orders' : 'feed') as 'feed' | 'orders'
+  const [section, setSection] = useState<'feed' | 'orders'>(initialSection)
   const [editors, setEditors] = useState<EditorListItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  const { orders, loading: ordersLoading, error: ordersError } = useOrders({ role: 'creator' })
+
+  function changeSection(next: 'feed' | 'orders') {
+    setSection(next)
+    if (next === 'orders') setSearchParams({ section: 'orders' })
+    else setSearchParams({})
+  }
 
   const loadEditors = useCallback(async () => {
     setLoading(true)
@@ -81,13 +92,13 @@ export function CreatorDashboard() {
       badgeLabel="CREATOR"
       navItems={NAV}
       activeId={section}
-      onNavigate={(id) => setSection(id as 'feed' | 'orders')}
+      onNavigate={(id) => changeSection(id as 'feed' | 'orders')}
       user={user}
       pageTitle={section === 'feed' ? 'Buscar editores' : 'Meus pedidos'}
       pageSubtitle={
         section === 'feed'
           ? `${total} ${total === 1 ? 'editor disponível' : 'editores disponíveis'}`
-          : 'Acompanhe seus projetos'
+          : `${orders.length} ${orders.length === 1 ? 'projeto' : 'projetos'}`
       }
     >
       {section === 'feed' && (
@@ -189,24 +200,63 @@ export function CreatorDashboard() {
       )}
 
       {section === 'orders' && (
-        <div
-          className="rounded-card p-12 text-center"
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
+        ordersLoading ? (
           <div
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-            style={{ background: 'rgba(244,99,30,0.1)' }}
+            className="flex items-center justify-center py-20 text-sm"
+            style={{ color: 'rgba(255,255,255,0.4)' }}
           >
-            <IconBriefcase size={28} stroke={1.5} color="#F4631E" />
+            Carregando pedidos...
           </div>
-          <h3 className="font-heading text-lg font-bold text-white">Sem pedidos ainda</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Encontre um editor e crie seu primeiro pedido. Disponível na Fase 3.
-          </p>
-        </div>
+        ) : ordersError ? (
+          <div
+            className="rounded-card p-6 text-center text-sm"
+            style={{
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              color: '#FCA5A5',
+            }}
+          >
+            {ordersError}
+          </div>
+        ) : orders.length === 0 ? (
+          <div
+            className="rounded-card p-12 text-center"
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <div
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+              style={{ background: 'rgba(244,99,30,0.1)' }}
+            >
+              <IconBriefcase size={28} stroke={1.5} color="#F4631E" />
+            </div>
+            <h3 className="font-heading text-lg font-bold text-white">Sem pedidos ainda</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Escolha um editor no feed e crie seu primeiro projeto.
+            </p>
+            <button
+              onClick={() => changeSection('feed')}
+              className="mt-5 rounded-[8px] px-4 py-2 text-sm font-semibold transition-all"
+              style={{
+                background: '#F4631E',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              Explorar editores
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {orders.map((order) => (
+              <OrderCard key={order.id} order={order} perspective="creator" />
+            ))}
+          </div>
+        )
       )}
     </DashboardShell>
   )

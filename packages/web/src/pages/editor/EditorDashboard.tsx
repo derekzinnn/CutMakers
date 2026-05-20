@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   IconLayoutDashboard,
   IconBriefcase,
+  IconInbox,
   IconUser,
   IconPlus,
   IconEdit,
@@ -16,15 +17,18 @@ import {
 import { DashboardShell, type NavItem } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
 import { useEditorMe } from '@/hooks/use-editor-me'
+import { useOrders } from '@/hooks/use-orders'
 import { api } from '@/lib/api'
+import { OrderCard } from '@/components/orders/OrderCard'
 import { PortfolioForm, type PortfolioItemInput } from './components/PortfolioForm'
 import { ProfileForm } from './components/ProfileForm'
 
-type Section = 'overview' | 'portfolio' | 'profile'
+type Section = 'overview' | 'portfolio' | 'orders' | 'profile'
 
 const NAV: NavItem[] = [
   { id: 'overview', label: 'Dashboard', Icon: IconLayoutDashboard },
   { id: 'portfolio', label: 'Portfólio', Icon: IconBriefcase },
+  { id: 'orders', label: 'Pedidos', Icon: IconInbox },
   { id: 'profile', label: 'Perfil', Icon: IconUser },
 ]
 
@@ -36,12 +40,15 @@ export function EditorDashboard() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<PortfolioItemInput | undefined>(undefined)
 
+  const { orders, loading: ordersLoading, error: ordersError } = useOrders({ role: 'editor' })
+
   if (!user) return null
 
   const items = editor?.profile.portfolioItems ?? []
   const sectionTitle = {
     overview: 'Dashboard',
     portfolio: 'Portfólio',
+    orders: 'Pedidos recebidos',
     profile: 'Editar perfil',
   }[section]
 
@@ -88,7 +95,9 @@ export function EditorDashboard() {
             ? 'Acompanhe seus projetos e métricas'
             : section === 'portfolio'
               ? `${items.length} ${items.length === 1 ? 'projeto' : 'projetos'}`
-              : 'Atualize suas informações públicas'
+              : section === 'orders'
+                ? `${orders.length} ${orders.length === 1 ? 'pedido recebido' : 'pedidos recebidos'}`
+                : 'Atualize suas informações públicas'
         }
         actions={
           section === 'portfolio' ? (
@@ -129,6 +138,53 @@ export function EditorDashboard() {
                 onEdit={openEdit}
                 onDelete={deleteItem}
               />
+            )}
+
+            {section === 'orders' && (
+              ordersLoading ? (
+                <div
+                  className="flex items-center justify-center py-20 text-sm"
+                  style={{ color: 'rgba(255,255,255,0.4)' }}
+                >
+                  Carregando pedidos...
+                </div>
+              ) : ordersError ? (
+                <div
+                  className="rounded-card p-6 text-center text-sm"
+                  style={{
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    color: '#FCA5A5',
+                  }}
+                >
+                  {ordersError}
+                </div>
+              ) : orders.length === 0 ? (
+                <div
+                  className="rounded-card p-12 text-center"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}
+                >
+                  <div
+                    className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+                    style={{ background: 'rgba(244,99,30,0.1)' }}
+                  >
+                    <IconInbox size={28} stroke={1.5} color="#F4631E" />
+                  </div>
+                  <h3 className="font-heading text-lg font-bold text-white">Nenhum pedido ainda</h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    Quando um creator te contratar, os pedidos aparecerão aqui.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  {orders.map((order) => (
+                    <OrderCard key={order.id} order={order} perspective="editor" />
+                  ))}
+                </div>
+              )
             )}
 
             {section === 'profile' && (

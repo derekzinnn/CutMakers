@@ -9,6 +9,8 @@ import {
   IconCalendar,
 } from '@tabler/icons-react'
 import { api } from '@/lib/api'
+import { useAuth } from '@/hooks/use-auth'
+import { NewOrderModal } from '@/components/orders/NewOrderModal'
 
 interface EditorFullDTO {
   id: string
@@ -40,10 +42,15 @@ interface EditorFullDTO {
 export function EditorPublicProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [editor, setEditor] = useState<EditorFullDTO | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [orderModalOpen, setOrderModalOpen] = useState(false)
+
+  const canHire =
+    !!user && user.id !== id && (user.role === 'CREATOR' || user.role === 'BOTH' || user.role === 'ADMIN')
 
   useEffect(() => {
     if (!id) return
@@ -206,19 +213,21 @@ export function EditorPublicProfile() {
           </div>
 
           {/* CTA */}
-          <button
-            onClick={() => alert('Sistema de pedidos será liberado na Fase 3')}
-            className="rounded-[8px] px-6 py-3 text-sm font-semibold transition-all"
-            style={{
-              background: '#F4631E',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: "'Syne', sans-serif",
-            }}
-          >
-            Contratar →
-          </button>
+          {canHire && (
+            <button
+              onClick={() => setOrderModalOpen(true)}
+              className="rounded-[8px] px-6 py-3 text-sm font-semibold transition-all"
+              style={{
+                background: '#F4631E',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              Contratar →
+            </button>
+          )}
         </div>
       </div>
 
@@ -301,6 +310,15 @@ export function EditorPublicProfile() {
           </div>
         )}
       </div>
+
+      {canHire && id && (
+        <NewOrderModal
+          open={orderModalOpen}
+          onClose={() => setOrderModalOpen(false)}
+          editor={{ id, name: editor.name }}
+          onSuccess={() => navigate('/dashboard/creator?section=orders')}
+        />
+      )}
     </div>
   )
 }
