@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   IconUsers,
   IconBriefcase,
@@ -42,6 +42,7 @@ interface ListResponse {
 
 export function CreatorDashboard() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { categories } = useCategories()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -253,7 +254,12 @@ export function CreatorDashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {orders.map((order) => (
-              <OrderCard key={order.id} order={order} perspective="creator" />
+              <OrderCard
+                key={order.id}
+                order={order}
+                perspective="creator"
+                onClick={() => navigate(`/orders/${order.id}`)}
+              />
             ))}
           </div>
         )

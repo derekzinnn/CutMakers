@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request } from 'express'
 import cors from 'cors'
 import { routes } from './routes'
 import { errorMiddleware } from './middlewares/error.middleware'
@@ -6,7 +6,15 @@ import { errorMiddleware } from './middlewares/error.middleware'
 export const app = express()
 
 app.use(cors())
-app.use(express.json())
+
+// Salva o rawBody antes do parser JSON — necessário para validar assinatura HMAC dos webhooks
+app.use(
+  express.json({
+    verify: (req: Request & { rawBody?: string }, _res, buf) => {
+      req.rawBody = buf.toString('utf8')
+    },
+  }),
+)
 
 app.use('/api', routes)
 

@@ -1,5 +1,7 @@
 import { api } from './api'
 
+// ─── Tipos ────────────────────────────────────────────────────────────────────
+
 export type OrderStatus =
   | 'PENDING'
   | 'ACCEPTED'
@@ -10,12 +12,32 @@ export type OrderStatus =
   | 'CANCELLED'
   | 'DISPUTED'
 
+export type TransactionStatus = 'PENDING' | 'HELD' | 'RELEASED' | 'REFUNDED'
+
 export interface OrderFile {
   id: string
   fileUrl: string
   fileName: string
   fileType: string
   uploadedAt: string
+}
+
+export interface OrderDelivery {
+  id: string
+  videoUrl: string
+  message: string | null
+  version: number
+  createdAt: string
+}
+
+export interface OrderTransaction {
+  id: string
+  status: TransactionStatus
+  amount: number
+  platformFee: number
+  netAmount: number
+  externalPaymentId: string | null
+  createdAt: string
 }
 
 export interface OrderUserRef {
@@ -40,6 +62,11 @@ export interface OrderDTO {
   revisionsCount: number
   createdAt: string
   updatedAt: string
+}
+
+export interface OrderDetailDTO extends OrderDTO {
+  deliveries: OrderDelivery[]
+  transaction: OrderTransaction | null
 }
 
 export interface CreateOrderPayload {
@@ -68,6 +95,8 @@ export interface ListOrdersParams {
   limit?: number
 }
 
+// ─── API calls ────────────────────────────────────────────────────────────────
+
 export async function createOrder(payload: CreateOrderPayload): Promise<OrderDTO> {
   const { data } = await api.post<{ order: OrderDTO }>('/orders', payload)
   return data.order
@@ -78,9 +107,27 @@ export async function listOrders(params: ListOrdersParams = {}): Promise<ListOrd
   return data
 }
 
-export async function getOrder(id: string): Promise<OrderDTO> {
-  const { data } = await api.get<{ order: OrderDTO }>(`/orders/${id}`)
+export async function getOrder(id: string): Promise<OrderDetailDTO> {
+  const { data } = await api.get<{ order: OrderDetailDTO }>(`/orders/${id}`)
   return data.order
+}
+
+export async function updateOrderStatus(id: string, status: OrderStatus): Promise<OrderDetailDTO> {
+  const { data } = await api.patch<{ order: OrderDetailDTO }>(`/orders/${id}/status`, { status })
+  return data.order
+}
+
+export async function createDelivery(
+  orderId: string,
+  payload: { videoUrl: string; message?: string },
+): Promise<OrderDelivery> {
+  const { data } = await api.post<{ delivery: OrderDelivery }>(`/orders/${orderId}/deliveries`, payload)
+  return data.delivery
+}
+
+export async function initiatePayment(orderId: string): Promise<{ paymentUrl: string | null }> {
+  const { data } = await api.post<{ paymentUrl: string | null }>(`/orders/${orderId}/payment`)
+  return data
 }
 
 // ─── Labels e cores por status ───────────────────────────────────────────────
@@ -105,4 +152,11 @@ export const STATUS_COLORS: Record<OrderStatus, string> = {
   COMPLETED: '#22C55E',
   CANCELLED: '#EF4444',
   DISPUTED: '#EF4444',
+}
+
+export const TRANSACTION_LABELS: Record<TransactionStatus, string> = {
+  PENDING: 'Aguardando pagamento',
+  HELD: 'Pagamento retido (escrow)',
+  RELEASED: 'Pagamento liberado',
+  REFUNDED: 'Reembolsado',
 }

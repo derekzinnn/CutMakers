@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { OrderService } from '../services/order.service'
+import { PaymentService } from '../services/payment.service'
 import { BadRequest } from '../lib/errors'
 
 const orderService = new OrderService()
+const paymentService = new PaymentService()
+
+// ─── Schemas de validação ────────────────────────────────────────────────────
 
 const fileSchema = z.object({
   fileUrl: z.string().url(),
@@ -39,6 +43,17 @@ const listSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).optional(),
 })
+
+const updateStatusSchema = z.object({
+  status: orderStatusEnum,
+})
+
+const createDeliverySchema = z.object({
+  videoUrl: z.string().url('URL do vídeo inválida'),
+  message: z.string().max(2000).optional(),
+})
+
+// ─── Controller ──────────────────────────────────────────────────────────────
 
 export class OrderController {
   // POST /api/orders
@@ -88,6 +103,62 @@ export class OrderController {
       const isAdmin = req.user!.role === 'ADMIN'
       const order = await orderService.getById(req.params.id, req.user!.sub, isAdmin)
       return res.json({ order })
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  // PATCH /api/orders/:id/status
+  updateStatus = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = updateStatusSchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.status(400).json({
+          message: 'Status inválido',
+          errors: parsed.error.flatten().fieldErrors,
+        })
+      }
+
+      const isAdmin = req.user!.role === 'ADMIN'
+      const order = await orderService.updateStatus(
+        req.params.id,
+        req.user!.sub,
+        isAdmin,
+        parsed.data.status,
+      )
+      return res.json({ order })
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  // POST /api/orders/:id/deliveries
+  createDelivery = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = createDeliverySchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.status(400).json({
+          message: 'Dados inválidos',
+          errors: parsed.error.flatten().fieldErrors,
+        })
+      }
+
+      const delivery = await orderService.createDelivery(
+        req.params.id,
+        req.user!.sub,
+        parsed.data,
+      )
+      return res.status(201).json({ delivery })
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  // POST /api/orders/:id/payment
+  initiatePayment = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await paymentService.initiatePayment(req.params.id, req.user!.sub)
+      return res.status(201).json(result)
     } catch (err) {
       next(err)
     }

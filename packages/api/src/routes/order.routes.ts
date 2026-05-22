@@ -6,7 +6,6 @@ import { requireRole } from '../middlewares/role.middleware'
 export const orderRoutes = Router()
 const ctrl = new OrderController()
 
-// Todas as rotas exigem autenticação
 orderRoutes.use(authMiddleware)
 
 orderRoutes.get('/', ctrl.list)
@@ -14,3 +13,12 @@ orderRoutes.get('/:id', ctrl.getById)
 
 // Apenas creators (ou BOTH/ADMIN) podem criar pedidos
 orderRoutes.post('/', requireRole('CREATOR', 'BOTH', 'ADMIN'), ctrl.create)
+
+// Qualquer parte do pedido pode atualizar o status (service valida a transição)
+orderRoutes.patch('/:id/status', ctrl.updateStatus)
+
+// Apenas editors (ou BOTH/ADMIN) enviam entregas
+orderRoutes.post('/:id/deliveries', requireRole('EDITOR', 'BOTH', 'ADMIN'), ctrl.createDelivery)
+
+// Apenas creators (ou BOTH/ADMIN) iniciam pagamento
+orderRoutes.post('/:id/payment', requireRole('CREATOR', 'BOTH', 'ADMIN'), ctrl.initiatePayment)

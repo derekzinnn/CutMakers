@@ -58,6 +58,7 @@ cutmakers/
 │               ├── admin/    AdminPage
 │               ├── editor/   EditorDashboard + components
 │               ├── creator/  CreatorDashboard
+│               ├── orders/   OrderDetailPage  ← Fase 3
 │               ├── LoginPage, RegisterPage, EditorPublicProfile
 │               └── App.tsx
 └── CLAUDE.md (este arquivo)
@@ -134,6 +135,33 @@ Texto:
 - `POST /signature` — gera assinatura para upload direto ao Cloudinary
   - body: `{ folder: 'portfolio'|'avatars'|'orders'|'deliveries', resourceType?: 'image'|'video'|'auto' }`
 
+### Orders — Status Flow (`/api/orders`)
+- `PATCH /:id/status` — atualiza status da order (auth obrigatório)
+  - body: `{ status: OrderStatus }`
+  - Transições válidas por role:
+    - **editor**: PENDING→ACCEPTED, PENDING→CANCELLED, ACCEPTED→IN_PROGRESS, ACCEPTED→CANCELLED, REVISION_REQUESTED→IN_PROGRESS
+    - **creator**: PENDING→CANCELLED, ACCEPTED→CANCELLED, DELIVERED→COMPLETED, DELIVERED→REVISION_REQUESTED
+    - **admin**: qualquer transição
+  - Cria notificação automática para a contraparte em cada transição
+  - Em COMPLETED: dispara `paymentService.releasePayment()` (Transaction→RELEASED)
+
+- `POST /:id/deliveries` — editor envia entrega (EDITOR/BOTH/ADMIN)
+  - body: `{ videoUrl: string, message?: string }`
+  - Cria `Delivery` com version auto-incrementado
+  - Transiciona automaticamente o order para DELIVERED
+  - Cria notificação `DELIVERY_RECEIVED` para o creator
+
+- `POST /:id/payment` — creator inicia pagamento via Abacatepay (CREATOR/BOTH/ADMIN)
+  - Cria cobrança PIX no Abacatepay (se `ABACATEPAY_API_KEY` configurado)
+  - Persiste `Transaction` com status PENDING
+  - Retorna `{ paymentUrl }` — abrir no browser para pagamento
+  - Sem chave configurada (dev): Transaction criada mas sem URL real
+
+### Webhooks (`/api/webhooks`)
+- `POST /abacatepay` — endpoint público para notificações do Abacatepay
+  - Valida assinatura HMAC-SHA256 via header `x-abacatepay-signature` (se `ABACATEPAY_WEBHOOK_SECRET` configurado)
+  - Em `billing.paid`: Transaction→HELD + notificação para o editor
+
 ---
 
 ## 🚀 Como rodar
@@ -162,6 +190,8 @@ Ver `packages/api/.env.example`. Precisa:
 - `DATABASE_URL` + `DIRECT_URL` (Supabase)
 - `JWT_SECRET` + `JWT_REFRESH_SECRET`
 - `CLOUDINARY_CLOUD_NAME` + `CLOUDINARY_API_KEY` + `CLOUDINARY_API_SECRET`
+- `ABACATEPAY_API_KEY` + `ABACATEPAY_WEBHOOK_SECRET` (Fase 3 — opcional em dev)
+- `FRONTEND_URL` (padrão `http://localhost:5173`, usado no returnUrl do Abacatepay)
 
 ---
 
@@ -185,15 +215,30 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Dashboard Creator (feed + busca + filtros)
    [x] Perfil público do editor
 
-⏳ Fase 3 — Core Creator (PRÓXIMA)
-   [ ] Criar Order com upload de OrderFile
-   [ ] Fluxo de status da Order (PENDING → ACCEPTED → ...)
-   [ ] Integração Abacatepay (escrow)
+✅ Fase 3 — Core Creator
+   [x] Criar Order com upload de OrderFile
+   [x] Fluxo de status da Order (PENDING → ACCEPTED → IN_PROGRESS → DELIVERED → COMPLETED)
+       — Transições validadas por role (creator/editor/admin)
+       — Notificações automáticas em cada transição
+   [x] Envio de entregas pelo editor (POST /orders/:id/deliveries)
+       — Upload de vídeo para Cloudinary (folder 'deliveries')
+       — Versionamento automático (v1, v2, v3...)
+       — Transição automática para DELIVERED
+   [x] Integração Abacatepay (escrow)
+       — POST /orders/:id/payment → cria cobrança PIX
+       — Webhook POST /api/webhooks/abacatepay → confirma pagamento (Transaction→HELD)
+       — Em COMPLETED: Transaction→RELEASED (liberação ao editor)
+   [x] Order Detail Page (/orders/:id)
+       — Status stepper visual (5 steps)
+       — Ações contextuais por role + status
+       — Histórico de entregas com links para vídeo
+       — Sidebar financeiro (budget, taxa, net)
+       — Status do pagamento (escrow)
 
-⏳ Fase 4 — Comunicação
-   [ ] Conversation + Message
-   [ ] Delivery + Revision
-   [ ] Liberação de pagamento ao aprovar
+⏳ Fase 4 — Comunicação (PRÓXIMA)
+   [ ] Conversation + Message (chat por order)
+   [ ] Revision formal (modelo Revision vinculado a Delivery)
+   [ ] Liberação de pagamento ao aprovar (já implementado via COMPLETED)
 
 ⏳ Fase 5 — Polish
    [ ] Notifications

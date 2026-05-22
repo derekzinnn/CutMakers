@@ -5,6 +5,7 @@ import { AdminPage } from './pages/admin/AdminPage'
 import { EditorDashboard } from './pages/editor/EditorDashboard'
 import { CreatorDashboard } from './pages/creator/CreatorDashboard'
 import { EditorPublicProfile } from './pages/EditorPublicProfile'
+import { OrderDetailPage } from './pages/orders/OrderDetailPage'
 
 // ─── Guards ───────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,16 @@ export default function App() {
             <RoleRoute allowed={['EDITOR', 'BOTH', 'ADMIN']}>
               <EditorDashboard />
             </RoleRoute>
+          }
+        />
+
+        {/* Order detail — acessível para creator e editor */}
+        <Route
+          path="/orders/:id"
+          element={
+            <PrivateRoute>
+              <OrderDetailPage />
+            </PrivateRoute>
           }
         />
 

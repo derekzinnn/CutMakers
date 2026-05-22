@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard,
   IconBriefcase,
@@ -34,6 +35,7 @@ const NAV: NavItem[] = [
 
 export function EditorDashboard() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { editor, loading, refetch } = useEditorMe()
 
   const [section, setSection] = useState<Section>('overview')
@@ -181,7 +183,12 @@ export function EditorDashboard() {
               ) : (
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   {orders.map((order) => (
-                    <OrderCard key={order.id} order={order} perspective="editor" />
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      perspective="editor"
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                    />
                   ))}
                 </div>
               )

@@ -5,6 +5,7 @@ import { categoryRoutes } from './category.routes'
 import { portfolioRoutes } from './portfolio.routes'
 import { uploadRoutes } from './upload.routes'
 import { orderRoutes } from './order.routes'
+import { webhookRoutes } from './webhook.routes'
 
 export const routes = Router()
 
@@ -15,3 +16,4 @@ routes.use('/categories', categoryRoutes)
 routes.use('/portfolio', portfolioRoutes)
 routes.use('/uploads', uploadRoutes)
 routes.use('/orders', orderRoutes)
+routes.use('/webhooks', webhookRoutes)
