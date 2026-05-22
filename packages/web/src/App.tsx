@@ -6,6 +6,7 @@ import { EditorDashboard } from './pages/editor/EditorDashboard'
 import { CreatorDashboard } from './pages/creator/CreatorDashboard'
 import { EditorPublicProfile } from './pages/EditorPublicProfile'
 import { OrderDetailPage } from './pages/orders/OrderDetailPage'
+import { LandingPage } from './pages/LandingPage'
 
 // ─── Guards ───────────────────────────────────────────────────────────────────
 
@@ -93,9 +94,9 @@ export default function App() {
           }
         />
 
-        {/* Fallback */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Landing — público */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

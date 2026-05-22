@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { IconLogout, IconBell } from '@tabler/icons-react'
 import type { AuthUser } from '@/hooks/use-auth'
+import { CMLockup } from '@/components/ui/CMLogo'
 
 export interface NavItem {
   id: string
@@ -64,15 +65,10 @@ export function DashboardShell({
       >
         {/* Logo + badge */}
         <div
-          className="flex items-center gap-2 px-6 py-5"
+          className="flex items-center gap-2 px-5 py-4"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <span className="h-2 w-2 rounded-full" style={{ background: '#F4631E' }} />
-          <span
-            className="font-heading text-[18px] font-extrabold text-white"
-          >
-            CutMakers
-          </span>
+          <CMLockup size={30} wordSize={16} color="#FFFFFF" variant="orange" gap={8} />
           {badgeLabel && (
             <span
               className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -97,11 +93,11 @@ export function DashboardShell({
                 onClick={() => onNavigate(id)}
                 className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
                 style={{
-                  background: active ? 'rgba(244,99,30,0.12)' : 'transparent',
-                  color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                  border: active ? '1px solid rgba(244,99,30,0.2)' : '1px solid transparent',
+                  background: active ? '#F4631E' : 'transparent',
+                  color: active ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
+                  border: '1px solid transparent',
                   fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: active ? 500 : 400,
+                  fontWeight: active ? 600 : 400,
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
