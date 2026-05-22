@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard,
   IconBriefcase,
@@ -14,6 +13,7 @@ import {
   IconClock,
   IconPlayerPlay,
   IconCrown,
+  IconMessage2,
 } from '@tabler/icons-react'
 import { DashboardShell, type NavItem } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
@@ -23,22 +23,25 @@ import { api } from '@/lib/api'
 import { OrderCard } from '@/components/orders/OrderCard'
 import { PortfolioForm, type PortfolioItemInput } from './components/PortfolioForm'
 import { ProfileForm } from './components/ProfileForm'
+import { MessagesTab } from '@/components/chat/MessagesTab'
+import { OrderDetail } from '@/components/orders/OrderDetail'
 
-type Section = 'overview' | 'portfolio' | 'orders' | 'profile'
+type Section = 'overview' | 'portfolio' | 'orders' | 'messages' | 'profile'
 
 const NAV: NavItem[] = [
   { id: 'overview', label: 'Dashboard', Icon: IconLayoutDashboard },
   { id: 'portfolio', label: 'Portfólio', Icon: IconBriefcase },
   { id: 'orders', label: 'Pedidos', Icon: IconInbox },
+  { id: 'messages', label: 'Mensagens', Icon: IconMessage2 },
   { id: 'profile', label: 'Perfil', Icon: IconUser },
 ]
 
 export function EditorDashboard() {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const { editor, loading, refetch } = useEditorMe()
 
   const [section, setSection] = useState<Section>('overview')
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<PortfolioItemInput | undefined>(undefined)
 
@@ -47,10 +50,11 @@ export function EditorDashboard() {
   if (!user) return null
 
   const items = editor?.profile.portfolioItems ?? []
-  const sectionTitle = {
+  const sectionTitle = selectedOrderId ? 'Detalhes do pedido' : {
     overview: 'Dashboard',
     portfolio: 'Portfólio',
     orders: 'Pedidos recebidos',
+    messages: 'Mensagens',
     profile: 'Editar perfil',
   }[section]
 
@@ -89,17 +93,21 @@ export function EditorDashboard() {
         badgeLabel="EDITOR"
         navItems={NAV}
         activeId={section}
-        onNavigate={(id) => setSection(id as Section)}
+        onNavigate={(id) => { setSelectedOrderId(null); setSection(id as Section) }}
         user={user}
         pageTitle={sectionTitle}
         pageSubtitle={
-          section === 'overview'
-            ? 'Acompanhe seus projetos e métricas'
-            : section === 'portfolio'
-              ? `${items.length} ${items.length === 1 ? 'projeto' : 'projetos'}`
-              : section === 'orders'
-                ? `${orders.length} ${orders.length === 1 ? 'pedido recebido' : 'pedidos recebidos'}`
-                : 'Atualize suas informações públicas'
+          selectedOrderId
+            ? undefined
+            : section === 'overview'
+              ? 'Acompanhe seus projetos e métricas'
+              : section === 'portfolio'
+                ? `${items.length} ${items.length === 1 ? 'projeto' : 'projetos'}`
+                : section === 'orders'
+                  ? `${orders.length} ${orders.length === 1 ? 'pedido recebido' : 'pedidos recebidos'}`
+                  : section === 'messages'
+                    ? 'Converse com seus clientes'
+                    : 'Atualize suas informações públicas'
         }
         actions={
           section === 'portfolio' ? (
@@ -143,7 +151,9 @@ export function EditorDashboard() {
             )}
 
             {section === 'orders' && (
-              ordersLoading ? (
+              selectedOrderId ? (
+                <OrderDetail orderId={selectedOrderId} onBack={() => setSelectedOrderId(null)} />
+              ) : ordersLoading ? (
                 <div
                   className="flex items-center justify-center py-20 text-sm"
                   style={{ color: 'rgba(255,255,255,0.4)' }}
@@ -187,12 +197,14 @@ export function EditorDashboard() {
                       key={order.id}
                       order={order}
                       perspective="editor"
-                      onClick={() => navigate(`/orders/${order.id}`)}
+                      onClick={() => setSelectedOrderId(order.id)}
                     />
                   ))}
                 </div>
               )
             )}
+
+            {section === 'messages' && <MessagesTab />}
 
             {section === 'profile' && (
               <div

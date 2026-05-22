@@ -22,6 +22,8 @@ import { useCategories } from '@/hooks/use-categories'
 import { useOrders } from '@/hooks/use-orders'
 import { api } from '@/lib/api'
 import { OrderCard } from '@/components/orders/OrderCard'
+import { MessagesTab } from '@/components/chat/MessagesTab'
+import { OrderDetail } from '@/components/orders/OrderDetail'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,6 +92,7 @@ export function CreatorDashboard() {
   const [sortBy, setSortBy] = useState<SortBy>('rating')
 
   const { orders, loading: ordersLoading, error: ordersError } = useOrders({ role: 'creator' })
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
   const navItems: NavItem[] = useMemo(
     () => [
@@ -109,6 +112,7 @@ export function CreatorDashboard() {
   )
 
   function changeSection(next: Section) {
+    setSelectedOrderId(null)
     setSection(next)
     if (next !== 'feed') setSearchParams({ section: next })
     else setSearchParams({})
@@ -180,27 +184,31 @@ export function CreatorDashboard() {
       onNavigate={(id) => changeSection(id as Section)}
       user={user}
       pageTitle={
-        section === 'feed'
-          ? 'Encontrar editor'
-          : section === 'orders'
-            ? 'Meus pedidos'
-            : section === 'messages'
-              ? 'Mensagens'
-              : section === 'favorites'
-                ? 'Favoritos'
-                : section === 'payments'
-                  ? 'Pagamentos'
-                  : 'Minha conta'
+        selectedOrderId
+          ? 'Detalhes do pedido'
+          : section === 'feed'
+            ? 'Encontrar editor'
+            : section === 'orders'
+              ? 'Meus pedidos'
+              : section === 'messages'
+                ? 'Mensagens'
+                : section === 'favorites'
+                  ? 'Favoritos'
+                  : section === 'payments'
+                    ? 'Pagamentos'
+                    : 'Minha conta'
       }
       pageSubtitle={
-        section === 'feed'
-          ? `${total.toLocaleString('pt-BR')} editores disponíveis · filtre por categoria e prazo`
-          : section === 'orders'
-            ? `${orders.length} ${orders.length === 1 ? 'projeto' : 'projetos'}`
-            : undefined
+        selectedOrderId
+          ? undefined
+          : section === 'feed'
+            ? `${total.toLocaleString('pt-BR')} editores disponíveis · filtre por categoria e prazo`
+            : section === 'orders'
+              ? `${orders.length} ${orders.length === 1 ? 'projeto' : 'projetos'}`
+              : undefined
       }
       actions={
-        section === 'feed' ? (
+        section === 'feed' && !selectedOrderId ? (
           <button
             onClick={() => changeSection('orders')}
             style={{
@@ -263,15 +271,15 @@ export function CreatorDashboard() {
                 onChange={e => setSelectedCategory(e.target.value || null)}
                 style={{
                   appearance: 'none', WebkitAppearance: 'none',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: '#1E3045',
+                  border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 8, padding: '9px 36px 9px 12px',
-                  fontSize: 13, color: selectedCategory ? '#fff' : 'rgba(255,255,255,0.4)',
+                  fontSize: 13, color: selectedCategory ? '#fff' : 'rgba(255,255,255,0.45)',
                   cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", outline: 'none',
-                  minWidth: 130,
+                  minWidth: 130, colorScheme: 'dark',
                 }}
               >
-                <option value="">Categoria</option>
+                <option value="">Todas categorias</option>
                 {categories.map(c => (
                   <option key={c.id} value={c.name}>{c.name}</option>
                 ))}
@@ -292,11 +300,12 @@ export function CreatorDashboard() {
                 onChange={e => setSortBy(e.target.value as SortBy)}
                 style={{
                   appearance: 'none', WebkitAppearance: 'none',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: '#1E3045',
+                  border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 8, padding: '9px 36px 9px 12px',
                   fontSize: 13, color: '#fff', cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif", outline: 'none', minWidth: 150,
+                  fontFamily: "'DM Sans', sans-serif", outline: 'none',
+                  minWidth: 150, colorScheme: 'dark',
                 }}
               >
                 <option value="rating">Mais avaliados</option>
@@ -392,7 +401,9 @@ export function CreatorDashboard() {
 
       {/* ── Meus pedidos ── */}
       {section === 'orders' && (
-        ordersLoading ? (
+        selectedOrderId ? (
+          <OrderDetail orderId={selectedOrderId} onBack={() => setSelectedOrderId(null)} />
+        ) : ordersLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
             Carregando pedidos...
           </div>
@@ -425,15 +436,18 @@ export function CreatorDashboard() {
                 key={order.id}
                 order={order}
                 perspective="creator"
-                onClick={() => navigate(`/orders/${order.id}`)}
+                onClick={() => setSelectedOrderId(order.id)}
               />
             ))}
           </div>
         )
       )}
 
+      {/* ── Mensagens ── */}
+      {section === 'messages' && <MessagesTab />}
+
       {/* ── Em breve ── */}
-      {(section === 'messages' || section === 'favorites' || section === 'payments' || section === 'account') && (
+      {(section === 'favorites' || section === 'payments' || section === 'account') && (
         <ComingSoon section={section} />
       )}
     </DashboardShell>

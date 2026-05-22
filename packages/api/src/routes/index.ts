@@ -6,6 +6,7 @@ import { portfolioRoutes } from './portfolio.routes'
 import { uploadRoutes } from './upload.routes'
 import { orderRoutes } from './order.routes'
 import { webhookRoutes } from './webhook.routes'
+import { conversationRoutes } from './conversation.routes'
 
 export const routes = Router()
 
@@ -17,3 +18,4 @@ routes.use('/portfolio', portfolioRoutes)
 routes.use('/uploads', uploadRoutes)
 routes.use('/orders', orderRoutes)
 routes.use('/webhooks', webhookRoutes)
+routes.use('/conversations', conversationRoutes)

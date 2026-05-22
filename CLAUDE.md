@@ -11,7 +11,7 @@ Marketplace que conecta **criadores de conteúdo** (influenciadores) a **editore
 
 **Monetização:** taxa sobre cada trabalho concluído + assinatura premium para editores.
 
-**Briefing completo:** Ver `BRIEFING.md` na raiz (se presente) ou `C:\Users\derek\Downloads\BRIEFING.md`.
+**Briefing completo:** Ver `BRIEFING.md` na raiz do repositório.
 
 ---
 
