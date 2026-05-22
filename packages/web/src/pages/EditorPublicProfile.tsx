@@ -346,7 +346,7 @@ export function EditorPublicProfile() {
                     {profile.avgRating ? profile.avgRating.toFixed(1) : '—'}
                   </span>
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
-                    · {profile.totalJobs} avaliações
+                    · {reviewsTotal} {reviewsTotal === 1 ? 'avaliação' : 'avaliações'}
                   </span>
                 </div>
                 <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>·</span>

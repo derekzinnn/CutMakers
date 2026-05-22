@@ -259,6 +259,10 @@ export class OrderService {
     // Efeitos colaterais por status
     if (newStatus === 'COMPLETED') {
       await paymentService.releasePayment(orderId)
+      await prisma.editorProfile.updateMany({
+        where: { userId: order.editorId },
+        data: { totalJobs: { increment: 1 } },
+      })
     }
 
     await this.notifyStatusChange(order.id, order.title, order.creatorId, order.editorId, newStatus, userId)
