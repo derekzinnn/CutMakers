@@ -13,6 +13,7 @@ export interface NavItem {
 interface Props {
   // sidebar
   badgeLabel?: string // "EDITOR" | "CREATOR" | ...
+  navLabel?: string   // small section header above nav items (e.g. "CRIADOR")
   navItems: NavItem[]
   activeId: string
   onNavigate: (id: string) => void
@@ -33,6 +34,7 @@ interface Props {
  */
 export function DashboardShell({
   badgeLabel,
+  navLabel,
   navItems,
   activeId,
   onNavigate,
@@ -85,6 +87,18 @@ export function DashboardShell({
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
+          {navLabel && (
+            <p
+              style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)',
+                padding: '0 12px', marginBottom: 8,
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              {navLabel}
+            </p>
+          )}
           {navItems.map(({ id, label, Icon, badge }) => {
             const active = activeId === id
             return (
