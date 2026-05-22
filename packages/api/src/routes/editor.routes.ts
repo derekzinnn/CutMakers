@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { EditorController } from '../controllers/editor.controller'
+import { reviewController } from '../controllers/review.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 import { requireRole } from '../middlewares/role.middleware'
 
@@ -23,3 +24,8 @@ editorRoutes.patch('/me', authMiddleware, requireRole('EDITOR', 'BOTH'), ctrl.up
  * Perfil público — fica depois pra não conflitar com /me.
  */
 editorRoutes.get('/:id', ctrl.getEditorById)
+
+/**
+ * Avaliações do editor — público, sem auth.
+ */
+editorRoutes.get('/:id/reviews', reviewController.listForEditor)

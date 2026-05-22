@@ -12,6 +12,7 @@ import {
   IconCreditCard,
   IconAlertCircle,
   IconUpload,
+  IconStarFilled,
 } from '@tabler/icons-react'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -25,6 +26,7 @@ import {
   type OrderDetailDTO,
   type OrderStatus,
 } from '@/lib/orders'
+import { createReview } from '@/lib/reviews'
 import { uploadFile } from '@/lib/upload'
 
 // ─── Stepper ────────────────────────────────────────────────────────────────
@@ -273,6 +275,106 @@ function DeliveryForm({ orderId, onDone }: { orderId: string; onDone: () => void
         </button>
       </div>
     </form>
+  )
+}
+
+// ─── Star rating interativo ──────────────────────────────────────────────────
+
+function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0)
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          onMouseEnter={() => setHovered(star)}
+          onMouseLeave={() => setHovered(0)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}
+        >
+          <IconStarFilled
+            size={28}
+            style={{ color: star <= (hovered || value) ? '#F4631E' : 'rgba(255,255,255,0.12)', transition: 'color 0.1s' }}
+          />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─── Formulário de avaliação ─────────────────────────────────────────────────
+
+function ReviewFormSection({ orderId, onDone }: { orderId: string; onDone: () => void }) {
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!rating) return setError('Selecione uma nota antes de enviar')
+    setSubmitting(true)
+    setError(null)
+    try {
+      await createReview(orderId, { rating, comment: comment.trim() || undefined })
+      onDone()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setError(e?.response?.data?.message ?? 'Erro ao enviar avaliação')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Section title="Avaliar entrega">
+      <form onSubmit={handleSubmit}>
+        <p className="mb-4 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          Pedido concluído! Avalie sua experiência com este editor.
+        </p>
+        <div className="mb-4">
+          <StarRating value={rating} onChange={setRating} />
+          {rating > 0 && (
+            <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {['', 'Muito ruim', 'Ruim', 'Regular', 'Bom', 'Excelente'][rating]}
+            </p>
+          )}
+        </div>
+        <textarea
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          placeholder="Deixe um comentário sobre o trabalho (opcional)..."
+          rows={3}
+          maxLength={2000}
+          className="mb-3 w-full rounded-[8px] px-3 py-2.5 text-sm text-white outline-none"
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            resize: 'vertical',
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+          disabled={submitting}
+        />
+        {error && (
+          <p className="mb-3 text-xs" style={{ color: '#FCA5A5' }}>{error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={submitting || !rating}
+          className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold"
+          style={{
+            background: '#F4631E', color: '#fff', border: 'none',
+            cursor: submitting || !rating ? 'not-allowed' : 'pointer',
+            opacity: submitting || !rating ? 0.6 : 1,
+            fontFamily: "'Syne', sans-serif",
+          }}
+        >
+          {submitting && <IconLoader2 size={14} className="animate-spin" />}
+          {submitting ? 'Enviando...' : 'Enviar avaliação'}
+        </button>
+      </form>
+    </Section>
   )
 }
 
@@ -667,6 +769,34 @@ export function OrderDetailPage() {
                       ))}
                     </ul>
                   </Section>
+                )}
+
+                {/* ── Avaliação ── */}
+                {order.status === 'COMPLETED' && perspective === 'creator' && (
+                  order.review ? (
+                    <Section title="Sua avaliação">
+                      <div className="flex items-center gap-2 mb-2">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <IconStarFilled
+                            key={s}
+                            size={18}
+                            style={{ color: s <= order.review!.rating ? '#F4631E' : 'rgba(255,255,255,0.12)' }}
+                          />
+                        ))}
+                        <span className="text-sm font-semibold text-white ml-1">{order.review.rating}/5</span>
+                      </div>
+                      {order.review.comment && (
+                        <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                          {order.review.comment}
+                        </p>
+                      )}
+                      <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                        Avaliado em {new Date(order.review.createdAt).toLocaleDateString('pt-BR')}
+                      </p>
+                    </Section>
+                  ) : (
+                    <ReviewFormSection orderId={order.id} onDone={load} />
+                  )
                 )}
 
                 {/* Action error */}

@@ -10,11 +10,13 @@ import {
   IconChevronRight,
   IconClock,
   IconBell,
+  IconStar,
 } from '@tabler/icons-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/hooks/use-auth'
 import { NewOrderModal } from '@/components/orders/NewOrderModal'
 import { CMLockup } from '@/components/ui/CMLogo'
+import { getEditorReviews, type ReviewDTO } from '@/lib/reviews'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -103,6 +105,11 @@ export function EditorPublicProfile() {
   const [error, setError] = useState<string | null>(null)
   const [orderModalOpen, setOrderModalOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string>('all')
+  const [reviews, setReviews] = useState<ReviewDTO[]>([])
+  const [reviewsTotal, setReviewsTotal] = useState(0)
+  const [reviewsPage, setReviewsPage] = useState(1)
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(1)
+  const [reviewsLoading, setReviewsLoading] = useState(false)
 
   const canHire =
     !!user &&
@@ -117,6 +124,25 @@ export function EditorPublicProfile() {
       .then(({ data }) => setEditor(data.editor))
       .catch(err => setError(err?.response?.data?.message ?? 'Editor não encontrado'))
       .finally(() => setLoading(false))
+  }, [id])
+
+  async function loadReviews(page: number) {
+    if (!id) return
+    setReviewsLoading(true)
+    try {
+      const res = await getEditorReviews(id, { page, limit: 5 })
+      setReviews(prev => page === 1 ? res.reviews : [...prev, ...res.reviews])
+      setReviewsTotal(res.total)
+      setReviewsPage(res.page)
+      setReviewsTotalPages(res.totalPages)
+    } finally {
+      setReviewsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (id) loadReviews(1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   if (loading) {
@@ -453,23 +479,55 @@ export function EditorPublicProfile() {
 
           {/* Avaliações */}
           <section style={sectionCard}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <h2 style={{ ...sectionTitle, margin: 0 }}>Avaliações</h2>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
-                {profile.avgRating ? `${profile.avgRating.toFixed(1)} média` : 'Sem avaliações'}
-              </span>
+              {reviewsTotal > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <IconStarFilled size={14} color="#F4631E" />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "'Syne', sans-serif" }}>
+                    {profile.avgRating.toFixed(1)}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                    · {reviewsTotal} {reviewsTotal === 1 ? 'avaliação' : 'avaliações'}
+                  </span>
+                </div>
+              )}
             </div>
-            <div
-              style={{
-                padding: '32px 16px', textAlign: 'center',
-                background: 'rgba(255,255,255,0.03)', borderRadius: 10,
-                border: '1px dashed rgba(255,255,255,0.08)',
-              }}
-            >
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-                Avaliações aparecem após a conclusão de pedidos.
-              </p>
-            </div>
+
+            {reviewsLoading && reviews.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>
+                Carregando avaliações...
+              </div>
+            ) : reviews.length === 0 ? (
+              <div style={{ padding: '28px 16px', textAlign: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px dashed rgba(255,255,255,0.08)' }}>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                  Avaliações aparecem após a conclusão de pedidos.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {reviews.map((review, i) => (
+                  <ReviewCard key={review.id} review={review} showDivider={i < reviews.length - 1} />
+                ))}
+
+                {reviewsPage < reviewsTotalPages && (
+                  <button
+                    onClick={() => loadReviews(reviewsPage + 1)}
+                    disabled={reviewsLoading}
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 8, padding: '9px 0', width: '100%',
+                      fontSize: 13, color: 'rgba(255,255,255,0.6)',
+                      cursor: reviewsLoading ? 'not-allowed' : 'pointer',
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  >
+                    {reviewsLoading ? 'Carregando...' : `Ver mais avaliações (${reviewsTotal - reviews.length} restantes)`}
+                  </button>
+                )}
+              </div>
+            )}
           </section>
         </div>
 
@@ -682,6 +740,82 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
           {item.title.toUpperCase()}
         </p>
       </div>
+    </div>
+  )
+}
+
+// ─── Review card ─────────────────────────────────────────────────────────────
+
+function relativeDate(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+  if (days === 0) return 'hoje'
+  if (days === 1) return 'há 1 dia'
+  if (days < 7) return `há ${days} dias`
+  const weeks = Math.floor(days / 7)
+  if (weeks === 1) return 'há 1 semana'
+  if (weeks < 5) return `há ${weeks} semanas`
+  const months = Math.floor(days / 30)
+  if (months === 1) return 'há 1 mês'
+  return `há ${months} meses`
+}
+
+function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: boolean }) {
+  const color = getAvatarColor(review.reviewer.name)
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 12 }}>
+        {/* Avatar */}
+        <div
+          style={{
+            width: 38, height: 38, borderRadius: '50%', background: color,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, fontSize: 13, fontWeight: 800, color: '#fff',
+            fontFamily: "'Syne', sans-serif", overflow: 'hidden',
+          }}
+        >
+          {review.reviewer.avatarUrl
+            ? <img src={review.reviewer.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : initials(review.reviewer.name)
+          }
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Header row */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+            <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, color: '#fff' }}>
+              {review.reviewer.name}
+            </span>
+            {review.orderCategory && (
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                {review.orderCategory}
+              </span>
+            )}
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+              · {relativeDate(review.createdAt)}
+            </span>
+          </div>
+
+          {/* Stars */}
+          <div style={{ display: 'flex', gap: 2, marginBottom: review.comment ? 8 : 0 }}>
+            {[1, 2, 3, 4, 5].map(s => (
+              s <= review.rating
+                ? <IconStarFilled key={s} size={13} color="#F4631E" />
+                : <IconStar key={s} size={13} stroke={1.5} style={{ color: 'rgba(255,255,255,0.15)' }} />
+            ))}
+          </div>
+
+          {/* Comment */}
+          {review.comment && (
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: 0 }}>
+              {review.comment}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {showDivider && (
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginTop: 20 }} />
+      )}
     </div>
   )
 }

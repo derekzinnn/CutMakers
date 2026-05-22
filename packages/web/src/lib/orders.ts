@@ -64,9 +64,18 @@ export interface OrderDTO {
   updatedAt: string
 }
 
+export interface OrderReview {
+  id: string
+  rating: number
+  comment: string | null
+  reviewer: { id: string; name: string; avatarUrl: string | null }
+  createdAt: string
+}
+
 export interface OrderDetailDTO extends OrderDTO {
   deliveries: OrderDelivery[]
   transaction: OrderTransaction | null
+  review: OrderReview | null
 }
 
 export interface CreateOrderPayload {

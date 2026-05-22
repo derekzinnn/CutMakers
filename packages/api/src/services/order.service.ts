@@ -92,6 +92,15 @@ const orderDetailInclude = {
       createdAt: true,
     },
   },
+  review: {
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      createdAt: true,
+      reviewer: { select: { id: true, name: true, avatarUrl: true } },
+    },
+  },
   _count: { select: { deliveries: true, revisions: true } },
 } satisfies Prisma.OrderInclude
 
@@ -413,6 +422,19 @@ export class OrderService {
           netAmount: Number(o.transaction.netAmount),
           externalPaymentId: o.transaction.externalPaymentId,
           createdAt: o.transaction.createdAt,
+        }
+      : null,
+    review: o.review
+      ? {
+          id: o.review.id,
+          rating: o.review.rating,
+          comment: o.review.comment,
+          createdAt: o.review.createdAt,
+          reviewer: {
+            id: o.review.reviewer.id,
+            name: o.review.reviewer.name,
+            avatarUrl: o.review.reviewer.avatarUrl,
+          },
         }
       : null,
     deliveriesCount: o._count.deliveries,

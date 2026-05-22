@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { OrderController } from '../controllers/order.controller'
+import { reviewController } from '../controllers/review.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 import { requireRole } from '../middlewares/role.middleware'
 
@@ -22,3 +23,6 @@ orderRoutes.post('/:id/deliveries', requireRole('EDITOR', 'BOTH', 'ADMIN'), ctrl
 
 // Apenas creators (ou BOTH/ADMIN) iniciam pagamento
 orderRoutes.post('/:id/payment', requireRole('CREATOR', 'BOTH', 'ADMIN'), ctrl.initiatePayment)
+
+// Apenas creators (ou BOTH) avaliam pedidos COMPLETED
+orderRoutes.post('/:id/review', requireRole('CREATOR', 'BOTH'), reviewController.create)
