@@ -50,16 +50,18 @@ cutmakers/
 │   └── web/                  Frontend React
 │       └── src/
 │           ├── components/
-│           │   ├── layout/   DashboardShell
-│           │   └── ui/       Button, Input, Modal
+│           │   ├── layout/   DashboardShell (navLabel, badgeLabel, actions)
+│           │   └── ui/       Button, Input, Modal, CMLogo (CMLogo + CMLockup)
 │           ├── hooks/        use-auth, use-categories, use-editor-me
 │           ├── lib/          api (axios), upload (cloudinary), utils
 │           └── pages/
 │               ├── admin/    AdminPage
 │               ├── editor/   EditorDashboard + components
-│               ├── creator/  CreatorDashboard
-│               ├── orders/   OrderDetailPage  ← Fase 3
-│               ├── LoginPage, RegisterPage, EditorPublicProfile
+│               ├── creator/  CreatorDashboard  ← EditorCard redesenhado (Fase 3.5)
+│               ├── orders/   OrderDetailPage
+│               ├── LandingPage (public /)
+│               ├── LoginPage, RegisterPage
+│               ├── EditorPublicProfile  ← redesenhado (Fase 3.5)
 │               └── App.tsx
 └── CLAUDE.md (este arquivo)
 ```
@@ -234,6 +236,27 @@ Ver `packages/api/.env.example`. Precisa:
        — Histórico de entregas com links para vídeo
        — Sidebar financeiro (budget, taxa, net)
        — Status do pagamento (escrow)
+
+✅ Fase 3.5 — Design System (Landing + Creator UI)
+   [x] LandingPage pública (Nav, Hero, HowItWorks, Categorias, Editores, Stats, CTA, Footer)
+   [x] CMLogo/CMLockup SVG component (variantes orange/navy/inverse)
+   [x] DashboardShell: active item sólido #F4631E, logo CMLockup, navLabel prop
+   [x] CreatorDashboard — Buscar Editores:
+       — EditorCard redesenhado: thumbnail 16:10 diagonal, play button, badge, avatar colorido
+       — Barra de busca: input + select categoria + select ordenação + botão Buscar
+       — Chips de filtro: Todos + categorias + Premium (filtra via API)
+       — Ordenação client-side: rating, jobs, price-asc/desc
+       — Nav estendida: Mensagens, Favoritos, Pagamentos, Minha conta (placeholders)
+       — Badge dinâmico em Meus Pedidos com contagem real
+   [x] EditorPublicProfile redesenhado:
+       — Navbar própria com CMLockup + botão Voltar + bell + avatar do usuário logado
+       — Breadcrumb dinâmico: Buscar editores > [categoria] > [nome]
+       — Hero banner (diagonal texture): avatar grande, PREMIUM badge, rating, preço
+       — Botões: Mensagem (disabled — Fase 4) + Contratar (abre NewOrderModal)
+       — Stats row: totalJobs, avgRating %, tempo médio (—), aprovação 1ª entrega (—)
+       — Portfólio com tabs de categoria + grid 4:3 com overlay play + badge + título
+       — Sidebar Pacotes: 3 tiers derivados do portfólio (Express/Pro/Studio, Pro destacado)
+       — Sidebar Especialidades, Avaliações empty state (Fase 5)
 
 ⏳ Fase 4 — Comunicação (PRÓXIMA)
    [ ] Conversation + Message (chat por order)
