@@ -258,6 +258,20 @@ Ver `packages/api/.env.example`. Precisa:
        — Sidebar Pacotes: 3 tiers derivados do portfólio (Express/Pro/Studio, Pro destacado)
        — Sidebar Especialidades, Avaliações empty state (Fase 5)
 
+✅ Fase 3.6 — Reviews/Ratings
+   [x] review.service.ts: createReview + getEditorReviews
+       — Valida: order COMPLETED, reviewer = creator, sem review existente
+       — Recalcula EditorProfile.avgRating via prisma.$transaction após cada review
+   [x] review.controller.ts: POST /orders/:id/review, GET /editors/:id/reviews
+   [x] order.service.ts: orderDetailInclude + toDetailDTO agora incluem review (com reviewer)
+   [x] Frontend lib/reviews.ts: ReviewDTO, ReviewsResponse, createReview(), getEditorReviews()
+   [x] OrderDetailPage: StarRating interativo, ReviewFormSection (só para creator em COMPLETED)
+       — Exibe card da avaliação já enviada se order.review existe
+   [x] EditorPublicProfile: avaliações reais paginadas (5/página), "Ver mais" incremental
+       — ReviewCard: avatar colorido + nome + categoria + data relativa + estrelas + comentário
+   [x] Novo endpoint: GET /api/editors/:id/reviews (público, sem auth)
+   [x] Novo endpoint: POST /api/orders/:id/review (requireRole CREATOR/BOTH)
+
 ⏳ Fase 4 — Comunicação (PRÓXIMA)
    [ ] Conversation + Message (chat por order)
    [ ] Revision formal (modelo Revision vinculado a Delivery)
