@@ -29,6 +29,8 @@ const createSchema = z.object({
 const orderStatusEnum = z.enum([
   'PENDING',
   'ACCEPTED',
+  'NEGOTIATING',
+  'AWAITING_PAYMENT',
   'IN_PROGRESS',
   'DELIVERED',
   'REVISION_REQUESTED',

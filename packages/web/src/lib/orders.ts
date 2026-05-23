@@ -1,8 +1,11 @@
 import { api } from './api'
+import type { ProposalDTO } from './proposals'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export type OrderStatus =
+  | 'NEGOTIATING'
+  | 'AWAITING_PAYMENT'
   | 'PENDING'
   | 'ACCEPTED'
   | 'IN_PROGRESS'
@@ -76,6 +79,8 @@ export interface OrderDetailDTO extends OrderDTO {
   deliveries: OrderDelivery[]
   transaction: OrderTransaction | null
   review: OrderReview | null
+  proposals: ProposalDTO[]
+  filesHidden: boolean
 }
 
 export interface CreateOrderPayload {
@@ -134,14 +139,23 @@ export async function createDelivery(
   return data.delivery
 }
 
-export async function initiatePayment(orderId: string): Promise<{ paymentUrl: string | null }> {
-  const { data } = await api.post<{ paymentUrl: string | null }>(`/orders/${orderId}/payment`)
+export interface InitiatePaymentResult {
+  paymentUrl: string | null
+  pixCode: string | null
+  pixQrCode: string | null
+  expiresAt: string | null
+}
+
+export async function initiatePayment(orderId: string): Promise<InitiatePaymentResult> {
+  const { data } = await api.post<InitiatePaymentResult>(`/orders/${orderId}/payment`)
   return data
 }
 
 // ─── Labels e cores por status ───────────────────────────────────────────────
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
+  NEGOTIATING: 'Negociando',
+  AWAITING_PAYMENT: 'Aguardando pagamento',
   PENDING: 'Pendente',
   ACCEPTED: 'Aceito',
   IN_PROGRESS: 'Em andamento',
@@ -153,6 +167,8 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
 }
 
 export const STATUS_COLORS: Record<OrderStatus, string> = {
+  NEGOTIATING: '#F4631E',
+  AWAITING_PAYMENT: '#EAB308',
   PENDING: '#F4631E',
   ACCEPTED: '#3B82F6',
   IN_PROGRESS: '#3B82F6',

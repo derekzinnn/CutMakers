@@ -272,7 +272,29 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Novo endpoint: GET /api/editors/:id/reviews (público, sem auth)
    [x] Novo endpoint: POST /api/orders/:id/review (requireRole CREATOR/BOTH)
 
-⏳ Fase 4 — Comunicação (PRÓXIMA)
+✅ Fase 4.2 — Negociação + Payment Gate
+   [x] OrderProposal model + ProposalStatus enum no schema
+   [x] NEGOTIATING + AWAITING_PAYMENT adicionados ao OrderStatus
+   [x] PROPOSAL_RECEIVED, PROPOSAL_ACCEPTED, PROPOSAL_REJECTED, PAYMENT_CONFIRMED no NotificationType
+   [x] proposal.service.ts: create, list, accept, reject
+       — Somente 1 proposta PENDING por vez por pedido
+       — Quem enviou a última não pode reenviar até resposta
+       — Aceitar → order.budget + platformFee recalculados, order → AWAITING_PAYMENT
+       — Rejeitar → order permanece NEGOTIATING
+   [x] proposal.controller.ts + rotas em order.routes.ts
+   [x] Order.create() → status NEGOTIATING + auto-cria primeira proposta do creator
+   [x] payment.service.ts: aceita AWAITING_PAYMENT (e ACCEPTED legacy)
+   [x] Webhook billing.paid → Transaction HELD + Order → IN_PROGRESS (new flow)
+   [x] Editor não vê arquivos do creator em NEGOTIATING/AWAITING_PAYMENT (filesHidden gate)
+   [x] Frontend lib/proposals.ts: ProposalDTO, createProposal, acceptProposal, rejectProposal
+   [x] OrderDetail redesenhado:
+       — NegotiationSection: histórico chat-like, cards por partido, Accept/Reject/Counter
+       — AwaitingPaymentSection: creator (PIX card + pay button), editor (waiting state)
+       — ProposalForm: inline com preview de taxa + valor líquido
+       — StatusStepper: novo happy path NEGOTIATING→AWAITING_PAYMENT→IN_PROGRESS→DELIVERED→COMPLETED
+       — File gate visual: cadeado para editor antes de IN_PROGRESS
+
+⏳ Fase 5 — Polish (próxima)
    [ ] Conversation + Message (chat por order)
    [ ] Revision formal (modelo Revision vinculado a Delivery)
    [ ] Liberação de pagamento ao aprovar (já implementado via COMPLETED)

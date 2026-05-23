@@ -18,12 +18,21 @@ enum Role {
 enum OrderStatus {
   PENDING
   ACCEPTED
+  NEGOTIATING
+  AWAITING_PAYMENT
   IN_PROGRESS
   DELIVERED
   REVISION_REQUESTED
   COMPLETED
   CANCELLED
   DISPUTED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
 }
 
 enum TransactionStatus {
@@ -52,6 +61,10 @@ enum NotificationType {
   PAYMENT_RELEASED
   ORDER_ACCEPTED
   ORDER_CANCELLED
+  PROPOSAL_RECEIVED
+  PROPOSAL_ACCEPTED
+  PROPOSAL_REJECTED
+  PAYMENT_CONFIRMED
 }
 
 model User {
@@ -77,6 +90,7 @@ model User {
   revisionsRequested     Revision[]
   transactionsAsPayer    Transaction[]  @relation("Payer")
   transactionsAsPayee    Transaction[]  @relation("Payee")
+  proposals              OrderProposal[]
 }
 
 model EditorProfile {
@@ -155,6 +169,7 @@ model Order {
   conversation  Conversation?
   review        Review?
   notifications Notification[]
+  proposals     OrderProposal[]
 }
 
 model OrderFile {
@@ -267,4 +282,16 @@ model Notification {
   relatedOrderId String?
   relatedOrder   Order?           @relation(fields: [relatedOrderId], references: [id])
   createdAt      DateTime         @default(now())
+}
+
+model OrderProposal {
+  id         String         @id @default(uuid())
+  orderId    String
+  order      Order          @relation(fields: [orderId], references: [id])
+  proposedBy String
+  user       User           @relation(fields: [proposedBy], references: [id])
+  amount     Decimal        @db.Decimal(10, 2)
+  message    String?
+  status     ProposalStatus @default(PENDING)
+  createdAt  DateTime       @default(now())
 }

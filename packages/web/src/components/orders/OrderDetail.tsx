@@ -15,6 +15,12 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconArrowLeft,
+  IconLock,
+  IconClock,
+  IconArrowsExchange,
+  IconCircleCheck,
+  IconCircleX,
+  IconArrowRight,
 } from '@tabler/icons-react'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -28,52 +34,93 @@ import {
   type OrderDetailDTO,
   type OrderStatus,
 } from '@/lib/orders'
+import {
+  createProposal,
+  acceptProposal,
+  rejectProposal,
+  PROPOSAL_STATUS_LABELS,
+  type ProposalDTO,
+} from '@/lib/proposals'
 import { createReview } from '@/lib/reviews'
 import { uploadFile } from '@/lib/upload'
 import { getOrCreateConversationByOrder, type ConversationDTO } from '@/lib/conversations'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 
-// ─── Stepper ────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const HAPPY_PATH: OrderStatus[] = ['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'DELIVERED', 'COMPLETED']
+function fmtBRL(n: number) {
+  return `R$ ${n.toFixed(2)}`
+}
 
-function StatusStepper({ current }: { current: OrderStatus }) {
-  const isBad = current === 'CANCELLED' || current === 'DISPUTED'
-  const isRevision = current === 'REVISION_REQUESTED'
+function avatarBg(name: string) {
+  const PALETTE = ['#F4631E', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4']
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % PALETTE.length
+  return PALETTE[h]
+}
+
+// ─── Layout helpers ───────────────────────────────────────────────────────────
+
+function ContentSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-[12px] p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <h2 className="mb-3 font-heading text-sm font-semibold text-white">{title}</h2>
+      {children}
+    </div>
+  )
+}
+
+function SideCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-[12px] p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      {children}
+    </div>
+  )
+}
+
+function Row({ label, value, muted, highlight }: { label: string; value: string; muted?: boolean; highlight?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-sm" style={{ color: muted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.6)' }}>{label}</span>
+      <span className="text-sm" style={{ color: highlight ? '#F4631E' : muted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.9)', fontWeight: highlight ? 600 : 400 }}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
+// ─── Status Stepper ───────────────────────────────────────────────────────────
+
+const NEW_HAPPY_PATH: OrderStatus[] = ['NEGOTIATING', 'AWAITING_PAYMENT', 'IN_PROGRESS', 'DELIVERED', 'COMPLETED']
+const OLD_HAPPY_PATH: OrderStatus[] = ['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'DELIVERED', 'COMPLETED']
+
+function StatusStepper({ order }: { order: OrderDetailDTO }) {
+  const isBad = order.status === 'CANCELLED' || order.status === 'DISPUTED'
+  const isRevision = order.status === 'REVISION_REQUESTED'
+
+  // Use new path if the order has proposals (i.e. was created after negotiation feature)
+  const isNewFlow = order.proposals.length > 0 || order.status === 'NEGOTIATING' || order.status === 'AWAITING_PAYMENT'
+  const happyPath = isNewFlow ? NEW_HAPPY_PATH : OLD_HAPPY_PATH
 
   return (
     <div className="mb-6 w-full overflow-x-auto">
       {isBad && (
-        <div
-          className="rounded-[8px] px-4 py-2 text-center text-sm font-medium"
-          style={{
-            background: 'rgba(239,68,68,0.1)',
-            border: '1px solid rgba(239,68,68,0.25)',
-            color: '#EF4444',
-          }}
-        >
-          {STATUS_LABELS[current]}
+        <div className="rounded-[8px] px-4 py-2 text-center text-sm font-medium" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#EF4444' }}>
+          {STATUS_LABELS[order.status]}
         </div>
       )}
       {isRevision && (
-        <div
-          className="rounded-[8px] px-4 py-2 text-center text-sm font-medium"
-          style={{
-            background: 'rgba(234,179,8,0.1)',
-            border: '1px solid rgba(234,179,8,0.25)',
-            color: '#EAB308',
-          }}
-        >
-          Revisão solicitada — editor revisará o pedido em breve
+        <div className="rounded-[8px] px-4 py-2 text-center text-sm font-medium" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.25)', color: '#EAB308' }}>
+          Revisão solicitada — editor revisará em breve
         </div>
       )}
       {!isBad && !isRevision && (
         <div className="flex items-center gap-0">
-          {HAPPY_PATH.map((step, i) => {
-            const stepIndex = HAPPY_PATH.indexOf(step)
-            const currentIndex = HAPPY_PATH.indexOf(current)
+          {happyPath.map((step, i) => {
+            const stepIndex = happyPath.indexOf(step)
+            const currentIndex = happyPath.indexOf(order.status)
             const isDone = stepIndex < currentIndex
-            const isActive = step === current
+            const isActive = step === order.status
             const color = STATUS_COLORS[step]
             return (
               <div key={step} className="flex flex-1 items-center">
@@ -88,18 +135,12 @@ function StatusStepper({ current }: { current: OrderStatus }) {
                   >
                     {isDone ? <IconCheck size={12} stroke={2.5} /> : i + 1}
                   </div>
-                  <span
-                    className="text-center text-[10px] leading-tight"
-                    style={{ color: isActive ? color : isDone ? '#22C55E' : 'rgba(255,255,255,0.3)' }}
-                  >
+                  <span className="text-center text-[10px] leading-tight" style={{ color: isActive ? color : isDone ? '#22C55E' : 'rgba(255,255,255,0.3)' }}>
                     {STATUS_LABELS[step]}
                   </span>
                 </div>
-                {i < HAPPY_PATH.length - 1 && (
-                  <div
-                    className="mb-4 h-px flex-1"
-                    style={{ background: stepIndex < currentIndex ? '#22C55E' : 'rgba(255,255,255,0.08)' }}
-                  />
+                {i < happyPath.length - 1 && (
+                  <div className="mb-4 h-px flex-1" style={{ background: stepIndex < currentIndex ? '#22C55E' : 'rgba(255,255,255,0.08)' }} />
                 )}
               </div>
             )
@@ -107,6 +148,466 @@ function StatusStepper({ current }: { current: OrderStatus }) {
         </div>
       )}
     </div>
+  )
+}
+
+// ─── Negotiation Section ──────────────────────────────────────────────────────
+
+function ProposalCard({
+  proposal,
+  order,
+  currentUserId,
+  perspective,
+  onRefresh,
+}: {
+  proposal: ProposalDTO
+  order: OrderDetailDTO
+  currentUserId: string
+  perspective: 'creator' | 'editor' | 'admin'
+  onRefresh: () => void
+}) {
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const isOwn = proposal.proposedBy === currentUserId
+  const isPending = proposal.status === 'PENDING'
+  const canRespond = isPending && !isOwn && perspective !== 'admin' // admin uses PATCH /status
+
+  async function handleAccept() {
+    setBusy('accept')
+    setError(null)
+    try {
+      await acceptProposal(order.id, proposal.id)
+      onRefresh()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setError(e?.response?.data?.message ?? 'Erro ao aceitar proposta')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function handleReject() {
+    setBusy('reject')
+    setError(null)
+    try {
+      await rejectProposal(order.id, proposal.id)
+      onRefresh()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setError(e?.response?.data?.message ?? 'Erro ao rejeitar proposta')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const statusColors: Record<string, { bg: string; color: string }> = {
+    PENDING: { bg: 'rgba(244,99,30,0.12)', color: '#F4631E' },
+    ACCEPTED: { bg: 'rgba(34,197,94,0.12)', color: '#22C55E' },
+    REJECTED: { bg: 'rgba(239,68,68,0.12)', color: '#EF4444' },
+    COUNTERED: { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' },
+  }
+  const sc = statusColors[proposal.status] ?? statusColors.COUNTERED
+
+  return (
+    <div
+      className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+    >
+      <div
+        className="max-w-[85%] rounded-[12px] p-4"
+        style={{
+          background: isOwn ? 'rgba(244,99,30,0.08)' : 'rgba(255,255,255,0.04)',
+          border: isOwn ? '1px solid rgba(244,99,30,0.2)' : '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        {/* Header: name + time */}
+        <div className="mb-2 flex items-center gap-2">
+          <div
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+            style={{ background: avatarBg(proposal.user.name) }}
+          >
+            {proposal.user.avatarUrl
+              ? <img src={proposal.user.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
+              : proposal.user.name.charAt(0).toUpperCase()
+            }
+          </div>
+          <span className="text-xs font-medium text-white">{proposal.user.name}</span>
+          <span className="ml-auto text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            {new Date(proposal.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+
+        {/* Amount */}
+        <div className="mb-1 flex items-baseline gap-2">
+          <span className="font-heading text-xl font-bold text-white">{fmtBRL(proposal.amount)}</span>
+          <span
+            className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+            style={{ background: sc.bg, color: sc.color }}
+          >
+            {PROPOSAL_STATUS_LABELS[proposal.status]}
+          </span>
+        </div>
+
+        {/* Fee breakdown */}
+        <div className="mb-2 space-y-0.5">
+          {perspective === 'editor' && (
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Você recebe: <span style={{ color: '#22C55E', fontWeight: 600 }}>{fmtBRL(proposal.netAmount)}</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}> · taxa 10%: {fmtBRL(proposal.platformFee)}</span>
+            </p>
+          )}
+          {perspective === 'creator' && (
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Você paga: <span className="font-medium text-white">{fmtBRL(proposal.amount)}</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}> · editor recebe: {fmtBRL(proposal.netAmount)}</span>
+            </p>
+          )}
+        </div>
+
+        {/* Message */}
+        {proposal.message && (
+          <p className="mb-3 text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            {proposal.message}
+          </p>
+        )}
+
+        {/* Actions for the other party on a pending proposal */}
+        {canRespond && (
+          <div className="flex gap-2">
+            <button
+              onClick={handleAccept}
+              disabled={busy !== null}
+              className="flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-xs font-semibold transition-all"
+              style={{
+                background: '#F4631E', color: 'white', border: 'none',
+                cursor: busy ? 'not-allowed' : 'pointer',
+                opacity: busy ? 0.6 : 1,
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              {busy === 'accept' ? <IconLoader2 size={12} className="animate-spin" /> : <IconCircleCheck size={12} stroke={2} />}
+              Aceitar
+            </button>
+            <button
+              onClick={handleReject}
+              disabled={busy !== null}
+              className="flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-xs font-semibold transition-all"
+              style={{
+                background: 'rgba(239,68,68,0.1)', color: '#EF4444',
+                border: '1px solid rgba(239,68,68,0.25)',
+                cursor: busy ? 'not-allowed' : 'pointer',
+                opacity: busy ? 0.6 : 1,
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              {busy === 'reject' ? <IconLoader2 size={12} className="animate-spin" /> : <IconCircleX size={12} stroke={2} />}
+              Rejeitar
+            </button>
+          </div>
+        )}
+
+        {isPending && isOwn && (
+          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <IconClock size={12} stroke={1.5} />
+            Aguardando resposta da contraparte...
+          </div>
+        )}
+
+        {error && <p className="mt-2 text-[11px]" style={{ color: '#FCA5A5' }}>{error}</p>}
+      </div>
+    </div>
+  )
+}
+
+function ProposalForm({
+  order,
+  hasExistingPending,
+  pendingIsOwn,
+  onDone,
+}: {
+  order: OrderDetailDTO
+  hasExistingPending: boolean
+  pendingIsOwn: boolean
+  onDone: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [amount, setAmount] = useState('')
+  const [message, setMessage] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  if (hasExistingPending && pendingIsOwn) return null
+
+  const isCounter = hasExistingPending && !pendingIsOwn
+  const label = isCounter ? 'Fazer contraproposta' : 'Fazer proposta'
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const parsed = parseFloat(amount.replace(',', '.'))
+    if (!parsed || parsed <= 0) return setError('Informe um valor válido')
+    setSubmitting(true)
+    setError(null)
+    try {
+      await createProposal(order.id, { amount: parsed, message: message.trim() || undefined })
+      setAmount('')
+      setMessage('')
+      setOpen(false)
+      onDone()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setError(e?.response?.data?.message ?? 'Erro ao enviar proposta')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div>
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
+          style={{
+            background: isCounter ? 'rgba(255,255,255,0.06)' : '#F4631E',
+            color: isCounter ? 'rgba(255,255,255,0.8)' : 'white',
+            border: isCounter ? '1px solid rgba(255,255,255,0.12)' : 'none',
+            cursor: 'pointer',
+            fontFamily: "'Syne', sans-serif",
+          }}
+        >
+          <IconArrowRight size={14} stroke={2} />
+          {label}
+        </button>
+      ) : (
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-[12px] p-4 space-y-3"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+        >
+          <p className="text-sm font-semibold text-white">{label}</p>
+          <div>
+            <label className="mb-1 block text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Valor (R$)</label>
+            <input
+              type="text"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0,00"
+              className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              disabled={submitting}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Mensagem (opcional)</label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Explique sua proposta..."
+              rows={2}
+              maxLength={2000}
+              className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+              disabled={submitting}
+            />
+          </div>
+          {amount && !isNaN(parseFloat(amount.replace(',', '.'))) && parseFloat(amount.replace(',', '.')) > 0 && (
+            <div className="rounded-[8px] px-3 py-2 text-xs space-y-0.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex justify-between">
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Taxa plataforma (10%)</span>
+                <span style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtBRL(Math.round(parseFloat(amount.replace(',', '.')) * 0.1 * 100) / 100)}</span>
+              </div>
+              <div className="flex justify-between font-medium">
+                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Editor recebe</span>
+                <span style={{ color: '#22C55E' }}>{fmtBRL(Math.round(parseFloat(amount.replace(',', '.')) * 0.9 * 100) / 100)}</span>
+              </div>
+            </div>
+          )}
+          {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+          <div className="flex gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setError(null) }}
+              className="rounded-[8px] px-3 py-2 text-xs"
+              style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
+              style={{
+                background: '#F4631E', color: 'white', border: 'none',
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                opacity: submitting ? 0.6 : 1,
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              {submitting && <IconLoader2 size={12} className="animate-spin" />}
+              Enviar proposta
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
+function NegotiationSection({
+  order,
+  perspective,
+  currentUserId,
+  onRefresh,
+}: {
+  order: OrderDetailDTO
+  perspective: 'creator' | 'editor' | 'admin'
+  currentUserId: string
+  onRefresh: () => void
+}) {
+  const pendingProposal = order.proposals.find((p) => p.status === 'PENDING') ?? null
+  const hasExistingPending = pendingProposal !== null
+  const pendingIsOwn = pendingProposal?.proposedBy === currentUserId
+
+  return (
+    <ContentSection title="Negociação">
+      <div className="mb-3 flex items-center gap-2">
+        <IconArrowsExchange size={14} stroke={1.5} style={{ color: '#F4631E' }} />
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          Negocie o valor com a contraparte. Quando ambos concordarem, o creator realiza o pagamento e o projeto inicia.
+        </p>
+      </div>
+
+      {order.proposals.length === 0 ? (
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhuma proposta ainda.</p>
+      ) : (
+        <div className="mb-4 space-y-3">
+          {order.proposals.map((p) => (
+            <ProposalCard
+              key={p.id}
+              proposal={p}
+              order={order}
+              currentUserId={currentUserId}
+              perspective={perspective}
+              onRefresh={onRefresh}
+            />
+          ))}
+        </div>
+      )}
+
+      {order.status === 'NEGOTIATING' && perspective !== 'admin' && (
+        <ProposalForm
+          order={order}
+          hasExistingPending={hasExistingPending}
+          pendingIsOwn={pendingIsOwn ?? false}
+          onDone={onRefresh}
+        />
+      )}
+    </ContentSection>
+  )
+}
+
+// ─── Awaiting Payment Section ─────────────────────────────────────────────────
+
+function AwaitingPaymentSection({
+  order,
+  perspective,
+  onPayment,
+  payError,
+}: {
+  order: OrderDetailDTO
+  perspective: 'creator' | 'editor' | 'admin'
+  onPayment: () => Promise<void>
+  payError: string | null
+}) {
+  const [busy, setBusy] = useState(false)
+  const accepted = order.proposals.filter((p) => p.status === 'ACCEPTED')
+  const acceptedProposal = accepted[accepted.length - 1] ?? order.proposals[order.proposals.length - 1]
+
+  if (perspective === 'editor') {
+    return (
+      <ContentSection title="Aguardando pagamento">
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-full"
+            style={{ background: 'rgba(234,179,8,0.12)', border: '1px solid rgba(234,179,8,0.25)' }}
+          >
+            <IconClock size={22} stroke={1.5} style={{ color: '#EAB308' }} />
+          </div>
+          <p className="font-heading text-sm font-semibold text-white">Aguardando pagamento do creator</p>
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            O creator precisa realizar o pagamento PIX para o projeto iniciar.
+          </p>
+          {acceptedProposal && (
+            <div className="mt-2 rounded-[10px] px-5 py-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Valor acordado</p>
+              <p className="font-heading text-lg font-bold text-white">{fmtBRL(order.budget)}</p>
+              <p className="text-xs" style={{ color: '#22C55E' }}>Você recebe {fmtBRL(order.budget - order.platformFee)}</p>
+            </div>
+          )}
+        </div>
+      </ContentSection>
+    )
+  }
+
+  // Creator view
+  const alreadyInitiated = order.transaction !== null
+
+  async function handlePay() {
+    setBusy(true)
+    await onPayment()
+    setBusy(false)
+  }
+
+  return (
+    <ContentSection title="Pagamento">
+      <div className="space-y-4">
+        <div className="rounded-[10px] p-4" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.2)' }}>
+          <p className="mb-1 text-xs font-semibold" style={{ color: '#EAB308' }}>Proposta aceita — realize o pagamento</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="font-heading text-2xl font-bold text-white">{fmtBRL(order.budget)}</span>
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>via PIX</span>
+          </div>
+          <div className="mt-1 space-y-0.5">
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Taxa plataforma (10%): {fmtBRL(order.platformFee)} · Editor recebe: {fmtBRL(order.budget - order.platformFee)}
+            </p>
+          </div>
+        </div>
+
+        {!alreadyInitiated ? (
+          <button
+            onClick={handlePay}
+            disabled={busy}
+            className="flex w-full items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-semibold transition-all"
+            style={{
+              background: '#F4631E', color: 'white', border: 'none',
+              cursor: busy ? 'not-allowed' : 'pointer',
+              opacity: busy ? 0.7 : 1,
+              fontFamily: "'Syne', sans-serif",
+            }}
+          >
+            {busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconCreditCard size={16} stroke={1.5} />}
+            {busy ? 'Gerando cobrança...' : 'Pagar via PIX'}
+          </button>
+        ) : (
+          <div className="rounded-[8px] px-4 py-3 text-center" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
+            <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>Pagamento iniciado</p>
+            <p className="mt-0.5 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Aguardando confirmação do PIX...
+            </p>
+          </div>
+        )}
+
+        {payError && (
+          <p className="text-xs" style={{ color: '#FCA5A5' }}>{payError}</p>
+        )}
+
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          O pagamento fica retido em escrow e é liberado ao editor apenas quando você aprovar a entrega.
+        </p>
+      </div>
+    </ContentSection>
   )
 }
 
@@ -184,11 +685,7 @@ function DeliveryForm({ orderId, onDone }: { orderId: string; onDone: () => void
       {useUpload ? (
         <label
           className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[8px] px-4 py-5 text-xs transition-colors"
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px dashed rgba(255,255,255,0.15)',
-            color: 'rgba(255,255,255,0.5)',
-          }}
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' }}
         >
           {uploading ? (
             <><IconLoader2 size={18} className="animate-spin" /><span>Enviando... {progress}%</span></>
@@ -340,13 +837,11 @@ function ActionButtons({
   order,
   perspective,
   onAction,
-  onPayment,
   onRefresh,
 }: {
   order: OrderDetailDTO
   perspective: 'creator' | 'editor' | 'admin'
   onAction: (status: OrderStatus) => Promise<void>
-  onPayment: () => Promise<void>
   onRefresh: () => Promise<void>
 }) {
   const [busy, setBusy] = useState<string | null>(null)
@@ -355,12 +850,6 @@ function ActionButtons({
   async function doAction(status: OrderStatus) {
     setBusy(status)
     await onAction(status)
-    setBusy(null)
-  }
-
-  async function doPay() {
-    setBusy('pay')
-    await onPayment()
     setBusy(null)
   }
 
@@ -390,7 +879,10 @@ function ActionButtons({
     </button>
   )
 
-  const { status, transaction } = order
+  const { status } = order
+
+  // New-flow statuses are handled by their own sections
+  if (status === 'NEGOTIATING' || status === 'AWAITING_PAYMENT') return null
 
   if (perspective === 'editor') {
     if (status === 'PENDING') {
@@ -431,12 +923,7 @@ function ActionButtons({
       return btn('Cancelar pedido', () => doAction('CANCELLED'), 'CANCELLED', 'danger', <IconX size={14} stroke={2} />)
     }
     if (status === 'ACCEPTED') {
-      return (
-        <div className="flex flex-col gap-2">
-          {!transaction && btn('Pagar agora (PIX)', doPay, 'pay', 'primary', <IconCreditCard size={14} stroke={1.5} />)}
-          {btn('Cancelar pedido', () => doAction('CANCELLED'), 'CANCELLED', 'danger', <IconX size={14} stroke={2} />)}
-        </div>
-      )
+      return btn('Cancelar pedido', () => doAction('CANCELLED'), 'CANCELLED', 'danger', <IconX size={14} stroke={2} />)
     }
     if (status === 'DELIVERED') {
       return (
@@ -450,36 +937,6 @@ function ActionButtons({
   }
 
   return null
-}
-
-// ─── Layout helpers ───────────────────────────────────────────────────────────
-
-function ContentSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-[12px] p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-      <h2 className="mb-3 font-heading text-sm font-semibold text-white">{title}</h2>
-      {children}
-    </div>
-  )
-}
-
-function SideCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-[12px] p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-      {children}
-    </div>
-  )
-}
-
-function Row({ label, value, muted, highlight }: { label: string; value: string; muted?: boolean; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span style={{ color: muted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.6)' }}>{label}</span>
-      <span style={{ color: highlight ? '#F4631E' : muted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.9)', fontWeight: highlight ? 600 : 400 }}>
-        {value}
-      </span>
-    </div>
-  )
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -575,6 +1032,8 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
 
   if (!order) return null
 
+  const showFilesGate = order.filesHidden && perspective === 'editor'
+
   return (
     <div>
       {/* Back button + order header */}
@@ -583,12 +1042,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
           <button
             onClick={onBack}
             className="mt-1 flex shrink-0 items-center gap-1.5 rounded-[8px] px-3 py-2 text-sm transition-all"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.6)',
-              cursor: 'pointer',
-            }}
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
           >
             <IconArrowLeft size={14} stroke={1.5} />
             Voltar
@@ -601,11 +1055,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             </p>
             <span
               className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
-              style={{
-                background: `${statusColor}1A`,
-                color: statusColor,
-                border: `1px solid ${statusColor}33`,
-              }}
+              style={{ background: `${statusColor}1A`, color: statusColor, border: `1px solid ${statusColor}33` }}
             >
               {STATUS_LABELS[order.status]}
             </span>
@@ -615,19 +1065,67 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       </div>
 
       {/* Stepper */}
-      <StatusStepper current={order.status} />
+      <StatusStepper order={order} />
 
       {/* 2-col layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         {/* Left column */}
         <div className="space-y-6">
+          {/* Negotiation section — shown during NEGOTIATING */}
+          {order.status === 'NEGOTIATING' && (
+            <NegotiationSection
+              order={order}
+              perspective={perspective}
+              currentUserId={user.id}
+              onRefresh={load}
+            />
+          )}
+
+          {/* Awaiting payment section */}
+          {order.status === 'AWAITING_PAYMENT' && (
+            <>
+              {/* Still show negotiation history read-only */}
+              {order.proposals.length > 0 && (
+                <ContentSection title="Negociação (concluída)">
+                  <div className="space-y-3">
+                    {order.proposals.map((p) => (
+                      <ProposalCard
+                        key={p.id}
+                        proposal={p}
+                        order={order}
+                        currentUserId={user.id}
+                        perspective={perspective}
+                        onRefresh={load}
+                      />
+                    ))}
+                  </div>
+                </ContentSection>
+              )}
+              <AwaitingPaymentSection
+                order={order}
+                perspective={perspective}
+                onPayment={handlePayment}
+                payError={payError}
+              />
+            </>
+          )}
+
+          {/* Briefing */}
           <ContentSection title="Briefing">
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
               {order.description}
             </p>
           </ContentSection>
 
-          {order.files.length > 0 && (
+          {/* Files — gated from editor before IN_PROGRESS */}
+          {showFilesGate ? (
+            <ContentSection title="Arquivos de referência">
+              <div className="flex items-center gap-3 py-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <IconLock size={16} stroke={1.5} />
+                <p className="text-sm">Arquivos disponíveis após confirmação do pagamento.</p>
+              </div>
+            </ContentSection>
+          ) : order.files.length > 0 ? (
             <ContentSection title={`Arquivos de referência (${order.files.length})`}>
               <ul className="space-y-2">
                 {order.files.map((f) => (
@@ -652,8 +1150,9 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                 ))}
               </ul>
             </ContentSection>
-          )}
+          ) : null}
 
+          {/* Deliveries */}
           {order.deliveries.length > 0 && (
             <ContentSection title={`Entregas (${order.deliveries.length})`}>
               <ul className="space-y-3">
@@ -756,7 +1255,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <div className="flex items-center gap-3">
                 <div
                   className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white"
-                  style={{ background: '#F4631E' }}
+                  style={{ background: avatarBg(counterpart.name) }}
                 >
                   {counterpart.avatarUrl
                     ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" />
@@ -772,11 +1271,11 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
               Financeiro
             </p>
-            <div className="space-y-2 text-sm">
-              <Row label="Orçamento" value={`R$ ${order.budget.toFixed(2)}`} />
-              <Row label="Taxa (10%)" value={`R$ ${order.platformFee.toFixed(2)}`} muted />
+            <div className="space-y-2">
+              <Row label="Orçamento" value={fmtBRL(order.budget)} />
+              <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
-                <Row label="Editor recebe" value={`R$ ${(order.budget - order.platformFee).toFixed(2)}`} highlight />
+                <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
               </div>
               {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
             </div>
@@ -798,24 +1297,27 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               </span>
             ) : (
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Aguardando aceitação do editor para iniciar pagamento.
+                {order.status === 'NEGOTIATING'
+                  ? 'Aguardando conclusão da negociação.'
+                  : 'Aguardando pagamento.'}
               </p>
             )}
-            {payError && <p className="mt-2 text-xs" style={{ color: '#FCA5A5' }}>{payError}</p>}
           </SideCard>
 
-          <SideCard>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              Ações
-            </p>
-            <ActionButtons
-              order={order}
-              perspective={perspective}
-              onAction={handleAction}
-              onPayment={handlePayment}
-              onRefresh={load}
-            />
-          </SideCard>
+          {/* Actions — only for post-negotiation statuses */}
+          {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && (
+            <SideCard>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                Ações
+              </p>
+              <ActionButtons
+                order={order}
+                perspective={perspective}
+                onAction={handleAction}
+                onRefresh={load}
+              />
+            </SideCard>
+          )}
         </div>
       </div>
     </div>

@@ -26,7 +26,9 @@ export class PaymentService {
 
     if (!order) throw NotFound('Pedido não encontrado')
     if (order.creatorId !== requesterId) throw Forbidden('Apenas o creator pode iniciar pagamento')
-    if (order.status !== 'ACCEPTED') throw BadRequest('Pedido precisa estar aceito para iniciar pagamento')
+    if (order.status !== 'AWAITING_PAYMENT' && order.status !== 'ACCEPTED') {
+      throw BadRequest('Pedido precisa estar aguardando pagamento para iniciar cobrança')
+    }
     if (order.transaction) throw BadRequest('Pagamento já foi iniciado para este pedido')
 
     const amount = Number(order.budget)
@@ -36,6 +38,9 @@ export class PaymentService {
 
     let externalPaymentId: string | null = null
     let paymentUrl: string | null = null
+    let pixCode: string | null = null
+    let pixQrCode: string | null = null
+    let expiresAt: string | null = null
 
     if (this.apiKey) {
       const res = await fetch(`${ABACATEPAY_API_URL}/billing/create`, {
@@ -69,13 +74,21 @@ export class PaymentService {
         throw BadRequest(`Erro ao criar cobrança: ${text}`)
       }
 
-      const json = (await res.json()) as { data?: { id?: string; url?: string } }
+      const json = (await res.json()) as {
+        data?: { id?: string; url?: string; pixCode?: string; pixQrCode?: string; expiresAt?: string }
+      }
       externalPaymentId = json.data?.id ?? null
       paymentUrl = json.data?.url ?? null
+      pixCode = json.data?.pixCode ?? null
+      pixQrCode = json.data?.pixQrCode ?? null
+      expiresAt = json.data?.expiresAt ?? null
     } else {
       // Dev/sandbox: sem chave configurada, simula cobrança
       externalPaymentId = `dev_${order.id}`
       paymentUrl = null
+      pixCode = null
+      pixQrCode = null
+      expiresAt = null
     }
 
     await prisma.transaction.create({
@@ -91,7 +104,7 @@ export class PaymentService {
       },
     })
 
-    return { paymentUrl }
+    return { paymentUrl, pixCode, pixQrCode, expiresAt }
   }
 
   async handleWebhook(rawBody: string, signature: string | undefined) {
@@ -109,10 +122,13 @@ export class PaymentService {
       const externalId = event.data.billing.id
       const transaction = await prisma.transaction.findFirst({
         where: { externalPaymentId: externalId },
+        include: { order: { select: { id: true, status: true, title: true } } },
       })
 
       if (transaction) {
-        await prisma.$transaction([
+        const isNewFlow = transaction.order.status === 'AWAITING_PAYMENT'
+
+        const baseOps = [
           prisma.transaction.update({
             where: { id: transaction.id },
             data: { status: 'HELD' },
@@ -120,13 +136,25 @@ export class PaymentService {
           prisma.notification.create({
             data: {
               userId: transaction.payeeId,
-              type: 'PAYMENT_RELEASED',
-              title: 'Pagamento confirmado!',
-              body: 'O pagamento foi confirmado e ficará retido até a conclusão do pedido.',
+              type: 'PAYMENT_CONFIRMED',
+              title: 'Pagamento confirmado — pode iniciar o projeto!',
+              body: `Pagamento recebido para "${transaction.order.title}". Você já pode iniciar o trabalho.`,
               relatedOrderId: transaction.orderId,
             },
           }),
-        ])
+        ] as const
+
+        if (isNewFlow) {
+          await prisma.$transaction([
+            ...baseOps,
+            prisma.order.update({
+              where: { id: transaction.orderId },
+              data: { status: 'IN_PROGRESS' },
+            }),
+          ])
+        } else {
+          await prisma.$transaction([...baseOps])
+        }
       }
     }
 

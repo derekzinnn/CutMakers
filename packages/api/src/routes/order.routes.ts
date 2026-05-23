@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { OrderController } from '../controllers/order.controller'
 import { reviewController } from '../controllers/review.controller'
+import { proposalController } from '../controllers/proposal.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 import { requireRole } from '../middlewares/role.middleware'
 
@@ -26,3 +27,9 @@ orderRoutes.post('/:id/payment', requireRole('CREATOR', 'BOTH', 'ADMIN'), ctrl.i
 
 // Apenas creators (ou BOTH) avaliam pedidos COMPLETED
 orderRoutes.post('/:id/review', requireRole('CREATOR', 'BOTH'), reviewController.create)
+
+// Propostas de negociação (ambas as partes)
+orderRoutes.get('/:id/proposals', proposalController.list)
+orderRoutes.post('/:id/proposals', proposalController.create)
+orderRoutes.post('/:id/proposals/:proposalId/accept', proposalController.accept)
+orderRoutes.post('/:id/proposals/:proposalId/reject', proposalController.reject)

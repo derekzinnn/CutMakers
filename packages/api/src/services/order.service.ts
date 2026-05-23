@@ -2,6 +2,7 @@ import { Prisma, OrderStatus } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 import { paymentService } from './payment.service'
+import { proposalToDTO } from './proposal.service'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,6 @@ export interface CreateDeliveryData {
   message?: string
 }
 
-// 10% por enquanto — vai virar config ou tabela no futuro
 const PLATFORM_FEE_RATE = 0.1
 
 // ─── Regras de transição de status ───────────────────────────────────────────
@@ -48,11 +48,19 @@ const VALID_TRANSITIONS: {
   to: OrderStatus
   allowedRoles: ActorRole[]
 }[] = [
+  // Legacy flow (orders created before negotiation feature)
   { from: 'PENDING',            to: 'ACCEPTED',           allowedRoles: ['editor', 'admin'] },
   { from: 'PENDING',            to: 'CANCELLED',          allowedRoles: ['creator', 'editor', 'admin'] },
   { from: 'ACCEPTED',           to: 'IN_PROGRESS',        allowedRoles: ['editor', 'admin'] },
   { from: 'ACCEPTED',           to: 'CANCELLED',          allowedRoles: ['creator', 'editor', 'admin'] },
-  { from: 'IN_PROGRESS',        to: 'DELIVERED',          allowedRoles: ['admin'] },          // normal flow via /deliveries
+  // New negotiation flow
+  { from: 'NEGOTIATING',        to: 'AWAITING_PAYMENT',   allowedRoles: ['admin'] },
+  { from: 'NEGOTIATING',        to: 'CANCELLED',          allowedRoles: ['creator', 'editor', 'admin'] },
+  { from: 'AWAITING_PAYMENT',   to: 'IN_PROGRESS',        allowedRoles: ['admin'] },
+  { from: 'AWAITING_PAYMENT',   to: 'NEGOTIATING',        allowedRoles: ['admin'] },
+  { from: 'AWAITING_PAYMENT',   to: 'CANCELLED',          allowedRoles: ['admin'] },
+  // Shared flow
+  { from: 'IN_PROGRESS',        to: 'DELIVERED',          allowedRoles: ['admin'] },
   { from: 'IN_PROGRESS',        to: 'CANCELLED',          allowedRoles: ['admin'] },
   { from: 'DELIVERED',          to: 'COMPLETED',          allowedRoles: ['creator', 'admin'] },
   { from: 'DELIVERED',          to: 'REVISION_REQUESTED', allowedRoles: ['creator', 'admin'] },
@@ -78,9 +86,7 @@ const orderDetailInclude = {
   creator: { select: { id: true, name: true, avatarUrl: true } },
   editor: { select: { id: true, name: true, avatarUrl: true } },
   files: true,
-  deliveries: {
-    orderBy: { version: 'asc' as const },
-  },
+  deliveries: { orderBy: { version: 'asc' as const } },
   transaction: {
     select: {
       id: true,
@@ -100,6 +106,12 @@ const orderDetailInclude = {
       createdAt: true,
       reviewer: { select: { id: true, name: true, avatarUrl: true } },
     },
+  },
+  proposals: {
+    include: {
+      user: { select: { id: true, name: true, avatarUrl: true } },
+    },
+    orderBy: { createdAt: 'asc' as const },
   },
   _count: { select: { deliveries: true, revisions: true } },
 } satisfies Prisma.OrderInclude
@@ -141,38 +153,51 @@ export class OrderService {
 
     const platformFee = Math.round(data.budget * PLATFORM_FEE_RATE * 100) / 100
 
-    const order = await prisma.order.create({
-      data: {
-        creatorId,
-        editorId: data.editorId,
-        categoryId: data.categoryId,
-        portfolioItemId: data.portfolioItemId,
-        title: data.title.trim(),
-        description: data.description.trim(),
-        budget: data.budget,
-        platformFee,
-        deadline: data.deadline,
-        status: 'PENDING',
-        files: {
-          create: data.files.map((f) => ({
-            fileUrl: f.fileUrl,
-            fileName: f.fileName,
-            fileType: f.fileType,
-          })),
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          creatorId,
+          editorId: data.editorId,
+          categoryId: data.categoryId,
+          portfolioItemId: data.portfolioItemId,
+          title: data.title.trim(),
+          description: data.description.trim(),
+          budget: data.budget,
+          platformFee,
+          deadline: data.deadline,
+          status: 'NEGOTIATING',
+          files: {
+            create: data.files.map((f) => ({
+              fileUrl: f.fileUrl,
+              fileName: f.fileName,
+              fileType: f.fileType,
+            })),
+          },
         },
-      },
-      include: orderInclude,
-    })
+        include: orderInclude,
+      })
 
-    // Notifica o editor do novo pedido
-    await prisma.notification.create({
-      data: {
-        userId: data.editorId,
-        type: 'NEW_ORDER',
-        title: 'Novo pedido recebido!',
-        body: `${order.creator.name} enviou um novo pedido: "${order.title}"`,
-        relatedOrderId: order.id,
-      },
+      // First proposal is auto-created from the creator's initial budget
+      await tx.orderProposal.create({
+        data: {
+          orderId: created.id,
+          proposedBy: creatorId,
+          amount: data.budget,
+          status: 'PENDING',
+        },
+      })
+
+      await tx.notification.create({
+        data: {
+          userId: data.editorId,
+          type: 'NEW_ORDER',
+          title: 'Nova proposta recebida!',
+          body: `${created.creator.name} enviou uma proposta de R$ ${data.budget.toFixed(2)} para "${created.title}"`,
+          relatedOrderId: created.id,
+        },
+      })
+
+      return created
     })
 
     return this.toDTO(order)
@@ -224,7 +249,7 @@ export class OrderService {
     if (!isAdmin && order.creatorId !== userId && order.editorId !== userId) {
       throw Forbidden('Você não tem acesso a este pedido')
     }
-    return this.toDetailDTO(order)
+    return this.toDetailDTO(order, userId, isAdmin)
   }
 
   async updateStatus(orderId: string, userId: string, isAdmin: boolean, newStatus: OrderStatus) {
@@ -256,7 +281,6 @@ export class OrderService {
       include: orderDetailInclude,
     })
 
-    // Efeitos colaterais por status
     if (newStatus === 'COMPLETED') {
       await paymentService.releasePayment(orderId)
       await prisma.editorProfile.updateMany({
@@ -267,7 +291,7 @@ export class OrderService {
 
     await this.notifyStatusChange(order.id, order.title, order.creatorId, order.editorId, newStatus, userId)
 
-    return this.toDetailDTO(updated)
+    return this.toDetailDTO(updated, userId, isAdmin)
   }
 
   async createDelivery(orderId: string, editorId: string, data: CreateDeliveryData) {
@@ -283,12 +307,7 @@ export class OrderService {
 
     const [delivery] = await prisma.$transaction([
       prisma.delivery.create({
-        data: {
-          orderId,
-          videoUrl: data.videoUrl,
-          message: data.message,
-          version,
-        },
+        data: { orderId, videoUrl: data.videoUrl, message: data.message, version },
       }),
       prisma.order.update({
         where: { id: orderId },
@@ -392,58 +411,69 @@ export class OrderService {
     updatedAt: o.updatedAt,
   })
 
-  private toDetailDTO = (o: OrderDetailWithRelations) => ({
-    id: o.id,
-    title: o.title,
-    description: o.description,
-    status: o.status,
-    budget: Number(o.budget),
-    platformFee: Number(o.platformFee),
-    deadline: o.deadline,
-    category: o.category,
-    creator: o.creator,
-    editor: o.editor,
-    files: o.files.map((f) => ({
-      id: f.id,
-      fileUrl: f.fileUrl,
-      fileName: f.fileName,
-      fileType: f.fileType,
-      uploadedAt: f.uploadedAt,
-    })),
-    deliveries: o.deliveries.map((d) => ({
-      id: d.id,
-      videoUrl: d.videoUrl,
-      message: d.message,
-      version: d.version,
-      createdAt: d.createdAt,
-    })),
-    transaction: o.transaction
-      ? {
-          id: o.transaction.id,
-          status: o.transaction.status,
-          amount: Number(o.transaction.amount),
-          platformFee: Number(o.transaction.platformFee),
-          netAmount: Number(o.transaction.netAmount),
-          externalPaymentId: o.transaction.externalPaymentId,
-          createdAt: o.transaction.createdAt,
-        }
-      : null,
-    review: o.review
-      ? {
-          id: o.review.id,
-          rating: o.review.rating,
-          comment: o.review.comment,
-          createdAt: o.review.createdAt,
-          reviewer: {
-            id: o.review.reviewer.id,
-            name: o.review.reviewer.name,
-            avatarUrl: o.review.reviewer.avatarUrl,
-          },
-        }
-      : null,
-    deliveriesCount: o._count.deliveries,
-    revisionsCount: o._count.revisions,
-    createdAt: o.createdAt,
-    updatedAt: o.updatedAt,
-  })
+  private toDetailDTO = (o: OrderDetailWithRelations, viewerId: string, isAdmin: boolean) => {
+    // Editor cannot see creator files until the project is underway
+    const PRE_WORK_STATUSES: OrderStatus[] = ['NEGOTIATING', 'AWAITING_PAYMENT']
+    const filesHidden =
+      !isAdmin && o.editorId === viewerId && PRE_WORK_STATUSES.includes(o.status)
+
+    return {
+      id: o.id,
+      title: o.title,
+      description: o.description,
+      status: o.status,
+      budget: Number(o.budget),
+      platformFee: Number(o.platformFee),
+      deadline: o.deadline,
+      category: o.category,
+      creator: o.creator,
+      editor: o.editor,
+      files: filesHidden
+        ? []
+        : o.files.map((f) => ({
+            id: f.id,
+            fileUrl: f.fileUrl,
+            fileName: f.fileName,
+            fileType: f.fileType,
+            uploadedAt: f.uploadedAt,
+          })),
+      filesHidden,
+      deliveries: o.deliveries.map((d) => ({
+        id: d.id,
+        videoUrl: d.videoUrl,
+        message: d.message,
+        version: d.version,
+        createdAt: d.createdAt,
+      })),
+      transaction: o.transaction
+        ? {
+            id: o.transaction.id,
+            status: o.transaction.status,
+            amount: Number(o.transaction.amount),
+            platformFee: Number(o.transaction.platformFee),
+            netAmount: Number(o.transaction.netAmount),
+            externalPaymentId: o.transaction.externalPaymentId,
+            createdAt: o.transaction.createdAt,
+          }
+        : null,
+      review: o.review
+        ? {
+            id: o.review.id,
+            rating: o.review.rating,
+            comment: o.review.comment,
+            createdAt: o.review.createdAt,
+            reviewer: {
+              id: o.review.reviewer.id,
+              name: o.review.reviewer.name,
+              avatarUrl: o.review.reviewer.avatarUrl,
+            },
+          }
+        : null,
+      proposals: o.proposals.map(proposalToDTO),
+      deliveriesCount: o._count.deliveries,
+      revisionsCount: o._count.revisions,
+      createdAt: o.createdAt,
+      updatedAt: o.updatedAt,
+    }
+  }
 }
