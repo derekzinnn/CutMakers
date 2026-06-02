@@ -83,12 +83,42 @@ export class PaymentService {
       pixQrCode = json.data?.pixQrCode ?? null
       expiresAt = json.data?.expiresAt ?? null
     } else {
-      // Dev/sandbox: sem chave configurada, simula cobrança
+      // Dev mode: auto-confirm payment so the demo flow progresses
       externalPaymentId = `dev_${order.id}`
       paymentUrl = null
       pixCode = null
       pixQrCode = null
       expiresAt = null
+
+      await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            orderId: order.id,
+            payerId: order.creatorId,
+            payeeId: order.editorId,
+            amount,
+            platformFee,
+            netAmount,
+            status: 'HELD',
+            externalPaymentId,
+          },
+        }),
+        prisma.order.update({
+          where: { id: order.id },
+          data: { status: 'IN_PROGRESS' },
+        }),
+        prisma.notification.create({
+          data: {
+            userId: order.editorId,
+            type: 'PAYMENT_CONFIRMED',
+            title: 'Pagamento confirmado — pode iniciar o projeto!',
+            body: `Pagamento recebido para "${order.title}". Você já pode iniciar o trabalho.`,
+            relatedOrderId: order.id,
+          },
+        }),
+      ])
+
+      return { paymentUrl, pixCode, pixQrCode, expiresAt }
     }
 
     await prisma.transaction.create({

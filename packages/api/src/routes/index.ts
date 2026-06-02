@@ -7,6 +7,7 @@ import { uploadRoutes } from './upload.routes'
 import { orderRoutes } from './order.routes'
 import { webhookRoutes } from './webhook.routes'
 import { conversationRoutes } from './conversation.routes'
+import { notificationRoutes } from './notification.routes'
 
 export const routes = Router()
 
@@ -19,3 +20,4 @@ routes.use('/uploads', uploadRoutes)
 routes.use('/orders', orderRoutes)
 routes.use('/webhooks', webhookRoutes)
 routes.use('/conversations', conversationRoutes)
+routes.use('/notifications', notificationRoutes)

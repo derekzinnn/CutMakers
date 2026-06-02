@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   IconArrowLeft,
@@ -11,8 +11,12 @@ import {
   IconClock,
   IconBell,
   IconStar,
+  IconPencil,
+  IconCamera,
+  IconX,
 } from '@tabler/icons-react'
 import { api } from '@/lib/api'
+import { uploadFile } from '@/lib/upload'
 import { useAuth } from '@/hooks/use-auth'
 import { NewOrderModal } from '@/components/orders/NewOrderModal'
 import { CMLockup } from '@/components/ui/CMLogo'
@@ -111,6 +115,16 @@ export function EditorPublicProfile() {
   const [reviewsTotalPages, setReviewsTotalPages] = useState(1)
   const [reviewsLoading, setReviewsLoading] = useState(false)
 
+  const isOwnProfile = !!user && user.id === id && (user.role === 'EDITOR' || user.role === 'BOTH')
+  const [editingField, setEditingField] = useState<'name' | 'bio' | 'categories' | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editBio, setEditBio] = useState('')
+  const [editCategoryIds, setEditCategoryIds] = useState<string[]>([])
+  const [allCategories, setAllCategories] = useState<{ id: string; name: string }[]>([])
+  const [saving, setSaving] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const avatarFileRef = useRef<HTMLInputElement>(null)
+
   const canHire =
     !!user &&
     user.id !== id &&
@@ -144,6 +158,53 @@ export function EditorPublicProfile() {
     if (id) loadReviews(1)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  useEffect(() => {
+    if (!isOwnProfile) return
+    api.get<{ categories: { id: string; name: string }[] }>('/categories')
+      .then(({ data }) => setAllCategories(data.categories))
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOwnProfile])
+
+  function startEdit(field: 'name' | 'bio' | 'categories') {
+    if (field === 'name') setEditName(editor?.name ?? '')
+    if (field === 'bio') setEditBio(editor?.bio ?? '')
+    if (field === 'categories') setEditCategoryIds(editor?.profile.categories.map(c => c.id) ?? [])
+    setEditingField(field)
+  }
+
+  async function saveField() {
+    if (!editingField || !id) return
+    setSaving(true)
+    try {
+      const payload: Record<string, unknown> = {}
+      if (editingField === 'name') payload.name = editName.trim()
+      if (editingField === 'bio') payload.bio = editBio.trim()
+      if (editingField === 'categories') payload.categoryIds = editCategoryIds
+      await api.patch('/editors/me', payload)
+      const { data } = await api.get<{ editor: EditorFullDTO }>(`/editors/${id}`)
+      setEditor(data.editor)
+      setEditingField(null)
+    } catch { /* noop */ } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !id) return
+    setAvatarUploading(true)
+    try {
+      const result = await uploadFile(file, 'avatars', 'image')
+      await api.patch('/editors/me', { avatarUrl: result.secureUrl })
+      const { data } = await api.get<{ editor: EditorFullDTO }>(`/editors/${id}`)
+      setEditor(data.editor)
+    } catch { /* noop */ } finally {
+      setAvatarUploading(false)
+      if (avatarFileRef.current) avatarFileRef.current.value = ''
+    }
+  }
 
   if (loading) {
     return (
@@ -309,32 +370,78 @@ export function EditorPublicProfile() {
               >
                 <IconCheck size={11} stroke={3} color="#fff" />
               </div>
+              {/* Camera overlay for own profile */}
+              {isOwnProfile && (
+                <>
+                  <button
+                    onClick={() => avatarFileRef.current?.click()}
+                    disabled={avatarUploading}
+                    title="Trocar foto"
+                    style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                      borderRadius: '50%', border: 'none',
+                      background: avatarUploading ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: avatarUploading ? 'wait' : 'pointer',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => { if (!avatarUploading) e.currentTarget.style.background = 'rgba(0,0,0,0.55)' }}
+                    onMouseLeave={e => { if (!avatarUploading) e.currentTarget.style.background = 'rgba(0,0,0,0)' }}
+                  >
+                    <IconCamera size={20} stroke={1.5} color="#fff" style={{ opacity: avatarUploading ? 1 : 0.9 }} />
+                  </button>
+                  <input ref={avatarFileRef} type="file" accept="image/*" onChange={handleAvatarUpload} hidden />
+                </>
+              )}
             </div>
 
             {/* Name + meta */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-                <h1
-                  style={{
-                    fontFamily: "'Syne', sans-serif", fontWeight: 800,
-                    fontSize: 26, color: '#fff', margin: 0, lineHeight: 1.1,
-                  }}
-                >
-                  {editor.name}
-                </h1>
-                {profile.isPremium && (
-                  <span
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 4,
-                      background: 'rgba(244,99,30,0.18)', color: '#F4631E',
-                      fontSize: 11, fontWeight: 700, padding: '3px 9px',
-                      borderRadius: 20, fontFamily: "'Syne', sans-serif",
-                      border: '1px solid rgba(244,99,30,0.25)',
-                    }}
-                  >
-                    <IconRosetteDiscountCheckFilled size={12} />
-                    PREMIUM
-                  </span>
+                {editingField === 'name' ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <input
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      autoFocus
+                      maxLength={80}
+                      style={{
+                        background: 'rgba(255,255,255,0.08)',
+                        border: '1px solid rgba(244,99,30,0.5)',
+                        borderRadius: 8, padding: '6px 12px',
+                        fontSize: 22, fontWeight: 800, color: '#fff',
+                        fontFamily: "'Syne', sans-serif",
+                        outline: 'none', width: 220,
+                      }}
+                    />
+                    <SaveCancelButtons saving={saving} onSave={saveField} onCancel={() => setEditingField(null)} />
+                  </div>
+                ) : (
+                  <>
+                    <h1
+                      style={{
+                        fontFamily: "'Syne', sans-serif", fontWeight: 800,
+                        fontSize: 26, color: '#fff', margin: 0, lineHeight: 1.1,
+                      }}
+                    >
+                      {editor.name}
+                    </h1>
+                    {isOwnProfile && <PencilBtn onClick={() => startEdit('name')} />}
+                    {profile.isPremium && (
+                      <span
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          background: 'rgba(244,99,30,0.18)', color: '#F4631E',
+                          fontSize: 11, fontWeight: 700, padding: '3px 9px',
+                          borderRadius: 20, fontFamily: "'Syne', sans-serif",
+                          border: '1px solid rgba(244,99,30,0.25)',
+                        }}
+                      >
+                        <IconRosetteDiscountCheckFilled size={12} />
+                        PREMIUM
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -354,11 +461,43 @@ export function EditorPublicProfile() {
               </div>
 
               {/* Category + tool tags */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {profile.categories.map(c => (
-                  <span key={c.id} style={tagStyle}>{c.name}</span>
-                ))}
-              </div>
+              {editingField === 'categories' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {allCategories.map(c => {
+                      const active = editCategoryIds.includes(c.id)
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setEditCategoryIds(curr =>
+                            curr.includes(c.id) ? curr.filter(x => x !== c.id) : [...curr, c.id]
+                          )}
+                          style={{
+                            padding: '4px 10px', borderRadius: 6, fontSize: 12,
+                            fontFamily: "'DM Sans', sans-serif",
+                            background: active ? 'rgba(244,99,30,0.2)' : 'rgba(255,255,255,0.07)',
+                            color: active ? '#F4631E' : 'rgba(255,255,255,0.75)',
+                            border: `1px solid ${active ? 'rgba(244,99,30,0.35)' : 'rgba(255,255,255,0.09)'}`,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {c.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <SaveCancelButtons saving={saving} onSave={saveField} onCancel={() => setEditingField(null)} />
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {profile.categories.map(c => (
+                      <span key={c.id} style={tagStyle}>{c.name}</span>
+                    ))}
+                  </div>
+                  {isOwnProfile && <PencilBtn onClick={() => startEdit('categories')} />}
+                </div>
+              )}
             </div>
           </div>
 
@@ -424,12 +563,46 @@ export function EditorPublicProfile() {
         <div style={{ flex: '1 1 540px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
           {/* Sobre */}
-          {editor.bio && (
+          {(editor.bio || isOwnProfile) && (
             <section style={sectionCard}>
-              <h2 style={sectionTitle}>Sobre</h2>
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, margin: 0 }}>
-                {editor.bio}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <h2 style={{ ...sectionTitle, margin: 0 }}>Sobre</h2>
+                {isOwnProfile && editingField !== 'bio' && (
+                  <PencilBtn onClick={() => startEdit('bio')} />
+                )}
+              </div>
+              {editingField === 'bio' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <textarea
+                    value={editBio}
+                    onChange={e => setEditBio(e.target.value)}
+                    autoFocus
+                    maxLength={500}
+                    rows={4}
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(244,99,30,0.4)',
+                      borderRadius: 8, padding: '10px 12px',
+                      fontSize: 14, color: 'rgba(255,255,255,0.85)',
+                      fontFamily: "'DM Sans', sans-serif",
+                      lineHeight: 1.6, outline: 'none', resize: 'vertical', minHeight: 80,
+                      width: '100%', boxSizing: 'border-box',
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{editBio.length}/500</span>
+                    <SaveCancelButtons saving={saving} onSave={saveField} onCancel={() => setEditingField(null)} />
+                  </div>
+                </div>
+              ) : editor.bio ? (
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, margin: 0 }}>
+                  {editor.bio}
+                </p>
+              ) : (
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', margin: 0 }}>
+                  Nenhuma bio adicionada. Clique no lápis para descrever seu trabalho.
+                </p>
+              )}
             </section>
           )}
 
@@ -816,6 +989,69 @@ function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: b
       {showDivider && (
         <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginTop: 20 }} />
       )}
+    </div>
+  )
+}
+
+// ─── Edit helpers ─────────────────────────────────────────────────────────────
+
+function PencilBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title="Editar"
+      style={{
+        width: 26, height: 26, borderRadius: 6,
+        background: 'rgba(244,99,30,0.12)',
+        border: '1px solid rgba(244,99,30,0.22)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', flexShrink: 0,
+      }}
+    >
+      <IconPencil size={13} stroke={1.8} color="#F4631E" />
+    </button>
+  )
+}
+
+function SaveCancelButtons({
+  saving,
+  onSave,
+  onCancel,
+}: {
+  saving: boolean
+  onSave: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      <button
+        onClick={onCancel}
+        disabled={saving}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          padding: '5px 11px', borderRadius: 6, fontSize: 12,
+          background: 'rgba(255,255,255,0.07)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          color: 'rgba(255,255,255,0.7)', cursor: 'pointer',
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        <IconX size={12} stroke={2} />
+        Cancelar
+      </button>
+      <button
+        onClick={onSave}
+        disabled={saving}
+        style={{
+          padding: '5px 12px', borderRadius: 6, fontSize: 12,
+          background: '#F4631E', border: 'none',
+          color: '#fff', cursor: saving ? 'not-allowed' : 'pointer',
+          fontFamily: "'Syne', sans-serif", fontWeight: 700,
+          opacity: saving ? 0.7 : 1,
+        }}
+      >
+        {saving ? '...' : 'Salvar'}
+      </button>
     </div>
   )
 }

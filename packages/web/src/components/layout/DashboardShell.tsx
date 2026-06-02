@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom'
-import { IconLogout, IconBell } from '@tabler/icons-react'
+import { useState, useEffect, useRef } from 'react'
+import { IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck, IconCoin, IconX, IconAlertCircle } from '@tabler/icons-react'
 import type { AuthUser } from '@/hooks/use-auth'
 import { CMLockup } from '@/components/ui/CMLogo'
+import { fetchNotifications, markAllRead, markOneRead, type NotificationDTO } from '@/lib/notifications'
 
 export interface NavItem {
   id: string
@@ -11,27 +13,247 @@ export interface NavItem {
 }
 
 interface Props {
-  // sidebar
-  badgeLabel?: string // "EDITOR" | "CREATOR" | ...
-  navLabel?: string   // small section header above nav items (e.g. "CRIADOR")
+  badgeLabel?: string
+  navLabel?: string
   navItems: NavItem[]
   activeId: string
   onNavigate: (id: string) => void
   user: AuthUser
-  // header
   pageTitle: string
   pageSubtitle?: string
   actions?: React.ReactNode
-  // content
   children: React.ReactNode
-  // banner (opcional)
   banner?: React.ReactNode
 }
 
-/**
- * Shell genérico para dashboards (Editor/Creator).
- * Mesma estrutura visual do AdminPage, mas reutilizável.
- */
+const NOTIF_ICONS: Record<string, React.ElementType> = {
+  NEW_ORDER: IconPackage,
+  NEW_MESSAGE: IconMessage2,
+  DELIVERY_RECEIVED: IconTruck,
+  PAYMENT_RELEASED: IconCoin,
+  PAYMENT_CONFIRMED: IconCoin,
+  ORDER_ACCEPTED: IconCheck,
+  ORDER_CANCELLED: IconX,
+  REVISION_REQUESTED: IconAlertCircle,
+  PROPOSAL_RECEIVED: IconAlertCircle,
+  PROPOSAL_ACCEPTED: IconCheck,
+  PROPOSAL_REJECTED: IconX,
+}
+
+function relativeDate(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'agora'
+  if (mins < 60) return `${mins}min`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h`
+  return `${Math.floor(hrs / 24)}d`
+}
+
+function NotificationBell({ onNavigateToOrder }: { onNavigateToOrder: (id: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [notifications, setNotifications] = useState<NotificationDTO[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const ref = useRef<HTMLDivElement>(null)
+
+  async function load() {
+    try {
+      const data = await fetchNotifications()
+      setNotifications(data.notifications)
+      setUnreadCount(data.unreadCount)
+    } catch {}
+  }
+
+  useEffect(() => {
+    load()
+    const interval = setInterval(load, 20000)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  async function handleMarkAllRead() {
+    await markAllRead()
+    setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })))
+    setUnreadCount(0)
+  }
+
+  async function handleClickNotif(notif: NotificationDTO) {
+    if (!notif.readAt) {
+      await markOneRead(notif.id)
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, readAt: new Date().toISOString() } : n)),
+      )
+      setUnreadCount((c) => Math.max(0, c - 1))
+    }
+    setOpen(false)
+    if (notif.relatedOrderId) onNavigateToOrder(notif.relatedOrderId)
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors"
+        style={{
+          background: open ? 'rgba(244,99,30,0.12)' : 'rgba(255,255,255,0.05)',
+          border: `1px solid ${open ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+          cursor: 'pointer',
+          position: 'relative',
+        }}
+      >
+        <IconBell size={16} stroke={1.5} style={{ color: open ? '#F4631E' : 'rgba(255,255,255,0.6)' }} />
+        {unreadCount > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: -4,
+              right: -4,
+              minWidth: 16,
+              height: 16,
+              borderRadius: 8,
+              background: '#F4631E',
+              color: 'white',
+              fontSize: 9,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 3px',
+              fontFamily: "'Syne', sans-serif",
+            }}
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            width: 340,
+            background: '#162436',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            zIndex: 100,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'white', fontFamily: "'Syne', sans-serif" }}>
+              Notificações {unreadCount > 0 && <span style={{ color: '#F4631E' }}>({unreadCount})</span>}
+            </span>
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                style={{
+                  fontSize: 11,
+                  color: '#F4631E',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif",
+                  padding: 0,
+                }}
+              >
+                Marcar todas como lidas
+              </button>
+            )}
+          </div>
+
+          {/* List */}
+          <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+            {notifications.length === 0 ? (
+              <div
+                style={{
+                  padding: '32px 16px',
+                  textAlign: 'center',
+                  color: 'rgba(255,255,255,0.3)',
+                  fontSize: 13,
+                }}
+              >
+                Nenhuma notificação
+              </div>
+            ) : (
+              notifications.map((notif) => {
+                const Icon = NOTIF_ICONS[notif.type] ?? IconBell
+                const isUnread = !notif.readAt
+                return (
+                  <button
+                    key={notif.id}
+                    onClick={() => handleClickNotif(notif)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '12px 16px',
+                      width: '100%',
+                      background: isUnread ? 'rgba(244,99,30,0.05)' : 'transparent',
+                      borderLeft: isUnread ? '2px solid #F4631E' : '2px solid transparent',
+                      border: 'none',
+                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isUnread ? 'rgba(244,99,30,0.05)' : 'transparent' }}
+                  >
+                    <div
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: '50%',
+                        background: isUnread ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.06)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon size={14} stroke={1.5} color={isUnread ? '#F4631E' : 'rgba(255,255,255,0.4)'} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 12, fontWeight: isUnread ? 600 : 400, color: isUnread ? 'white' : 'rgba(255,255,255,0.7)', margin: '0 0 2px', lineHeight: 1.3 }}>
+                        {notif.title}
+                      </p>
+                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {notif.body}
+                      </p>
+                    </div>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', flexShrink: 0, marginTop: 2 }}>
+                      {relativeDate(notif.createdAt)}
+                    </span>
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function DashboardShell({
   badgeLabel,
   navLabel,
@@ -50,6 +272,10 @@ export function DashboardShell({
   function logout() {
     localStorage.clear()
     navigate('/login')
+  }
+
+  function goToOrder(orderId: string) {
+    navigate(`/orders/${orderId}`)
   }
 
   return (
@@ -190,16 +416,7 @@ export function DashboardShell({
           </div>
           <div className="flex items-center gap-3">
             {actions}
-            <button
-              className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                cursor: 'pointer',
-              }}
-            >
-              <IconBell size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.6)' }} />
-            </button>
+            <NotificationBell onNavigateToOrder={goToOrder} />
             <div
               className="flex h-9 w-9 items-center justify-center rounded-full font-heading text-sm font-bold text-white"
               style={{ background: '#F4631E' }}

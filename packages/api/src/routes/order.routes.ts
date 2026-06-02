@@ -28,6 +28,9 @@ orderRoutes.post('/:id/payment', requireRole('CREATOR', 'BOTH', 'ADMIN'), ctrl.i
 // Apenas creators (ou BOTH) avaliam pedidos COMPLETED
 orderRoutes.post('/:id/review', requireRole('CREATOR', 'BOTH'), reviewController.create)
 
+// Creator adiciona arquivos a um pedido existente
+orderRoutes.post('/:id/files', requireRole('CREATOR', 'BOTH', 'ADMIN'), ctrl.addFiles)
+
 // Propostas de negociação (ambas as partes)
 orderRoutes.get('/:id/proposals', proposalController.list)
 orderRoutes.post('/:id/proposals', proposalController.create)

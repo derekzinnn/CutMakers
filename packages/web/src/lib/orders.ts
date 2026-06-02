@@ -151,6 +151,13 @@ export async function initiatePayment(orderId: string): Promise<InitiatePaymentR
   return data
 }
 
+export async function addOrderFiles(
+  orderId: string,
+  files: { fileUrl: string; fileName: string; fileType: string }[],
+): Promise<void> {
+  await api.post(`/orders/${orderId}/files`, { files })
+}
+
 // ─── Labels e cores por status ───────────────────────────────────────────────
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {

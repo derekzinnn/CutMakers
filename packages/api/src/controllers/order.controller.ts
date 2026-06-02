@@ -165,4 +165,25 @@ export class OrderController {
       next(err)
     }
   }
+
+  // POST /api/orders/:id/files
+  addFiles = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const filesSchema = z.object({
+        files: z.array(z.object({
+          fileUrl: z.string().url(),
+          fileName: z.string().min(1),
+          fileType: z.string().min(1),
+        })).min(1),
+      })
+      const parsed = filesSchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.status(400).json({ message: 'Dados inválidos', errors: parsed.error.flatten() })
+      }
+      const result = await orderService.addFiles(req.params.id as string, req.user!.sub, parsed.data.files)
+      return res.status(201).json(result)
+    } catch (err) {
+      next(err)
+    }
+  }
 }

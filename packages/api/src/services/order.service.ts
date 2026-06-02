@@ -305,6 +305,18 @@ export class OrderService {
     const existingCount = await prisma.delivery.count({ where: { orderId } })
     const version = existingCount + 1
 
+    // Find or create the conversation so the delivery message lands in chat
+    let conversation = await prisma.conversation.findUnique({ where: { orderId } })
+    if (!conversation) {
+      conversation = await prisma.conversation.create({
+        data: { creatorId: order.creatorId, editorId: order.editorId, orderId },
+      })
+    }
+
+    const chatMessage = data.message?.trim()
+      ? `📦 Entrega v${version}: ${data.message.trim()}`
+      : `📦 Entrega v${version} enviada. Revise e aprove!`
+
     const [delivery] = await prisma.$transaction([
       prisma.delivery.create({
         data: { orderId, videoUrl: data.videoUrl, message: data.message, version },
@@ -322,6 +334,9 @@ export class OrderService {
           relatedOrderId: orderId,
         },
       }),
+      prisma.message.create({
+        data: { conversationId: conversation.id, senderId: editorId, content: chatMessage },
+      }),
     ])
 
     return {
@@ -332,6 +347,27 @@ export class OrderService {
       version: delivery.version,
       createdAt: delivery.createdAt,
     }
+  }
+
+  async addFiles(orderId: string, creatorId: string, files: OrderFileInput[]) {
+    const order = await prisma.order.findUnique({ where: { id: orderId } })
+    if (!order) throw NotFound('Pedido não encontrado')
+    if (order.creatorId !== creatorId) throw Forbidden('Apenas o creator do pedido pode adicionar arquivos')
+    if (order.status === 'COMPLETED' || order.status === 'CANCELLED') {
+      throw BadRequest('Não é possível adicionar arquivos a um pedido finalizado')
+    }
+    if (files.length === 0) throw BadRequest('Nenhum arquivo enviado')
+
+    const created = await prisma.orderFile.createMany({
+      data: files.map((f) => ({
+        orderId,
+        fileUrl: f.fileUrl,
+        fileName: f.fileName,
+        fileType: f.fileType,
+      })),
+    })
+
+    return { count: created.count }
   }
 
   // ─── Helpers privados ─────────────────────────────────────────────────────
@@ -412,10 +448,8 @@ export class OrderService {
   })
 
   private toDetailDTO = (o: OrderDetailWithRelations, viewerId: string, isAdmin: boolean) => {
-    // Editor cannot see creator files until the project is underway
-    const PRE_WORK_STATUSES: OrderStatus[] = ['NEGOTIATING', 'AWAITING_PAYMENT']
-    const filesHidden =
-      !isAdmin && o.editorId === viewerId && PRE_WORK_STATUSES.includes(o.status)
+    void viewerId
+    void isAdmin
 
     return {
       id: o.id,
@@ -428,16 +462,14 @@ export class OrderService {
       category: o.category,
       creator: o.creator,
       editor: o.editor,
-      files: filesHidden
-        ? []
-        : o.files.map((f) => ({
-            id: f.id,
-            fileUrl: f.fileUrl,
-            fileName: f.fileName,
-            fileType: f.fileType,
-            uploadedAt: f.uploadedAt,
-          })),
-      filesHidden,
+      files: o.files.map((f) => ({
+        id: f.id,
+        fileUrl: f.fileUrl,
+        fileName: f.fileName,
+        fileType: f.fileType,
+        uploadedAt: f.uploadedAt,
+      })),
+      filesHidden: false,
       deliveries: o.deliveries.map((d) => ({
         id: d.id,
         videoUrl: d.videoUrl,

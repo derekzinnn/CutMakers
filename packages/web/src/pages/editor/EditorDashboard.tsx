@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard,
   IconBriefcase,
@@ -22,7 +23,6 @@ import { useOrders } from '@/hooks/use-orders'
 import { api } from '@/lib/api'
 import { OrderCard } from '@/components/orders/OrderCard'
 import { PortfolioForm, type PortfolioItemInput } from './components/PortfolioForm'
-import { ProfileForm } from './components/ProfileForm'
 import { MessagesTab } from '@/components/chat/MessagesTab'
 import { OrderDetail } from '@/components/orders/OrderDetail'
 
@@ -39,6 +39,7 @@ const NAV: NavItem[] = [
 export function EditorDashboard() {
   const { user } = useAuth()
   const { editor, loading, refetch } = useEditorMe()
+  const navigate = useNavigate()
 
   const [section, setSection] = useState<Section>('overview')
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
@@ -93,7 +94,10 @@ export function EditorDashboard() {
         badgeLabel="EDITOR"
         navItems={NAV}
         activeId={section}
-        onNavigate={(id) => { setSelectedOrderId(null); setSection(id as Section) }}
+        onNavigate={(id) => {
+          if (id === 'profile') { navigate(`/editors/${user.id}`); return }
+          setSelectedOrderId(null); setSection(id as Section)
+        }}
         user={user}
         pageTitle={sectionTitle}
         pageSubtitle={
@@ -206,17 +210,6 @@ export function EditorDashboard() {
 
             {section === 'messages' && <MessagesTab />}
 
-            {section === 'profile' && (
-              <div
-                className="mx-auto max-w-2xl rounded-card p-8"
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
-              >
-                <ProfileForm editor={editor} userName={user.name} onSaved={refetch} />
-              </div>
-            )}
           </>
         )}
       </DashboardShell>

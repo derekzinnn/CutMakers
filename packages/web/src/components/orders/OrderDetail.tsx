@@ -11,11 +11,7 @@ import {
   IconAlertCircle,
   IconUpload,
   IconStarFilled,
-  IconMessage2,
-  IconChevronDown,
-  IconChevronUp,
   IconArrowLeft,
-  IconLock,
   IconClock,
   IconArrowsExchange,
   IconCircleCheck,
@@ -28,6 +24,7 @@ import {
   updateOrderStatus,
   createDelivery,
   initiatePayment,
+  addOrderFiles,
   STATUS_LABELS,
   STATUS_COLORS,
   TRANSACTION_LABELS,
@@ -61,10 +58,13 @@ function avatarBg(name: string) {
 
 // ─── Layout helpers ───────────────────────────────────────────────────────────
 
-function ContentSection({ title, children }: { title: string; children: React.ReactNode }) {
+function ContentSection({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="rounded-[12px] p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-      <h2 className="mb-3 font-heading text-sm font-semibold text-white">{title}</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-heading text-sm font-semibold text-white">{title}</h2>
+        {action}
+      </div>
       {children}
     </div>
   )
@@ -613,7 +613,7 @@ function AwaitingPaymentSection({
 
 // ─── Delivery form ───────────────────────────────────────────────────────────
 
-function DeliveryForm({ orderId, onDone }: { orderId: string; onDone: () => void }) {
+function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: () => void; onClose: () => void }) {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoUrl, setVideoUrl] = useState('')
   const [useUpload, setUseUpload] = useState(true)
@@ -658,83 +658,173 @@ function DeliveryForm({ orderId, onDone }: { orderId: string; onDone: () => void
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mt-4 space-y-4 rounded-[12px] p-4"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      onClick={onClose}
     >
-      <p className="text-sm font-semibold text-white">Enviar entrega</p>
-      <div className="flex gap-2">
-        {[{ v: true, l: 'Upload de arquivo' }, { v: false, l: 'Colar URL' }].map(({ v, l }) => (
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 500, background: '#162436',
+          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
+          overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
+              Enviar entrega
+            </h3>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
+              O creator será notificado para revisar e aprovar
+            </p>
+          </div>
           <button
-            key={String(v)}
             type="button"
-            onClick={() => setUseUpload(v)}
-            className="rounded-[6px] px-3 py-1.5 text-xs transition-all"
-            style={{
-              background: useUpload === v ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.04)',
-              color: useUpload === v ? '#F4631E' : 'rgba(255,255,255,0.5)',
-              border: useUpload === v ? '1px solid rgba(244,99,30,0.3)' : '1px solid rgba(255,255,255,0.08)',
-              cursor: 'pointer',
-            }}
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4 }}
           >
-            {l}
+            <IconX size={18} stroke={1.5} />
           </button>
-        ))}
-      </div>
-      {useUpload ? (
-        <label
-          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[8px] px-4 py-5 text-xs transition-colors"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' }}
-        >
-          {uploading ? (
-            <><IconLoader2 size={18} className="animate-spin" /><span>Enviando... {progress}%</span></>
-          ) : videoFile ? (
-            <><IconCheck size={18} style={{ color: '#22C55E' }} /><span style={{ color: '#22C55E' }}>{videoFile.name}</span></>
+        </div>
+
+        {/* Body */}
+        <form onSubmit={handleSubmit} style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Mode toggle */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[{ v: true, l: 'Upload de arquivo' }, { v: false, l: 'Colar URL' }].map(({ v, l }) => (
+              <button
+                key={String(v)}
+                type="button"
+                onClick={() => setUseUpload(v)}
+                style={{
+                  padding: '6px 14px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+                  background: useUpload === v ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.04)',
+                  color: useUpload === v ? '#F4631E' : 'rgba(255,255,255,0.5)',
+                  border: useUpload === v ? '1px solid rgba(244,99,30,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+
+          {/* Upload zone or URL input */}
+          {useUpload ? (
+            <label
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 10, padding: '28px 16px', borderRadius: 10, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.12)', transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => { if (!videoFile && !uploading) { e.currentTarget.style.background = 'rgba(244,99,30,0.05)'; e.currentTarget.style.borderColor = 'rgba(244,99,30,0.3)' } }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
+            >
+              {uploading ? (
+                <>
+                  <IconLoader2 size={28} stroke={1.5} color="#F4631E" style={{ animation: 'spin 1s linear infinite' }} />
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: 13, color: 'white', margin: '0 0 4px', fontWeight: 500 }}>Enviando vídeo...</p>
+                    <div style={{ width: 200, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${progress}%`, background: '#F4631E', transition: 'width 0.3s' }} />
+                    </div>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>{progress}%</p>
+                  </div>
+                </>
+              ) : videoFile ? (
+                <>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconCheck size={22} stroke={2} color="#22C55E" />
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: 13, color: '#22C55E', margin: '0 0 2px', fontWeight: 500 }}>Vídeo pronto</p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0 }}>{videoFile.name}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(244,99,30,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconUpload size={20} stroke={1.5} color="#F4631E" />
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '0 0 2px', fontWeight: 500 }}>Clique para selecionar o vídeo</p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>MP4, MOV, AVI...</p>
+                  </div>
+                </>
+              )}
+              <input type="file" accept="video/*" className="hidden" onChange={handleFileChange} disabled={uploading || submitting} />
+            </label>
           ) : (
-            <><IconUpload size={18} /><span>Clique para selecionar o vídeo</span></>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://drive.google.com/... ou YouTube, Vimeo..."
+              style={{
+                width: '100%', padding: '12px 14px', borderRadius: 8, fontSize: 13, color: 'white',
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
+              onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+              disabled={submitting}
+            />
           )}
-          <input type="file" accept="video/*" className="hidden" onChange={handleFileChange} disabled={uploading || submitting} />
-        </label>
-      ) : (
-        <input
-          type="url"
-          value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
-          placeholder="https://..."
-          className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-          disabled={submitting}
-        />
-      )}
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Mensagem para o creator (opcional)..."
-        rows={3}
-        maxLength={2000}
-        className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', resize: 'vertical' }}
-        disabled={submitting}
-      />
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={submitting || uploading || !videoUrl}
-          className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
-          style={{
-            background: '#F4631E', color: 'white', border: 'none',
-            cursor: submitting || uploading || !videoUrl ? 'not-allowed' : 'pointer',
-            opacity: submitting || uploading || !videoUrl ? 0.6 : 1,
-            fontFamily: "'Syne', sans-serif",
-          }}
-        >
-          {submitting && <IconLoader2 size={14} className="animate-spin" />}
-          {submitting ? 'Enviando...' : 'Confirmar entrega'}
-        </button>
+
+          {/* Message */}
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Mensagem para o creator (opcional) — explique o que foi feito, decisões criativas, etc."
+            rows={3}
+            maxLength={2000}
+            style={{
+              width: '100%', padding: '12px 14px', borderRadius: 8, fontSize: 13, color: 'white',
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+              outline: 'none', resize: 'vertical', fontFamily: "'DM Sans', sans-serif",
+              lineHeight: 1.6, boxSizing: 'border-box',
+            }}
+            onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
+            onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+            disabled={submitting}
+          />
+
+          {error && (
+            <p style={{ fontSize: 12, color: '#FCA5A5', padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', margin: 0 }}>
+              {error}
+            </p>
+          )}
+
+          {/* Footer */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 4 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{ padding: '9px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || uploading || !videoUrl}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 20px',
+                borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "'Syne', sans-serif",
+                background: '#F4631E', color: 'white', border: 'none',
+                cursor: submitting || uploading || !videoUrl ? 'not-allowed' : 'pointer',
+                opacity: submitting || uploading || !videoUrl ? 0.6 : 1,
+              }}
+            >
+              {submitting && <IconLoader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
+              {submitting ? 'Enviando...' : 'Confirmar entrega'}
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+    </div>
   )
 }
 
@@ -759,6 +849,175 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
           />
         </button>
       ))}
+    </div>
+  )
+}
+
+// ─── Add Files Modal ─────────────────────────────────────────────────────────
+
+interface PendingUpload {
+  file: File
+  progress: number
+  uploaded?: { fileUrl: string; fileName: string; fileType: string }
+  error?: string
+}
+
+function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: () => void; onClose: () => void }) {
+  const [pending, setPending] = useState<PendingUpload[]>([])
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleFiles(list: FileList | null) {
+    if (!list) return
+    const newOnes: PendingUpload[] = Array.from(list).map((f) => ({ file: f, progress: 0 }))
+    setPending((prev) => [...prev, ...newOnes])
+    for (const item of newOnes) {
+      try {
+        const result = await uploadFile(item.file, 'orders', 'auto', (p) => {
+          setPending((prev) => prev.map((x) => (x.file === item.file ? { ...x, progress: p } : x)))
+        })
+        setPending((prev) =>
+          prev.map((x) =>
+            x.file === item.file
+              ? { ...x, progress: 100, uploaded: { fileUrl: result.secureUrl, fileName: item.file.name, fileType: result.resourceType } }
+              : x,
+          ),
+        )
+      } catch (e) {
+        setPending((prev) =>
+          prev.map((x) => (x.file === item.file ? { ...x, error: e instanceof Error ? e.message : 'Erro no upload' } : x)),
+        )
+      }
+    }
+  }
+
+  async function handleSubmit() {
+    const ready = pending.filter((p) => p.uploaded).map((p) => p.uploaded!)
+    if (ready.length === 0) { setError('Adicione pelo menos um arquivo'); return }
+    if (pending.some((p) => !p.uploaded && !p.error)) { setError('Aguarde os uploads terminarem'); return }
+    setSubmitting(true)
+    setError(null)
+    try {
+      await addOrderFiles(orderId, ready)
+      onDone()
+      onClose()
+    } catch (e) {
+      const err = e as { response?: { data?: { message?: string } } }
+      setError(err?.response?.data?.message ?? 'Erro ao salvar arquivos')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 480, background: '#162436',
+          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
+          overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
+              Adicionar arquivos
+            </h3>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
+              Novos arquivos de referência para este pedido
+            </p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4 }}>
+            <IconX size={18} stroke={1.5} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Drop zone */}
+          <label
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 8, padding: '28px 16px', borderRadius: 10, cursor: 'pointer',
+              background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.12)', transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(244,99,30,0.05)'; e.currentTarget.style.borderColor = 'rgba(244,99,30,0.3)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
+          >
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(244,99,30,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconUpload size={18} stroke={1.5} color="#F4631E" />
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0, fontWeight: 500 }}>
+              Clique ou arraste arquivos aqui
+            </p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Vídeos, imagens, PDFs</p>
+            <input type="file" multiple className="hidden"
+              onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }}
+              disabled={pending.length >= 10}
+            />
+          </label>
+
+          {/* File list */}
+          {pending.length > 0 && (
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: 0, padding: 0, listStyle: 'none' }}>
+              {pending.map((p) => (
+                <li key={p.file.name + p.file.lastModified} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                  borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+                }}>
+                  <IconFile size={14} stroke={1.5} color="rgba(255,255,255,0.4)" />
+                  <span style={{ flex: 1, fontSize: 12, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {p.file.name}
+                  </span>
+                  <span style={{ fontSize: 11, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4,
+                    color: p.error ? '#EF4444' : p.uploaded ? '#22C55E' : 'rgba(255,255,255,0.4)' }}>
+                    {p.error ? p.error : p.uploaded
+                      ? <><IconCheck size={10} stroke={2.5} /> ok</>
+                      : <><IconLoader2 size={10} style={{ animation: 'spin 1s linear infinite' }} /> {p.progress}%</>}
+                  </span>
+                  <button type="button"
+                    onClick={() => setPending((prev) => prev.filter((x) => x.file !== p.file))}
+                    style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconX size={10} stroke={2} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {error && (
+            <p style={{ fontSize: 12, color: '#FCA5A5', padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', margin: 0 }}>
+              {error}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '14px 22px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.1)' }}>
+          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || pending.length === 0}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px',
+              borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "'Syne', sans-serif",
+              background: pending.length > 0 && !submitting ? '#F4631E' : 'rgba(244,99,30,0.4)',
+              color: 'white', border: 'none', cursor: submitting || pending.length === 0 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {submitting ? <IconLoader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <IconCheck size={14} stroke={2} />}
+            {submitting ? 'Salvando...' : `Adicionar ${pending.filter((p) => p.uploaded).length > 0 ? `(${pending.filter((p) => p.uploaded).length})` : ''}`}
+          </button>
+        </div>
+      </div>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
@@ -899,15 +1158,13 @@ function ActionButtons({
     if (status === 'IN_PROGRESS') {
       return (
         <>
-          {btn(
-            showDelivery ? 'Cancelar envio' : 'Enviar entrega',
-            () => setShowDelivery(!showDelivery),
-            'delivery',
-            'primary',
-            <IconUpload size={14} stroke={1.5} />,
-          )}
+          {btn('Enviar entrega', () => setShowDelivery(true), 'delivery', 'primary', <IconUpload size={14} stroke={1.5} />)}
           {showDelivery && (
-            <DeliveryForm orderId={order.id} onDone={async () => { setShowDelivery(false); await onRefresh() }} />
+            <DeliveryForm
+              orderId={order.id}
+              onClose={() => setShowDelivery(false)}
+              onDone={async () => { setShowDelivery(false); await onRefresh() }}
+            />
           )}
         </>
       )
@@ -953,8 +1210,9 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [payError, setPayError] = useState<string | null>(null)
+  const [addFilesOpen, setAddFilesOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<string | null>(null)
   const [conversation, setConversation] = useState<ConversationDTO | null>(null)
-  const [chatOpen, setChatOpen] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -983,6 +1241,9 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
     if (order?.editor.id === user.id) return 'editor' as const
     return 'creator' as const
   })()
+
+  const defaultTab = perspective === 'editor' ? 'briefing' : 'pagamento'
+  const currentTab = activeTab ?? defaultTab
 
   async function handleAction(newStatus: OrderStatus) {
     if (!order) return
@@ -1032,12 +1293,23 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
 
   if (!order) return null
 
-  const showFilesGate = order.filesHidden && perspective === 'editor'
+  // Tab definitions per perspective
+  const tabs = perspective === 'editor'
+    ? [
+        { id: 'briefing', label: 'Briefing' },
+        { id: 'arquivos', label: 'Arquivos' },
+        { id: 'mensagens', label: 'Mensagens' },
+      ]
+    : [
+        { id: 'pagamento', label: 'Pagamento' },
+        { id: 'briefing', label: 'Briefing & Arquivos' },
+        { id: 'mensagens', label: 'Mensagens' },
+      ]
 
   return (
     <div>
       {/* Back button + order header */}
-      <div className="mb-6 flex items-start gap-4">
+      <div className="mb-5 flex items-start gap-4">
         {onBack && (
           <button
             onClick={onBack}
@@ -1064,123 +1336,207 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
         </div>
       </div>
 
-      {/* Stepper */}
+      {/* Stepper — always visible */}
       <StatusStepper order={order} />
 
-      {/* 2-col layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-        {/* Left column */}
-        <div className="space-y-6">
-          {/* Negotiation section — shown during NEGOTIATING */}
-          {order.status === 'NEGOTIATING' && (
-            <NegotiationSection
-              order={order}
-              perspective={perspective}
-              currentUserId={user.id}
-              onRefresh={load}
-            />
-          )}
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 2, marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 0 }}>
+        {tabs.map((tab) => {
+          const active = currentTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '10px 20px', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer',
+                background: 'none', border: 'none', borderBottom: active ? '2px solid #F4631E' : '2px solid transparent',
+                color: active ? '#F4631E' : 'rgba(255,255,255,0.5)',
+                fontFamily: "'DM Sans', sans-serif", marginBottom: -1, transition: 'all 0.15s',
+              }}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
 
-          {/* Awaiting payment section */}
-          {order.status === 'AWAITING_PAYMENT' && (
-            <>
-              {/* Still show negotiation history read-only */}
-              {order.proposals.length > 0 && (
-                <ContentSection title="Negociação (concluída)">
-                  <div className="space-y-3">
-                    {order.proposals.map((p) => (
-                      <ProposalCard
-                        key={p.id}
-                        proposal={p}
-                        order={order}
-                        currentUserId={user.id}
-                        perspective={perspective}
-                        onRefresh={load}
-                      />
-                    ))}
+      {/* ── TAB: PAGAMENTO (creator / admin) ── */}
+      {currentTab === 'pagamento' && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+          <div className="space-y-6">
+            {order.status === 'NEGOTIATING' && (
+              <NegotiationSection order={order} perspective={perspective} currentUserId={user.id} onRefresh={load} />
+            )}
+            {order.status === 'AWAITING_PAYMENT' && (
+              <>
+                {order.proposals.length > 0 && (
+                  <ContentSection title="Negociação (concluída)">
+                    <div className="space-y-3">
+                      {order.proposals.map((p) => (
+                        <ProposalCard key={p.id} proposal={p} order={order} currentUserId={user.id} perspective={perspective} onRefresh={load} />
+                      ))}
+                    </div>
+                  </ContentSection>
+                )}
+                <AwaitingPaymentSection order={order} perspective={perspective} onPayment={handlePayment} payError={payError} />
+              </>
+            )}
+            {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && (
+              <ContentSection title="Ações">
+                <ActionButtons order={order} perspective={perspective} onAction={handleAction} onRefresh={load} />
+                {actionError && (
+                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+                    {actionError}
                   </div>
-                </ContentSection>
-              )}
-              <AwaitingPaymentSection
-                order={order}
-                perspective={perspective}
-                onPayment={handlePayment}
-                payError={payError}
-              />
-            </>
-          )}
+                )}
+              </ContentSection>
+            )}
+          </div>
 
-          {/* Briefing */}
+          <div className="space-y-4">
+            {counterpart && (
+              <SideCard>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>{counterpartLabel}</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
+                    {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="font-medium text-white">{counterpart.name}</p>
+                </div>
+              </SideCard>
+            )}
+            <SideCard>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Financeiro</p>
+              <div className="space-y-2">
+                <Row label="Orçamento" value={fmtBRL(order.budget)} />
+                <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
+                  <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
+                </div>
+                {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
+              </div>
+            </SideCard>
+            <SideCard>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Pagamento</p>
+              {order.transaction ? (
+                <span className="inline-block rounded-full px-2.5 py-1 text-[11px] font-medium" style={{
+                  background: order.transaction.status === 'RELEASED' ? 'rgba(34,197,94,0.15)' : order.transaction.status === 'HELD' ? 'rgba(59,130,246,0.15)' : 'rgba(244,99,30,0.15)',
+                  color: order.transaction.status === 'RELEASED' ? '#22C55E' : order.transaction.status === 'HELD' ? '#3B82F6' : '#F4631E',
+                }}>
+                  {TRANSACTION_LABELS[order.transaction.status]}
+                </span>
+              ) : (
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {order.status === 'NEGOTIATING' ? 'Aguardando conclusão da negociação.' : 'Aguardando pagamento.'}
+                </p>
+              )}
+            </SideCard>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: BRIEFING (editor only — payment + actions in sidebar) ── */}
+      {currentTab === 'briefing' && perspective === 'editor' && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+          <div className="space-y-6">
+            {order.status === 'NEGOTIATING' && (
+              <NegotiationSection order={order} perspective={perspective} currentUserId={user.id} onRefresh={load} />
+            )}
+            {order.status === 'AWAITING_PAYMENT' && (
+              <AwaitingPaymentSection order={order} perspective={perspective} onPayment={handlePayment} payError={payError} />
+            )}
+            <ContentSection title="Briefing">
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.description}</p>
+            </ContentSection>
+          </div>
+          <div className="space-y-4">
+            {counterpart && (
+              <SideCard>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>{counterpartLabel}</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
+                    {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="font-medium text-white">{counterpart.name}</p>
+                </div>
+              </SideCard>
+            )}
+            <SideCard>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Financeiro</p>
+              <div className="space-y-2">
+                <Row label="Orçamento" value={fmtBRL(order.budget)} />
+                <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
+                  <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
+                </div>
+                {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
+              </div>
+            </SideCard>
+            {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && (
+              <SideCard>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Ações</p>
+                <ActionButtons order={order} perspective={perspective} onAction={handleAction} onRefresh={load} />
+                {actionError && (
+                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+                    {actionError}
+                  </div>
+                )}
+              </SideCard>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: BRIEFING & ARQUIVOS (creator / admin) ── */}
+      {currentTab === 'briefing' && perspective !== 'editor' && (
+        <div className="space-y-6">
           <ContentSection title="Briefing">
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
-              {order.description}
-            </p>
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.description}</p>
           </ContentSection>
 
-          {/* Files — gated from editor before IN_PROGRESS */}
-          {showFilesGate ? (
-            <ContentSection title="Arquivos de referência">
-              <div className="flex items-center gap-3 py-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                <IconLock size={16} stroke={1.5} />
-                <p className="text-sm">Arquivos disponíveis após confirmação do pagamento.</p>
-              </div>
-            </ContentSection>
-          ) : order.files.length > 0 ? (
-            <ContentSection title={`Arquivos de referência (${order.files.length})`}>
+          <ContentSection
+            title={`Arquivos de referência${order.files.length > 0 ? ` (${order.files.length})` : ''}`}
+            action={
+              order.status !== 'COMPLETED' && order.status !== 'CANCELLED' ? (
+                <button
+                  onClick={() => setAddFilesOpen(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'rgba(244,99,30,0.1)', border: '1px solid rgba(244,99,30,0.25)', color: '#F4631E', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+                >
+                  <IconUpload size={11} stroke={2} />
+                  Novos arquivos
+                </button>
+              ) : undefined
+            }
+          >
+            {order.files.length > 0 ? (
               <ul className="space-y-2">
                 {order.files.map((f) => (
-                  <li
-                    key={f.id}
-                    className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-                  >
+                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <IconFile size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
                     <span className="flex-1 truncate text-white">{f.fileName}</span>
                     <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{f.fileType}</span>
-                    <a
-                      href={f.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-[6px]"
-                      style={{ background: 'rgba(244,99,30,0.1)', color: '#F4631E', textDecoration: 'none' }}
-                    >
+                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'rgba(244,99,30,0.1)', color: '#F4631E', textDecoration: 'none' }}>
                       <IconDownload size={13} stroke={1.5} />
                     </a>
                   </li>
                 ))}
               </ul>
-            </ContentSection>
-          ) : null}
+            ) : (
+              <p className="py-1 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhum arquivo adicionado ainda.</p>
+            )}
+          </ContentSection>
 
-          {/* Deliveries */}
           {order.deliveries.length > 0 && (
             <ContentSection title={`Entregas (${order.deliveries.length})`}>
               <ul className="space-y-3">
                 {order.deliveries.map((d) => (
-                  <li
-                    key={d.id}
-                    className="rounded-[8px] p-4"
-                    style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)' }}
-                  >
+                  <li key={d.id} className="rounded-[8px] p-4" style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)' }}>
                     <div className="mb-2 flex items-center gap-2">
-                      <span
-                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
-                        style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}
-                      >
-                        v{d.version}
-                      </span>
-                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                        {new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>v{d.version}</span>
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     {d.message && <p className="mb-3 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{d.message}</p>}
-                    <a
-                      href={d.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-[6px] px-3 py-1.5 text-xs font-medium"
-                      style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', textDecoration: 'none', border: '1px solid rgba(168,85,247,0.3)' }}
-                    >
+                    <a href={d.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-[6px] px-3 py-1.5 text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', textDecoration: 'none', border: '1px solid rgba(168,85,247,0.3)' }}>
                       <IconPlayerPlay size={12} stroke={1.5} />
                       Abrir vídeo
                     </a>
@@ -1190,7 +1546,6 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             </ContentSection>
           )}
 
-          {/* Review */}
           {order.status === 'COMPLETED' && perspective === 'creator' && (
             order.review ? (
               <ContentSection title="Sua avaliação">
@@ -1200,126 +1555,73 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                   ))}
                   <span className="text-sm font-semibold text-white ml-1">{order.review.rating}/5</span>
                 </div>
-                {order.review.comment && (
-                  <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.review.comment}</p>
-                )}
-                <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  Avaliado em {new Date(order.review.createdAt).toLocaleDateString('pt-BR')}
-                </p>
+                {order.review.comment && <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.review.comment}</p>}
+                <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Avaliado em {new Date(order.review.createdAt).toLocaleDateString('pt-BR')}</p>
               </ContentSection>
             ) : (
               <ReviewFormSection orderId={order.id} onDone={load} />
             )
           )}
-
-          {actionError && (
-            <div className="rounded-[8px] px-4 py-3 text-xs" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-              {actionError}
-            </div>
-          )}
-
-          {/* Inline chat */}
-          {conversation && (
-            <div className="overflow-hidden rounded-[12px]" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-              <button
-                onClick={() => setChatOpen((v) => !v)}
-                className="flex w-full items-center justify-between px-5 py-3 transition-colors"
-                style={{
-                  background: chatOpen ? '#162436' : 'rgba(255,255,255,0.03)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderBottom: chatOpen ? '1px solid rgba(255,255,255,0.08)' : 'none',
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <IconMessage2 size={16} stroke={1.5} color="#F4631E" />
-                  <span className="font-heading text-sm font-semibold text-white">Mensagens</span>
-                </div>
-                {chatOpen
-                  ? <IconChevronUp size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
-                  : <IconChevronDown size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
-                }
-              </button>
-              {chatOpen && <ChatPanel conversation={conversation} compact />}
-            </div>
-          )}
         </div>
+      )}
 
-        {/* Right sidebar */}
-        <div className="space-y-4">
-          {counterpart && (
-            <SideCard>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {counterpartLabel}
-              </p>
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white"
-                  style={{ background: avatarBg(counterpart.name) }}
-                >
-                  {counterpart.avatarUrl
-                    ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" />
-                    : counterpart.name.charAt(0).toUpperCase()
-                  }
-                </div>
-                <p className="font-medium text-white">{counterpart.name}</p>
-              </div>
-            </SideCard>
-          )}
-
-          <SideCard>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              Financeiro
-            </p>
-            <div className="space-y-2">
-              <Row label="Orçamento" value={fmtBRL(order.budget)} />
-              <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
-                <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
-              </div>
-              {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
-            </div>
-          </SideCard>
-
-          <SideCard>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              Pagamento
-            </p>
-            {order.transaction ? (
-              <span
-                className="inline-block rounded-full px-2.5 py-1 text-[11px] font-medium"
-                style={{
-                  background: order.transaction.status === 'RELEASED' ? 'rgba(34,197,94,0.15)' : order.transaction.status === 'HELD' ? 'rgba(59,130,246,0.15)' : 'rgba(244,99,30,0.15)',
-                  color: order.transaction.status === 'RELEASED' ? '#22C55E' : order.transaction.status === 'HELD' ? '#3B82F6' : '#F4631E',
-                }}
-              >
-                {TRANSACTION_LABELS[order.transaction.status]}
-              </span>
+      {/* ── TAB: ARQUIVOS (editor only) ── */}
+      {currentTab === 'arquivos' && perspective === 'editor' && (
+        <div className="space-y-6">
+          <ContentSection title={`Arquivos de referência${order.files.length > 0 ? ` (${order.files.length})` : ''}`}>
+            {order.files.length > 0 ? (
+              <ul className="space-y-2">
+                {order.files.map((f) => (
+                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <IconFile size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                    <span className="flex-1 truncate text-white">{f.fileName}</span>
+                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{f.fileType}</span>
+                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'rgba(244,99,30,0.1)', color: '#F4631E', textDecoration: 'none' }}>
+                      <IconDownload size={13} stroke={1.5} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {order.status === 'NEGOTIATING'
-                  ? 'Aguardando conclusão da negociação.'
-                  : 'Aguardando pagamento.'}
-              </p>
+              <p className="py-1 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhum arquivo adicionado ainda.</p>
             )}
-          </SideCard>
+          </ContentSection>
 
-          {/* Actions — only for post-negotiation statuses */}
-          {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && (
-            <SideCard>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Ações
-              </p>
-              <ActionButtons
-                order={order}
-                perspective={perspective}
-                onAction={handleAction}
-                onRefresh={load}
-              />
-            </SideCard>
+          {order.deliveries.length > 0 && (
+            <ContentSection title={`Suas entregas (${order.deliveries.length})`}>
+              <ul className="space-y-3">
+                {order.deliveries.map((d) => (
+                  <li key={d.id} className="rounded-[8px] p-4" style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>v{d.version}</span>
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    {d.message && <p className="mb-3 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{d.message}</p>}
+                    <a href={d.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-[6px] px-3 py-1.5 text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', textDecoration: 'none', border: '1px solid rgba(168,85,247,0.3)' }}>
+                      <IconPlayerPlay size={12} stroke={1.5} />
+                      Abrir vídeo
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </ContentSection>
           )}
         </div>
-      </div>
+      )}
+
+      {/* ── TAB: MENSAGENS ── */}
+      {currentTab === 'mensagens' && (
+        <div className="overflow-hidden rounded-[12px]" style={{ border: '1px solid rgba(255,255,255,0.08)', height: 'calc(100vh - 320px)', minHeight: 400 }}>
+          {conversation
+            ? <ChatPanel conversation={conversation} compact={false} />
+            : <div className="flex h-full items-center justify-center text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Carregando conversa...</div>
+          }
+        </div>
+      )}
+
+      {addFilesOpen && (
+        <AddFilesModal orderId={order.id} onDone={load} onClose={() => setAddFilesOpen(false)} />
+      )}
     </div>
   )
 }
