@@ -2,6 +2,8 @@ import { Router } from 'express'
 import { OrderController } from '../controllers/order.controller'
 import { reviewController } from '../controllers/review.controller'
 import { proposalController } from '../controllers/proposal.controller'
+import { revisionController } from '../controllers/revision.controller'
+import { disputeController } from '../controllers/dispute.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 import { requireRole } from '../middlewares/role.middleware'
 
@@ -36,3 +38,11 @@ orderRoutes.get('/:id/proposals', proposalController.list)
 orderRoutes.post('/:id/proposals', proposalController.create)
 orderRoutes.post('/:id/proposals/:proposalId/accept', proposalController.accept)
 orderRoutes.post('/:id/proposals/:proposalId/reject', proposalController.reject)
+
+// Revisões formais (creator solicita, ambas as partes visualizam)
+orderRoutes.get('/:id/revisions', revisionController.list)
+orderRoutes.post('/:id/revisions', requireRole('CREATOR', 'BOTH'), revisionController.create)
+
+// Disputas (creator abre, apenas ADMIN resolve)
+orderRoutes.post('/:id/dispute', requireRole('CREATOR', 'BOTH'), disputeController.open)
+orderRoutes.post('/:id/dispute/resolve', requireRole('ADMIN'), disputeController.resolve)

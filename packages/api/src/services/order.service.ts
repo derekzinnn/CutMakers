@@ -3,6 +3,8 @@ import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 import { paymentService } from './payment.service'
 import { proposalToDTO } from './proposal.service'
+import { revisionService, revisionToDTO } from './revision.service'
+import { disputeToDTO } from './dispute.service'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -113,6 +115,14 @@ const orderDetailInclude = {
     },
     orderBy: { createdAt: 'asc' as const },
   },
+  revisions: {
+    include: {
+      delivery: { select: { id: true, version: true } },
+      requestedBy: { select: { id: true, name: true, avatarUrl: true } },
+    },
+    orderBy: { createdAt: 'desc' as const },
+  },
+  dispute: true,
   _count: { select: { deliveries: true, revisions: true } },
 } satisfies Prisma.OrderInclude
 
@@ -337,6 +347,8 @@ export class OrderService {
       prisma.message.create({
         data: { conversationId: conversation.id, senderId: editorId, content: chatMessage },
       }),
+      // Uma nova entrega resolve automaticamente qualquer revisão pendente
+      revisionService.markAddressedOp(orderId),
     ])
 
     return {
@@ -502,6 +514,8 @@ export class OrderService {
           }
         : null,
       proposals: o.proposals.map(proposalToDTO),
+      revisions: o.revisions.map(revisionToDTO),
+      dispute: o.dispute ? disputeToDTO(o.dispute) : null,
       deliveriesCount: o._count.deliveries,
       revisionsCount: o._count.revisions,
       createdAt: o.createdAt,

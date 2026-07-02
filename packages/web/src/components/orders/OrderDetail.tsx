@@ -17,6 +17,8 @@ import {
   IconCircleCheck,
   IconCircleX,
   IconArrowRight,
+  IconGavel,
+  IconAlertTriangle,
 } from '@tabler/icons-react'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -39,6 +41,8 @@ import {
   type ProposalDTO,
 } from '@/lib/proposals'
 import { createReview } from '@/lib/reviews'
+import { createRevision, REVISION_STATUS_LABELS, type RevisionDTO } from '@/lib/revisions'
+import { openDispute, resolveDispute, type DisputeResolution } from '@/lib/disputes'
 import { uploadFile } from '@/lib/upload'
 import { getOrCreateConversationByOrder, type ConversationDTO } from '@/lib/conversations'
 import { ChatPanel } from '@/components/chat/ChatPanel'
@@ -1090,6 +1094,280 @@ function ReviewFormSection({ orderId, onDone }: { orderId: string; onDone: () =>
   )
 }
 
+// ─── Revision request form (creator, on DELIVERED) ────────────────────────────
+
+function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => Promise<void> }) {
+  const [open, setOpen] = useState(false)
+  const [description, setDescription] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const latestDelivery = order.deliveries[order.deliveries.length - 1] ?? null
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!latestDelivery) return setError('Não há entrega para revisar')
+    if (!description.trim()) return setError('Descreva o que precisa ser alterado')
+    setSubmitting(true)
+    setError(null)
+    try {
+      await createRevision(order.id, { deliveryId: latestDelivery.id, description: description.trim() })
+      setDescription('')
+      setOpen(false)
+      await onDone()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setError(e?.response?.data?.message ?? 'Erro ao solicitar revisão')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
+        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+      >
+        <IconRefresh size={14} stroke={1.5} />
+        Solicitar revisão
+      </button>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-[12px] p-4 space-y-3" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.25)' }}>
+      <p className="text-sm font-semibold" style={{ color: '#EAB308' }}>Solicitar revisão</p>
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="O que precisa ser alterado?"
+        rows={3}
+        maxLength={2000}
+        autoFocus
+        className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+        disabled={submitting}
+      />
+      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setError(null) }}
+          className="rounded-[8px] px-3 py-2 text-xs"
+          style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={submitting || !description.trim()}
+          className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
+          style={{ background: '#EAB308', color: '#1a1400', border: 'none', cursor: submitting || !description.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !description.trim() ? 0.6 : 1, fontFamily: "'Syne', sans-serif" }}
+        >
+          {submitting && <IconLoader2 size={12} className="animate-spin" />}
+          Enviar solicitação
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ─── Dispute form (creator, on DELIVERED / REVISION_REQUESTED) ─────────────────
+
+function DisputeForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => Promise<void> }) {
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!reason.trim()) return setError('Descreva o motivo da disputa')
+    setSubmitting(true)
+    setError(null)
+    try {
+      await openDispute(order.id, reason.trim())
+      setReason('')
+      setOpen(false)
+      await onDone()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setError(e?.response?.data?.message ?? 'Erro ao abrir disputa')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-1.5 text-xs font-medium transition-all"
+        style={{ background: 'none', border: 'none', color: 'rgba(239,68,68,0.7)', cursor: 'pointer', padding: '4px 0', fontFamily: "'DM Sans', sans-serif" }}
+      >
+        <IconGavel size={13} stroke={1.5} />
+        Abrir disputa
+      </button>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-[12px] p-4 space-y-3" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)' }}>
+      <div className="flex items-center gap-2">
+        <IconAlertTriangle size={15} stroke={1.5} style={{ color: '#EF4444' }} />
+        <p className="text-sm font-semibold" style={{ color: '#EF4444' }}>Abrir disputa</p>
+      </div>
+      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        Use apenas se não foi possível resolver com revisões. O pedido será congelado e a CutMakers fará a análise. O pagamento permanece retido até a decisão.
+      </p>
+      <textarea
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Explique o motivo da disputa..."
+        rows={3}
+        maxLength={2000}
+        autoFocus
+        className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+        disabled={submitting}
+      />
+      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setError(null) }}
+          className="rounded-[8px] px-3 py-2 text-xs"
+          style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={submitting || !reason.trim()}
+          className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
+          style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.35)', cursor: submitting || !reason.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !reason.trim() ? 0.6 : 1, fontFamily: "'Syne', sans-serif" }}
+        >
+          {submitting && <IconLoader2 size={12} className="animate-spin" />}
+          Confirmar disputa
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ─── Pending revision card (editor sees what to fix) ──────────────────────────
+
+function PendingRevisionCard({ revision }: { revision: RevisionDTO }) {
+  return (
+    <div className="mb-6 rounded-[12px] p-5" style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)' }}>
+      <div className="mb-2 flex items-center gap-2">
+        <IconRefresh size={16} stroke={1.5} style={{ color: '#EAB308' }} />
+        <p className="font-heading text-sm font-semibold" style={{ color: '#EAB308' }}>
+          Revisão solicitada na entrega v{revision.deliveryVersion}
+        </p>
+      </div>
+      <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>{revision.description}</p>
+      <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        Solicitada em {new Date(revision.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+      </p>
+    </div>
+  )
+}
+
+// ─── Revision history ─────────────────────────────────────────────────────────
+
+function RevisionHistorySection({ revisions }: { revisions: RevisionDTO[] }) {
+  if (revisions.length === 0) return null
+  return (
+    <ContentSection title={`Histórico de revisões (${revisions.length})`}>
+      <ul className="space-y-3">
+        {revisions.map((r) => {
+          const resolved = r.status === 'ADDRESSED'
+          return (
+            <li key={r.id} className="rounded-[8px] p-4" style={{ background: 'rgba(234,179,8,0.05)', border: '1px solid rgba(234,179,8,0.18)' }}>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>v{r.deliveryVersion}</span>
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: resolved ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)', color: resolved ? '#22C55E' : '#EAB308' }}>
+                  {REVISION_STATUS_LABELS[r.status]}
+                </span>
+                <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{r.description}</p>
+            </li>
+          )
+        })}
+      </ul>
+    </ContentSection>
+  )
+}
+
+// ─── Dispute banner ───────────────────────────────────────────────────────────
+
+function DisputeBanner({
+  order,
+  perspective,
+  onResolve,
+  resolving,
+  resolveError,
+}: {
+  order: OrderDetailDTO
+  perspective: 'creator' | 'editor' | 'admin'
+  onResolve: (resolution: DisputeResolution) => Promise<void>
+  resolving: DisputeResolution | null
+  resolveError: string | null
+}) {
+  const dispute = order.dispute
+  return (
+    <div className="mb-6 rounded-[12px] p-5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+      <div className="mb-2 flex items-center gap-2">
+        <IconGavel size={18} stroke={1.5} style={{ color: '#EF4444' }} />
+        <p className="font-heading text-sm font-bold" style={{ color: '#EF4444' }}>
+          Em disputa — aguardando análise da CutMakers
+        </p>
+      </div>
+      {dispute?.reason && (
+        <div className="mt-2 rounded-[8px] px-3 py-2" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Motivo</p>
+          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)' }}>{dispute.reason}</p>
+        </div>
+      )}
+      <p className="mt-3 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        {perspective === 'admin'
+          ? 'Resolva a disputa liberando o pagamento ao editor ou reembolsando o creator. O pagamento está retido em escrow.'
+          : 'O pedido está congelado e o pagamento permanece retido em escrow até a decisão da equipe.'}
+      </p>
+
+      {perspective === 'admin' && dispute?.status === 'OPEN' && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => onResolve('RELEASE')}
+            disabled={resolving !== null}
+            className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
+            style={{ background: '#22C55E', color: 'white', border: 'none', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+          >
+            {resolving === 'RELEASE' ? <IconLoader2 size={14} className="animate-spin" /> : <IconCircleCheck size={14} stroke={2} />}
+            Liberar ao editor
+          </button>
+          <button
+            onClick={() => onResolve('REFUND')}
+            disabled={resolving !== null}
+            className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
+            style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+          >
+            {resolving === 'REFUND' ? <IconLoader2 size={14} className="animate-spin" /> : <IconArrowLeft size={14} stroke={2} />}
+            Reembolsar creator
+          </button>
+        </div>
+      )}
+      {resolveError && <p className="mt-3 text-xs" style={{ color: '#FCA5A5' }}>{resolveError}</p>}
+    </div>
+  )
+}
+
 // ─── Action buttons ───────────────────────────────────────────────────────────
 
 function ActionButtons({
@@ -1184,9 +1462,22 @@ function ActionButtons({
     }
     if (status === 'DELIVERED') {
       return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {btn('Aprovar entrega', () => doAction('COMPLETED'), 'COMPLETED', 'primary', <IconCheck size={14} stroke={2} />)}
-          {btn('Solicitar revisão', () => doAction('REVISION_REQUESTED'), 'REVISION_REQUESTED', 'ghost', <IconRefresh size={14} stroke={1.5} />)}
+          <RevisionRequestForm order={order} onDone={onRefresh} />
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+            <DisputeForm order={order} onDone={onRefresh} />
+          </div>
+        </div>
+      )
+    }
+    if (status === 'REVISION_REQUESTED') {
+      return (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            O editor foi notificado e irá aplicar a revisão solicitada.
+          </p>
+          <DisputeForm order={order} onDone={onRefresh} />
         </div>
       )
     }
@@ -1210,6 +1501,8 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [payError, setPayError] = useState<string | null>(null)
+  const [resolving, setResolving] = useState<DisputeResolution | null>(null)
+  const [resolveError, setResolveError] = useState<string | null>(null)
   const [addFilesOpen, setAddFilesOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [conversation, setConversation] = useState<ConversationDTO | null>(null)
@@ -1267,6 +1560,21 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
     } catch (err) {
       const e = err as { response?: { data?: { message?: string } } }
       setPayError(e?.response?.data?.message ?? 'Erro ao iniciar pagamento')
+    }
+  }
+
+  async function handleResolveDispute(resolution: DisputeResolution) {
+    if (!order) return
+    setResolving(resolution)
+    setResolveError(null)
+    try {
+      await resolveDispute(order.id, resolution)
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setResolveError(e?.response?.data?.message ?? 'Erro ao resolver disputa')
+    } finally {
+      setResolving(null)
     }
   }
 
@@ -1339,6 +1647,25 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       {/* Stepper — always visible */}
       <StatusStepper order={order} />
 
+      {/* Dispute banner — visible to both parties + admin resolve actions */}
+      {order.status === 'DISPUTED' && (
+        <DisputeBanner
+          order={order}
+          perspective={perspective}
+          onResolve={handleResolveDispute}
+          resolving={resolving}
+          resolveError={resolveError}
+        />
+      )}
+
+      {/* Pending revision — editor sees what to fix, above everything */}
+      {perspective === 'editor' &&
+        (order.status === 'REVISION_REQUESTED' || order.status === 'IN_PROGRESS') &&
+        (() => {
+          const pending = order.revisions.find((r) => r.status === 'PENDING')
+          return pending ? <PendingRevisionCard revision={pending} /> : null
+        })()}
+
       {/* Tab bar */}
       <div style={{ display: 'flex', gap: 2, marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 0 }}>
         {tabs.map((tab) => {
@@ -1381,7 +1708,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                 <AwaitingPaymentSection order={order} perspective={perspective} onPayment={handlePayment} payError={payError} />
               </>
             )}
-            {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && (
+            {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && order.status !== 'DISPUTED' && (
               <ContentSection title="Ações">
                 <ActionButtons order={order} perspective={perspective} onAction={handleAction} onRefresh={load} />
                 {actionError && (
@@ -1472,7 +1799,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                 {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
               </div>
             </SideCard>
-            {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && (
+            {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && order.status !== 'DISPUTED' && (
               <SideCard>
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Ações</p>
                 <ActionButtons order={order} perspective={perspective} onAction={handleAction} onRefresh={load} />
@@ -1546,6 +1873,8 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             </ContentSection>
           )}
 
+          <RevisionHistorySection revisions={order.revisions} />
+
           {order.status === 'COMPLETED' && perspective === 'creator' && (
             order.review ? (
               <ContentSection title="Sua avaliação">
@@ -1606,6 +1935,8 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               </ul>
             </ContentSection>
           )}
+
+          <RevisionHistorySection revisions={order.revisions} />
         </div>
       )}
 

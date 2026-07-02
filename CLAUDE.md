@@ -159,6 +159,22 @@ Texto:
   - Retorna `{ paymentUrl }` — abrir no browser para pagamento
   - Sem chave configurada (dev): Transaction criada mas sem URL real
 
+### Revisions (`/api/orders/:id/revisions`) — auth
+- `POST /` — creator solicita revisão (CREATOR/BOTH). Body: `{ deliveryId, description }`
+  - Valida: order em DELIVERED, requester = creator, deliveryId é a entrega mais recente
+  - Cria `Revision` (PENDING), order → REVISION_REQUESTED, notifica editor
+- `GET /` — histórico de revisões (creator/editor do pedido ou admin), com versão da entrega
+- Nova entrega do editor (`POST /:id/deliveries`) marca revisões PENDING como ADDRESSED automaticamente
+
+### Disputes (`/api/orders/:id/dispute`)
+- `POST /` — creator abre disputa (CREATOR/BOTH). Body: `{ reason }`
+  - Válido a partir de DELIVERED ou REVISION_REQUESTED, 1 disputa por pedido
+  - Cria `Dispute` (OPEN), order → DISPUTED (congelado), notifica editor + todos os admins
+- `POST /resolve` — apenas ADMIN. Body: `{ resolution: 'RELEASE' | 'REFUND' }`
+  - RELEASE → Transaction RELEASED, order → COMPLETED, incrementa totalJobs do editor
+  - REFUND  → Transaction REFUNDED, order → CANCELLED
+  - Dispute → RESOLVED_RELEASED/RESOLVED_REFUNDED, notifica ambas as partes
+
 ### Webhooks (`/api/webhooks`)
 - `POST /abacatepay` — endpoint público para notificações do Abacatepay
   - Valida assinatura HMAC-SHA256 via header `x-abacatepay-signature` (se `ABACATEPAY_WEBHOOK_SECRET` configurado)
@@ -214,7 +230,7 @@ Ver `packages/api/.env.example`. Precisa:
 ✅ Fase 1 — Base
    [x] Monorepo pnpm workspaces
    [x] API Express + TypeScript + Prisma
-   [x] Schema Prisma completo (16 modelos)
+   [x] Schema Prisma completo (17 modelos)
    [x] Auth: register, login, refresh, JWT middleware
    [x] Seed do admin + categorias
    [x] Frontend: Login, Register, AdminPage (com switcher de view)
@@ -333,11 +349,31 @@ Ver `packages/api/.env.example`. Precisa:
        — resolve TS2742 (declaration emit não conseguia nomear tipo transitivo do express)
    [x] AdminPage.tsx: removido `statusColors` morto em OrdersSection (placeholder)
 
-⏳ Fase 5 — Polish (próxima)
-   [ ] Revision formal (modelo Revision já existe no schema — expor via API)
+✅ Fase 5 — Revisões formais + Disputas
+   [x] Revision: revision.service.ts (createRevision, listRevisions, markAddressedOp)
+       — createRevision valida DELIVERED + creator + entrega mais recente; order → REVISION_REQUESTED
+       — nova entrega do editor marca revisões PENDING como ADDRESSED (atômico no createDelivery)
+   [x] revision.controller.ts + rotas GET/POST /api/orders/:id/revisions
+   [x] Dispute: novo modelo Dispute + enum DisputeStatus (OPEN/RESOLVED_RELEASED/RESOLVED_REFUNDED)
+       — dispute.service.ts (openDispute, resolveDispute); payment.service.refundPayment (Transaction REFUNDED)
+       — openDispute: DELIVERED/REVISION_REQUESTED → DISPUTED (congelado), notifica editor + admins
+       — resolveDispute (ADMIN): RELEASE → COMPLETED/RELEASED (+totalJobs); REFUND → CANCELLED/REFUNDED
+   [x] dispute.controller.ts + rotas POST /api/orders/:id/dispute e /dispute/resolve
+   [x] NotificationType: + DISPUTE_OPENED, DISPUTE_RESOLVED
+   [x] order.service: orderDetailInclude/toDetailDTO agora incluem `revisions` e `dispute`
+   [x] Frontend lib/revisions.ts + lib/disputes.ts; OrderDetailDTO com revisions + dispute
+   [x] OrderDetail UI:
+       — creator DELIVERED: form "O que precisa ser alterado?" (substitui botão simples) + "Abrir disputa"
+       — editor REVISION_REQUESTED/IN_PROGRESS: PendingRevisionCard destacado acima do upload
+       — Histórico de revisões (versão-alvo, descrição, Pendente/Resolvida, data) abaixo das entregas
+       — DISPUTED: banner "Em disputa — aguardando análise da CutMakers" (ambas as partes, ações escondidas)
+       — admin: botões "Liberar ao editor" / "Reembolsar creator" no banner de disputa
+   [x] `tsc --noEmit` limpo em api + web, sem `any`
+   ⚠️ Requer `pnpm --filter @cutmakers/api db:push` para sincronizar o novo modelo Dispute + enums
+
+⏳ Fase 6 — Polish (próxima)
    [ ] Subscription premium do editor (modelo existe — sem service/controller/rotas)
-   [ ] Endpoints admin avançados (aprovar editores, resolver disputas, tabelas reais)
-   [ ] Fluxo DISPUTED (enum existe — sem handlers dedicados)
+   [ ] Endpoints admin avançados (aprovar editores, tabelas reais, painel de disputas)
    [ ] Notification bell na UI: dropdown de listagem + marcar como lido
    [ ] Testes automatizados (nenhum ainda em api/web)
    [ ] Mobile React Native (planejado — fase futura)

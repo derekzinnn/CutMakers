@@ -53,6 +53,12 @@ enum RevisionStatus {
   ADDRESSED
 }
 
+enum DisputeStatus {
+  OPEN
+  RESOLVED_RELEASED
+  RESOLVED_REFUNDED
+}
+
 enum NotificationType {
   NEW_ORDER
   NEW_MESSAGE
@@ -65,6 +71,8 @@ enum NotificationType {
   PROPOSAL_ACCEPTED
   PROPOSAL_REJECTED
   PAYMENT_CONFIRMED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
 }
 
 model User {
@@ -91,6 +99,8 @@ model User {
   transactionsAsPayer    Transaction[]  @relation("Payer")
   transactionsAsPayee    Transaction[]  @relation("Payee")
   proposals              OrderProposal[]
+  disputesOpened         Dispute[]      @relation("DisputeOpener")
+  disputesResolved       Dispute[]      @relation("DisputeResolver")
 }
 
 model EditorProfile {
@@ -170,6 +180,7 @@ model Order {
   review        Review?
   notifications Notification[]
   proposals     OrderProposal[]
+  dispute       Dispute?
 }
 
 model OrderFile {
@@ -294,4 +305,19 @@ model OrderProposal {
   message    String?
   status     ProposalStatus @default(PENDING)
   createdAt  DateTime       @default(now())
+}
+
+model Dispute {
+  id           String        @id @default(uuid())
+  orderId      String        @unique
+  order        Order         @relation(fields: [orderId], references: [id])
+  openedById   String
+  openedBy     User          @relation("DisputeOpener", fields: [openedById], references: [id])
+  reason       String
+  resolution   String?
+  resolvedById String?
+  resolvedBy   User?         @relation("DisputeResolver", fields: [resolvedById], references: [id])
+  status       DisputeStatus @default(OPEN)
+  createdAt    DateTime      @default(now())
+  resolvedAt   DateTime?
 }

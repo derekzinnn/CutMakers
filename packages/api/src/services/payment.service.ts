@@ -205,6 +205,21 @@ export class PaymentService {
       data: { status: 'RELEASED' },
     })
   }
+
+  // Chamado internamente quando uma disputa é resolvida em favor do creator
+  async refundPayment(orderId: string) {
+    const transaction = await prisma.transaction.findUnique({
+      where: { orderId },
+      select: { id: true, status: true },
+    })
+    if (!transaction || transaction.status !== 'HELD') return
+
+    // TODO: chamar API Abacatepay para estornar o valor ao creator
+    await prisma.transaction.update({
+      where: { id: transaction.id },
+      data: { status: 'REFUNDED' },
+    })
+  }
 }
 
 export const paymentService = new PaymentService()
