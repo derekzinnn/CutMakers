@@ -164,6 +164,17 @@ Texto:
   - Valida assinatura HMAC-SHA256 via header `x-abacatepay-signature` (se `ABACATEPAY_WEBHOOK_SECRET` configurado)
   - Em `billing.paid`: Transaction→HELD + notificação para o editor
 
+### Conversations (`/api/conversations`) — todas exigem auth
+- `POST /order/:orderId` — cria ou retorna a conversa vinculada ao pedido (1 conversa por order, `orderId @unique`)
+- `GET /` — lista todas as conversas do usuário logado
+- `GET /:id/messages` — lista mensagens (`?page=`, `?limit=`); marca as recebidas como lidas (`readAt`)
+- `POST /:id/messages` — envia mensagem `{ content: string }` + cria notificação `NEW_MESSAGE`
+
+### Notifications (`/api/notifications`) — todas exigem auth
+- `GET /` — lista notificações do usuário logado
+- `PATCH /read-all` — marca todas como lidas
+- `PATCH /:id/read` — marca uma como lida
+
 ---
 
 ## 🚀 Como rodar
@@ -203,7 +214,7 @@ Ver `packages/api/.env.example`. Precisa:
 ✅ Fase 1 — Base
    [x] Monorepo pnpm workspaces
    [x] API Express + TypeScript + Prisma
-   [x] Schema Prisma completo (15 modelos)
+   [x] Schema Prisma completo (16 modelos)
    [x] Auth: register, login, refresh, JWT middleware
    [x] Seed do admin + categorias
    [x] Frontend: Login, Register, AdminPage (com switcher de view)
@@ -294,16 +305,42 @@ Ver `packages/api/.env.example`. Precisa:
        — StatusStepper: novo happy path NEGOTIATING→AWAITING_PAYMENT→IN_PROGRESS→DELIVERED→COMPLETED
        — File gate visual: cadeado para editor antes de IN_PROGRESS
 
-⏳ Fase 5 — Polish (próxima)
-   [ ] Conversation + Message (chat por order)
-   [ ] Revision formal (modelo Revision vinculado a Delivery)
-   [ ] Liberação de pagamento ao aprovar (já implementado via COMPLETED)
+✅ Fase 4.3 — Chat/Mensagens (Conversations)
+   [x] conversation.service.ts: getOrCreateByOrder, listForUser, getMessages, sendMessage
+       — 1 Conversation por order (`orderId @unique`), criada sob demanda
+       — Auto-read ao buscar mensagens (`readAt` setado)
+       — Notificação `NEW_MESSAGE` a cada mensagem enviada
+   [x] conversation.controller.ts + conversation.routes.ts (montadas em /api/conversations)
+   [x] Frontend lib/conversations.ts (tipos + API calls)
+   [x] ChatPanel.tsx: widget com polling 3s, bolhas orange/dark, auto-scroll, Enter para enviar
+   [x] MessagesTab.tsx: lista de conversas (300px) + ChatPanel; usada nos dashboards
+   [x] Widget de chat colapsável no OrderDetail
 
-⏳ Fase 5 — Polish
-   [ ] Notifications
-   [ ] Review/Rating
-   [ ] Subscription premium do editor
-   [ ] Endpoints admin avançados
+✅ Fase 4.4 — Notifications
+   [x] notification.service.ts: create + list + markOneRead + markAllRead
+       — Notificações disparadas em transições de status, entregas, propostas, pagamento e chat
+   [x] notification.controller.ts + notification.routes.ts (montadas em /api/notifications)
+   [x] Frontend lib/notifications.ts (tipos + API calls)
+   [x] NotificationType cobre: NEW_ORDER, NEW_MESSAGE, DELIVERY_RECEIVED, REVISION_REQUESTED,
+       PAYMENT_RELEASED, ORDER_ACCEPTED, ORDER_CANCELLED, PROPOSAL_*, PAYMENT_CONFIRMED
+
+✅ Fase 4.5 — Type hardening (tsc --noEmit limpo)
+   [x] `tsc --noEmit` passa sem erros em @cutmakers/api e @cutmakers/web
+   [x] Controllers: `req.params.id as string` nos handlers de editor/order/portfolio
+       (Express tipa params como `string | string[]`)
+   [x] auth.service.ts: jwt.sign tipado com `Secret` + `SignOptions` (sem `any`)
+   [x] app.ts + todas as rotas anotadas com `: Express` / `: Router`
+       — resolve TS2742 (declaration emit não conseguia nomear tipo transitivo do express)
+   [x] AdminPage.tsx: removido `statusColors` morto em OrdersSection (placeholder)
+
+⏳ Fase 5 — Polish (próxima)
+   [ ] Revision formal (modelo Revision já existe no schema — expor via API)
+   [ ] Subscription premium do editor (modelo existe — sem service/controller/rotas)
+   [ ] Endpoints admin avançados (aprovar editores, resolver disputas, tabelas reais)
+   [ ] Fluxo DISPUTED (enum existe — sem handlers dedicados)
+   [ ] Notification bell na UI: dropdown de listagem + marcar como lido
+   [ ] Testes automatizados (nenhum ainda em api/web)
+   [ ] Mobile React Native (planejado — fase futura)
 ```
 
 ---

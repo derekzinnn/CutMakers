@@ -103,7 +103,7 @@ export class OrderController {
   getById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const isAdmin = req.user!.role === 'ADMIN'
-      const order = await orderService.getById(req.params.id, req.user!.sub, isAdmin)
+      const order = await orderService.getById(req.params.id as string, req.user!.sub, isAdmin)
       return res.json({ order })
     } catch (err) {
       next(err)
@@ -123,7 +123,7 @@ export class OrderController {
 
       const isAdmin = req.user!.role === 'ADMIN'
       const order = await orderService.updateStatus(
-        req.params.id,
+        req.params.id as string,
         req.user!.sub,
         isAdmin,
         parsed.data.status,
@@ -146,7 +146,7 @@ export class OrderController {
       }
 
       const delivery = await orderService.createDelivery(
-        req.params.id,
+        req.params.id as string,
         req.user!.sub,
         parsed.data,
       )
@@ -159,7 +159,7 @@ export class OrderController {
   // POST /api/orders/:id/payment
   initiatePayment = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await paymentService.initiatePayment(req.params.id, req.user!.sub)
+      const result = await paymentService.initiatePayment(req.params.id as string, req.user!.sub)
       return res.status(201).json(result)
     } catch (err) {
       next(err)

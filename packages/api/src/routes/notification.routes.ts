@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { notificationController } from '../controllers/notification.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 
-export const notificationRoutes = Router()
+export const notificationRoutes: Router = Router()
 
 notificationRoutes.use(authMiddleware)
 

@@ -1,9 +1,9 @@
-import express, { Request } from 'express'
+import express, { Express, Request } from 'express'
 import cors from 'cors'
 import { routes } from './routes'
 import { errorMiddleware } from './middlewares/error.middleware'
 
-export const app = express()
+export const app: Express = express()
 
 app.use(cors())
 

@@ -54,7 +54,7 @@ export class PortfolioController {
   // GET /api/portfolio/:id
   getById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const item = await portfolioService.getById(req.params.id)
+      const item = await portfolioService.getById(req.params.id as string)
       return res.json({ item })
     } catch (err) {
       next(err)
@@ -92,7 +92,7 @@ export class PortfolioController {
 
       const isAdmin = req.user!.role === 'ADMIN'
       const item = await portfolioService.update(
-        req.params.id,
+        req.params.id as string,
         req.user!.sub,
         isAdmin,
         parsed.data,
@@ -107,7 +107,7 @@ export class PortfolioController {
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const isAdmin = req.user!.role === 'ADMIN'
-      await portfolioService.delete(req.params.id, req.user!.sub, isAdmin)
+      await portfolioService.delete(req.params.id as string, req.user!.sub, isAdmin)
       return res.status(204).send()
     } catch (err) {
       next(err)

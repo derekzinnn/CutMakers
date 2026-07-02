@@ -71,7 +71,7 @@ export class EditorController {
 
   // GET /api/editors/:id
   getEditorById = async (req: Request, res: Response) => {
-    const { id } = req.params
+    const id = req.params.id as string
     const editor = await editorService.getEditorByUserId(id)
     if (!editor) {
       return res.status(404).json({ message: 'Editor não encontrado' })

@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
+import jwt, { Secret, SignOptions } from 'jsonwebtoken'
 
 interface TokenPayload {
   sub: string
@@ -18,13 +18,18 @@ export class AuthService {
   generateTokens(userId: string, role: string) {
     const payload: TokenPayload = { sub: userId, role }
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, {
-      expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as string,
-    })
+    const secret: Secret = process.env.JWT_SECRET!
+    const refreshSecret: Secret = process.env.JWT_REFRESH_SECRET!
 
-    const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
-      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as string,
-    })
+    const tokenOptions: SignOptions = {
+      expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as SignOptions['expiresIn'],
+    }
+    const refreshOptions: SignOptions = {
+      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as SignOptions['expiresIn'],
+    }
+
+    const token = jwt.sign(payload, secret, tokenOptions)
+    const refreshToken = jwt.sign(payload, refreshSecret, refreshOptions)
 
     return { token, refreshToken }
   }

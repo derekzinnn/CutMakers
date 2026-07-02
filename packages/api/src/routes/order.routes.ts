@@ -5,7 +5,7 @@ import { proposalController } from '../controllers/proposal.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 import { requireRole } from '../middlewares/role.middleware'
 
-export const orderRoutes = Router()
+export const orderRoutes: Router = Router()
 const ctrl = new OrderController()
 
 orderRoutes.use(authMiddleware)

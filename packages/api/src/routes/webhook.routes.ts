@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { PaymentService } from '../services/payment.service'
 
-export const webhookRoutes = Router()
+export const webhookRoutes: Router = Router()
 const paymentService = new PaymentService()
 
 // POST /api/webhooks/abacatepay

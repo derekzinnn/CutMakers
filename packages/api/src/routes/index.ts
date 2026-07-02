@@ -9,7 +9,7 @@ import { webhookRoutes } from './webhook.routes'
 import { conversationRoutes } from './conversation.routes'
 import { notificationRoutes } from './notification.routes'
 
-export const routes = Router()
+export const routes: Router = Router()
 
 routes.get('/health', (_req, res) => res.json({ status: 'ok' }))
 routes.use('/auth', authRoutes)

@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { conversationController } from '../controllers/conversation.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 
-export const conversationRoutes = Router()
+export const conversationRoutes: Router = Router()
 
 conversationRoutes.use(authMiddleware)
 

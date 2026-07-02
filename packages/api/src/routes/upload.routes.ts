@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { UploadController } from '../controllers/upload.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 
-export const uploadRoutes = Router()
+export const uploadRoutes: Router = Router()
 const ctrl = new UploadController()
 
 /**

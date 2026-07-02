@@ -191,14 +191,6 @@ function UsersSection() {
 }
 
 function OrdersSection() {
-  const statusColors: Record<string, string> = {
-    PENDING: '#F4631E',
-    IN_PROGRESS: '#3B82F6',
-    COMPLETED: '#22C55E',
-    CANCELLED: '#EF4444',
-    DISPUTED: '#EAB308',
-  }
-
   return (
     <div
       className="rounded-card p-6"

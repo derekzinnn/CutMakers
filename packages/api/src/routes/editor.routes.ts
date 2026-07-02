@@ -4,7 +4,7 @@ import { reviewController } from '../controllers/review.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 import { requireRole } from '../middlewares/role.middleware'
 
-export const editorRoutes = Router()
+export const editorRoutes: Router = Router()
 const ctrl = new EditorController()
 
 /**

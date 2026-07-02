@@ -3,7 +3,7 @@ import { PortfolioController } from '../controllers/portfolio.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 import { requireRole } from '../middlewares/role.middleware'
 
-export const portfolioRoutes = Router()
+export const portfolioRoutes: Router = Router()
 const ctrl = new PortfolioController()
 
 // ─── Públicas ───────────────────────────────────────────────────────────────
