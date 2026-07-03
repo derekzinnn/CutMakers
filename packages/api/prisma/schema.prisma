@@ -43,6 +43,7 @@ enum TransactionStatus {
 }
 
 enum SubscriptionStatus {
+  PENDING
   ACTIVE
   EXPIRED
   CANCELLED
@@ -239,9 +240,10 @@ model Subscription {
   id                     String             @id @default(uuid())
   editorProfileId        String
   editorProfile          EditorProfile      @relation(fields: [editorProfileId], references: [id])
-  status                 SubscriptionStatus @default(ACTIVE)
+  status                 SubscriptionStatus @default(PENDING)
+  amount                 Decimal            @db.Decimal(10, 2)
   startedAt              DateTime           @default(now())
-  expiresAt              DateTime
+  expiresAt              DateTime?
   externalSubscriptionId String?
 }
 

@@ -15,6 +15,77 @@ export class PaymentService {
     return process.env.FRONTEND_URL ?? 'http://localhost:5173'
   }
 
+  /**
+   * Cria uma cobrança PIX genérica no Abacatepay (reutilizada por orders e assinaturas).
+   * Em dev (sem ABACATEPAY_API_KEY) retorna um id sintético e sem URL — o chamador
+   * decide como simular a confirmação.
+   */
+  async createPixCharge(params: {
+    amount: number
+    externalId: string
+    productName: string
+    customer: { name: string; email: string }
+    returnPath: string
+  }): Promise<{
+    externalPaymentId: string | null
+    paymentUrl: string | null
+    pixCode: string | null
+    pixQrCode: string | null
+    expiresAt: string | null
+    devMode: boolean
+  }> {
+    if (!this.apiKey) {
+      return {
+        externalPaymentId: `dev_${params.externalId}`,
+        paymentUrl: null,
+        pixCode: null,
+        pixQrCode: null,
+        expiresAt: null,
+        devMode: true,
+      }
+    }
+
+    const res = await fetch(`${ABACATEPAY_API_URL}/billing/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        frequency: 'ONE_TIME',
+        methods: ['PIX'],
+        products: [
+          {
+            externalId: params.externalId,
+            name: params.productName.slice(0, 100),
+            quantity: 1,
+            price: Math.round(params.amount * 100),
+          },
+        ],
+        customer: { name: params.customer.name, email: params.customer.email },
+        returnUrl: `${this.frontendUrl}${params.returnPath}`,
+        completionUrl: `${this.frontendUrl}${params.returnPath}`,
+      }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      throw BadRequest(`Erro ao criar cobrança: ${text}`)
+    }
+
+    const json = (await res.json()) as {
+      data?: { id?: string; url?: string; pixCode?: string; pixQrCode?: string; expiresAt?: string }
+    }
+    return {
+      externalPaymentId: json.data?.id ?? null,
+      paymentUrl: json.data?.url ?? null,
+      pixCode: json.data?.pixCode ?? null,
+      pixQrCode: json.data?.pixQrCode ?? null,
+      expiresAt: json.data?.expiresAt ?? null,
+      devMode: false,
+    }
+  }
+
   async initiatePayment(orderId: string, requesterId: string) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -154,6 +225,20 @@ export class PaymentService {
         where: { externalPaymentId: externalId },
         include: { order: { select: { id: true, status: true, title: true } } },
       })
+
+      // Não é pagamento de pedido → pode ser uma assinatura premium
+      if (!transaction) {
+        const subscription = await prisma.subscription.findFirst({
+          where: { externalSubscriptionId: externalId },
+          select: { id: true, status: true },
+        })
+        if (subscription && subscription.status === 'PENDING') {
+          // Lazy import evita ciclo de dependência entre payment e subscription services
+          const { subscriptionService } = await import('./subscription.service')
+          await subscriptionService.confirmSubscriptionPayment(subscription.id)
+        }
+        return { received: true }
+      }
 
       if (transaction) {
         const isNewFlow = transaction.order.status === 'AWAITING_PAYMENT'

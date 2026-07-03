@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { AuthService } from '../services/auth.service'
+import { subscriptionService } from '../services/subscription.service'
 
 const authService = new AuthService()
 
@@ -67,6 +68,9 @@ export class AuthController {
     if (!valid) {
       return res.status(401).json({ message: 'Credenciais inválidas' })
     }
+
+    // Aplica expiração de assinaturas vencidas de forma oportunista (sem cron por enquanto)
+    await subscriptionService.checkAndExpireSubscriptions()
 
     const tokens = authService.generateTokens(user.id, user.role)
 

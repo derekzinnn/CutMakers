@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard,
@@ -15,7 +15,14 @@ import {
   IconPlayerPlay,
   IconCrown,
   IconMessage2,
+  IconLoader2,
+  IconRosetteDiscountCheck,
 } from '@tabler/icons-react'
+import {
+  getMySubscription,
+  createSubscription,
+  type MySubscription,
+} from '@/lib/subscriptions'
 import { DashboardShell, type NavItem } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
 import { useEditorMe } from '@/hooks/use-editor-me'
@@ -26,13 +33,14 @@ import { PortfolioForm, type PortfolioItemInput } from './components/PortfolioFo
 import { MessagesTab } from '@/components/chat/MessagesTab'
 import { OrderDetail } from '@/components/orders/OrderDetail'
 
-type Section = 'overview' | 'portfolio' | 'orders' | 'messages' | 'profile'
+type Section = 'overview' | 'portfolio' | 'orders' | 'messages' | 'premium' | 'profile'
 
 const NAV: NavItem[] = [
   { id: 'overview', label: 'Dashboard', Icon: IconLayoutDashboard },
   { id: 'portfolio', label: 'Portfólio', Icon: IconBriefcase },
   { id: 'orders', label: 'Pedidos', Icon: IconInbox },
   { id: 'messages', label: 'Mensagens', Icon: IconMessage2 },
+  { id: 'premium', label: 'Premium', Icon: IconCrown },
   { id: 'profile', label: 'Perfil', Icon: IconUser },
 ]
 
@@ -56,6 +64,7 @@ export function EditorDashboard() {
     portfolio: 'Portfólio',
     orders: 'Pedidos recebidos',
     messages: 'Mensagens',
+    premium: 'Premium',
     profile: 'Editar perfil',
   }[section]
 
@@ -111,7 +120,9 @@ export function EditorDashboard() {
                   ? `${orders.length} ${orders.length === 1 ? 'pedido recebido' : 'pedidos recebidos'}`
                   : section === 'messages'
                     ? 'Converse com seus clientes'
-                    : 'Atualize suas informações públicas'
+                    : section === 'premium'
+                      ? 'Destaque seu perfil e receba mais clientes'
+                      : 'Atualize suas informações públicas'
         }
         actions={
           section === 'portfolio' ? (
@@ -209,6 +220,8 @@ export function EditorDashboard() {
             )}
 
             {section === 'messages' && <MessagesTab />}
+
+            {section === 'premium' && <PremiumSection />}
 
           </>
         )}
@@ -465,6 +478,197 @@ function PortfolioSection({
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+// ─── Section: Premium ──────────────────────────────────────────────────────────
+
+const PREMIUM_BENEFITS = [
+  'Aparecer primeiro nas buscas dos criadores',
+  'Badge verificado no seu perfil público',
+  'Sem limite de projetos simultâneos',
+]
+
+function PremiumSection() {
+  const [data, setData] = useState<MySubscription | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [charge, setCharge] = useState<{ pixCode: string | null; paymentUrl: string | null } | null>(null)
+
+  async function load() {
+    setLoading(true)
+    try {
+      setData(await getMySubscription())
+    } catch {
+      setError('Não foi possível carregar sua assinatura')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function handleSubscribe() {
+    setBusy(true)
+    setError(null)
+    setCharge(null)
+    try {
+      const result = await createSubscription()
+      if (result.paymentUrl) window.open(result.paymentUrl, '_blank')
+      setCharge({ pixCode: result.pixCode, paymentUrl: result.paymentUrl })
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setError(e?.response?.data?.message ?? 'Erro ao iniciar assinatura')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <IconLoader2 size={26} className="animate-spin" style={{ color: '#F4631E' }} />
+      </div>
+    )
+  }
+
+  const isPremium = data?.isPremium ?? false
+  const expiresAt = data?.premiumExpiresAt ? new Date(data.premiumExpiresAt) : null
+  const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)) : null
+  const price = data?.price ?? 39.9
+  const renewable = daysLeft !== null && daysLeft <= 5
+
+  // ── Estado premium ativo ──
+  if (isPremium) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div
+          className="rounded-card p-8 text-center"
+          style={{ background: 'linear-gradient(180deg, rgba(244,99,30,0.12), rgba(244,99,30,0.03))', border: '1px solid rgba(244,99,30,0.3)' }}
+        >
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'rgba(244,99,30,0.15)' }}>
+            <IconCrown size={30} stroke={1.5} color="#F4631E" />
+          </div>
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'rgba(244,99,30,0.15)', color: '#F4631E' }}>
+            <IconRosetteDiscountCheck size={14} stroke={2} />
+            PREMIUM ATIVO
+          </div>
+          <h3 className="font-heading text-xl font-bold text-white">Você é um editor Premium</h3>
+          {expiresAt && (
+            <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              Válido até {expiresAt.toLocaleDateString('pt-BR')}
+              {daysLeft !== null && daysLeft >= 0 && (
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}> · {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'}</span>
+              )}
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-card p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <ul className="space-y-3">
+            {PREMIUM_BENEFITS.map((b) => (
+              <li key={b} className="flex items-center gap-3 text-sm text-white">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(34,197,94,0.15)' }}>
+                  <IconCheck size={12} stroke={2.5} color="#22C55E" />
+                </span>
+                {b}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6">
+            <button
+              onClick={handleSubscribe}
+              disabled={busy || !renewable}
+              className="flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-semibold transition-all"
+              style={{
+                background: renewable ? '#F4631E' : 'rgba(255,255,255,0.06)',
+                color: renewable ? 'white' : 'rgba(255,255,255,0.4)',
+                border: renewable ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                cursor: busy || !renewable ? 'not-allowed' : 'pointer',
+                opacity: busy ? 0.7 : 1,
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              {busy ? <IconLoader2 size={15} className="animate-spin" /> : <IconCrown size={15} stroke={1.5} />}
+              Renovar assinatura
+            </button>
+            {!renewable && (
+              <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                A renovação fica disponível nos últimos 5 dias antes do vencimento.
+              </p>
+            )}
+            {error && <p className="mt-2 text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Estado free (upsell) ──
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="rounded-card p-8" style={{ background: 'linear-gradient(180deg, rgba(244,99,30,0.1), rgba(255,255,255,0.02))', border: '1px solid rgba(244,99,30,0.25)' }}>
+        <div className="mb-5 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: 'rgba(244,99,30,0.15)' }}>
+            <IconCrown size={24} stroke={1.5} color="#F4631E" />
+          </div>
+          <div>
+            <h3 className="font-heading text-xl font-bold text-white">CutMakers Premium</h3>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Mais visibilidade, mais clientes.</p>
+          </div>
+        </div>
+
+        <ul className="space-y-3">
+          {PREMIUM_BENEFITS.map((b) => (
+            <li key={b} className="flex items-center gap-3 text-sm text-white">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(244,99,30,0.15)' }}>
+                <IconCheck size={12} stroke={2.5} color="#F4631E" />
+              </span>
+              {b}
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6 flex items-baseline gap-1.5">
+          <span className="font-heading text-3xl font-bold text-white">R$ {price.toFixed(2).replace('.', ',')}</span>
+          <span className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>/mês</span>
+        </div>
+
+        <button
+          onClick={handleSubscribe}
+          disabled={busy}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-semibold transition-all"
+          style={{ background: '#F4631E', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+        >
+          {busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconCrown size={16} stroke={1.5} />}
+          {busy ? 'Gerando cobrança...' : `Assinar Premium — R$ ${price.toFixed(2).replace('.', ',')}/mês`}
+        </button>
+
+        {charge && (charge.pixCode || charge.paymentUrl) && (
+          <div className="mt-4 rounded-[8px] px-4 py-3" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
+            <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>Cobrança PIX gerada</p>
+            {charge.paymentUrl && (
+              <a href={charge.paymentUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs underline" style={{ color: '#93C5FD' }}>
+                Abrir página de pagamento
+              </a>
+            )}
+            {charge.pixCode && (
+              <p className="mt-2 break-all rounded-[6px] px-2 py-1.5 text-[11px]" style={{ background: 'rgba(0,0,0,0.2)', color: 'rgba(255,255,255,0.7)' }}>
+                {charge.pixCode}
+              </p>
+            )}
+            <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Assim que o pagamento for confirmado, seu perfil vira Premium automaticamente.
+            </p>
+          </div>
+        )}
+
+        {error && <p className="mt-3 text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+      </div>
     </div>
   )
 }

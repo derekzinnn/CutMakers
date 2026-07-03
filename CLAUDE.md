@@ -191,6 +191,18 @@ Texto:
 - `PATCH /read-all` — marca todas como lidas
 - `PATCH /:id/read` — marca uma como lida
 
+### Subscriptions (`/api/subscriptions`) — auth + EDITOR/BOTH
+- `POST /` — editor assina o Premium (R$ 39,90/mês)
+  - Bloqueia se já houver assinatura ACTIVE fora da janela de renovação (últimos 5 dias)
+  - Cria `Subscription` PENDING (`amount` Decimal, `expiresAt` null) + cobrança PIX no Abacatepay
+  - Dev (sem `ABACATEPAY_API_KEY`): confirma na hora (`devConfirmed: true`)
+  - Retorna `{ paymentUrl, pixCode, pixQrCode, expiresAt, devConfirmed }`
+- `GET /me` — status atual: `{ isPremium, premiumExpiresAt, price, subscription }`
+- Confirmação via webhook `billing.paid`: se o `externalId` não casar com nenhuma `Transaction`,
+  procura `Subscription` por `externalSubscriptionId` → `confirmSubscriptionPayment`
+  (status ACTIVE, `expiresAt` = agora/vencimento + 30d, `EditorProfile.isPremium = true`)
+- Expiração: `checkAndExpireSubscriptions()` roda no login — vencidas → EXPIRED + `isPremium = false`
+
 ---
 
 ## 🚀 Como rodar
@@ -371,10 +383,29 @@ Ver `packages/api/.env.example`. Precisa:
    [x] `tsc --noEmit` limpo em api + web, sem `any`
    ⚠️ Requer `pnpm --filter @cutmakers/api db:push` para sincronizar o novo modelo Dispute + enums
 
-⏳ Fase 6 — Polish (próxima)
-   [ ] Subscription premium do editor (modelo existe — sem service/controller/rotas)
+✅ Fase 6 — Subscription premium do editor
+   [x] Schema: SubscriptionStatus + PENDING; Subscription.amount (Decimal) + expiresAt nullable + default PENDING
+   [x] subscription.service.ts:
+       — createSubscription (guard ACTIVE fora da janela de renovação de 5 dias; cria PENDING + cobrança PIX)
+       — getMySubscription ({ isPremium, premiumExpiresAt, price, subscription })
+       — confirmSubscriptionPayment (ACTIVE + expiresAt now/vencimento + 30d; EditorProfile.isPremium = true)
+       — checkAndExpireSubscriptions (vencidas → EXPIRED + isPremium false) — chamada no login
+   [x] payment.service: createPixCharge reutilizável (orders + assinaturas); dev mode auto-confirma
+   [x] Webhook billing.paid distingue Transaction (order) vs Subscription (externalSubscriptionId)
+       — lazy import de subscription.service evita ciclo de dependência
+   [x] subscription.controller.ts + subscription.routes.ts (POST / e GET /me, EDITOR/BOTH)
+   [x] auth.controller.login → checkAndExpireSubscriptions() (expiração sem cron)
+   [x] Frontend lib/subscriptions.ts + EditorDashboard: nav "Premium" + PremiumSection
+       — free: benefícios + CTA "Assinar Premium — R$39,90/mês" + card PIX
+       — premium: badge ATIVO + "Válido até DD/MM/AAAA" + "Renovar" (habilitado nos últimos 5 dias)
+   [x] Badge PREMIUM já visível no EditorCard (feed) e EditorPublicProfile; filtro ?premium=true intacto
+   [x] `tsc --noEmit` limpo em api + web, sem `any`
+   ⚠️ Requer `pnpm --filter @cutmakers/api db:push` (Subscription.amount/expiresAt + enum PENDING)
+
+⏳ Fase 7 — Polish (próxima)
    [ ] Endpoints admin avançados (aprovar editores, tabelas reais, painel de disputas)
    [ ] Notification bell na UI: dropdown de listagem + marcar como lido
+   [ ] Renovação recorrente automática (hoje é cobrança única mensal renovada manualmente)
    [ ] Testes automatizados (nenhum ainda em api/web)
    [ ] Mobile React Native (planejado — fase futura)
 ```
