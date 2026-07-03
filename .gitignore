@@ -7,13 +7,14 @@ dist/
 build/
 .turbo/
 
-# Environment files
+# Environment files (segredos) — mantém apenas os *.example versionados
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
 
 # Prisma
-packages/api/prisma/migrations/
+# migrations/ é versionado (necessário para `prisma migrate deploy` em produção)
 
 # Logs
 *.log
