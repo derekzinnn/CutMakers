@@ -4,6 +4,12 @@ import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 
 const ABACATEPAY_API_URL = 'https://api.abacatepay.com/v1'
 
+// A Abacatepay exige `customer.cellphone` e `customer.taxId` (CPF/CNPJ) ao criar cobranças.
+// Como ainda não coletamos esses dados do usuário no cadastro, usamos fallbacks configuráveis
+// via env. Em produção, substituir por dados reais coletados do usuário.
+const ABACATEPAY_FALLBACK_CELLPHONE = process.env.ABACATEPAY_FALLBACK_CELLPHONE ?? '(11) 99999-9999'
+const ABACATEPAY_FALLBACK_TAX_ID = process.env.ABACATEPAY_FALLBACK_TAX_ID ?? '529.982.247-25'
+
 export class PaymentService {
   private get apiKey() {
     return process.env.ABACATEPAY_API_KEY
@@ -62,7 +68,12 @@ export class PaymentService {
             price: Math.round(params.amount * 100),
           },
         ],
-        customer: { name: params.customer.name, email: params.customer.email },
+        customer: {
+          name: params.customer.name,
+          email: params.customer.email,
+          cellphone: ABACATEPAY_FALLBACK_CELLPHONE,
+          taxId: ABACATEPAY_FALLBACK_TAX_ID,
+        },
         returnUrl: `${this.frontendUrl}${params.returnPath}`,
         completionUrl: `${this.frontendUrl}${params.returnPath}`,
       }),
@@ -134,6 +145,8 @@ export class PaymentService {
           customer: {
             name: order.creator.name,
             email: order.creator.email,
+            cellphone: ABACATEPAY_FALLBACK_CELLPHONE,
+            taxId: ABACATEPAY_FALLBACK_TAX_ID,
           },
           returnUrl: `${this.frontendUrl}/orders/${order.id}`,
           completionUrl: `${this.frontendUrl}/orders/${order.id}`,
