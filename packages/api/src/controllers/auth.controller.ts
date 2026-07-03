@@ -69,6 +69,10 @@ export class AuthController {
       return res.status(401).json({ message: 'Credenciais inválidas' })
     }
 
+    if (user.banned) {
+      return res.status(401).json({ message: 'Conta suspensa. Entre em contato com o suporte.' })
+    }
+
     // Aplica expiração de assinaturas vencidas de forma oportunista (sem cron por enquanto)
     await subscriptionService.checkAndExpireSubscriptions()
 

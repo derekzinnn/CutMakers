@@ -203,6 +203,18 @@ Texto:
   (status ACTIVE, `expiresAt` = agora/vencimento + 30d, `EditorProfile.isPremium = true`)
 - Expiração: `checkAndExpireSubscriptions()` roda no login — vencidas → EXPIRED + `isPremium = false`
 
+### Admin (`/api/admin`) — auth + requireRole(ADMIN) em todas
+- `GET /users` — lista paginada (20/pág). Filtros: `?search=` (nome/email), `?role=`, `?page=`
+  - Retorna id, name, email, role, banned, isPremium (join EditorProfile), createdAt
+- `PATCH /users/:id/ban` / `PATCH /users/:id/unban` — suspende/reativa (bloqueia banir ADMIN)
+- `GET /orders` — lista paginada (20/pág), `?status=`. Retorna id, creatorName, editorName, status, budget, createdAt
+- `GET /disputes` — disputas OPEN, mais antigas primeiro (createdAt asc), com order + partes + reason
+- `GET /financial-summary` — { totalTransacted, totalPlatformFees (RELEASED), totalHeldInEscrow (HELD), totalRefunded (REFUNDED) }
+- `GET /transactions` — lista paginada (50/pág): orderId, payerName, payeeName, amount, platformFee, status, createdAt
+- Resolução de disputa reusa `POST /api/orders/:id/dispute/resolve` (ADMIN); `GET /api/orders/:id` já aceita ADMIN
+
+**Login:** `user.banned === true` → 401 "Conta suspensa. Entre em contato com o suporte."
+
 ---
 
 ## 🚀 Como rodar
@@ -402,10 +414,28 @@ Ver `packages/api/.env.example`. Precisa:
    [x] `tsc --noEmit` limpo em api + web, sem `any`
    ⚠️ Requer `pnpm --filter @cutmakers/api db:push` (Subscription.amount/expiresAt + enum PENDING)
 
-⏳ Fase 7 — Polish (próxima)
-   [ ] Endpoints admin avançados (aprovar editores, tabelas reais, painel de disputas)
+✅ Fase 7 — Painel Admin avançado
+   [x] Schema: User.banned (Boolean @default(false))
+   [x] admin.service.ts: listUsers, setBanned, listOrders, listOpenDisputes, financialSummary, listTransactions
+       — DTOs sem passwordHash; Decimal→Number; isPremium via join EditorProfile
+   [x] admin.controller.ts + admin.routes.ts (montadas em /api/admin, authMiddleware + requireRole(ADMIN))
+       — GET /users (?search=&role=&page=, 20/pág), PATCH /users/:id/ban|unban (bloqueia banir ADMIN)
+       — GET /orders (?status=, 20/pág), GET /disputes (OPEN asc)
+       — GET /financial-summary, GET /transactions (50/pág)
+   [x] auth.controller.login: user.banned → 401 "Conta suspensa. Entre em contato com o suporte."
+   [x] Frontend lib/admin.ts + AdminPage:
+       — Usuários: busca debounced + filtro de role + badge premium/status + Ver perfil (editores) + Banir/Desbanir (modal)
+       — Ordens: filtro de status, linha DISPUTED destacada em laranja + modal "Resolver disputa"
+         (resumo, motivo, Liberar para editor / Reembolsar criador via resolveDispute); clique → /orders/:id
+       — Financeiro: 4 cards de resumo + tabela de transações (50/pág)
+       — Pagination/Spinner/EmptyState reutilizados; Modal existente reusado; view switcher Admin/Creator/Editor intacto
+   [x] `tsc --noEmit` limpo em api + web, sem `any`
+   ⚠️ Requer `pnpm --filter @cutmakers/api db:push` (novo campo User.banned)
+
+⏳ Fase 8 — Polish (próxima)
    [ ] Notification bell na UI: dropdown de listagem + marcar como lido
-   [ ] Renovação recorrente automática (hoje é cobrança única mensal renovada manualmente)
+   [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)
+   [ ] Aprovação/verificação manual de editores pelo admin (badge verificado curado)
    [ ] Testes automatizados (nenhum ainda em api/web)
    [ ] Mobile React Native (planejado — fase futura)
 ```

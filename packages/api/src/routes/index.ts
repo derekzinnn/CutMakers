@@ -9,6 +9,7 @@ import { webhookRoutes } from './webhook.routes'
 import { conversationRoutes } from './conversation.routes'
 import { notificationRoutes } from './notification.routes'
 import { subscriptionRoutes } from './subscription.routes'
+import { adminRoutes } from './admin.routes'
 
 export const routes: Router = Router()
 
@@ -23,3 +24,4 @@ routes.use('/webhooks', webhookRoutes)
 routes.use('/conversations', conversationRoutes)
 routes.use('/notifications', notificationRoutes)
 routes.use('/subscriptions', subscriptionRoutes)
+routes.use('/admin', adminRoutes)
