@@ -74,16 +74,16 @@ nano packages/api/.env.production
 
 Preencha com atenção:
 
-- **`JWT_SECRET` / `JWT_REFRESH_SECRET`** — gere NOVOS, nunca reutilize os de dev:
-  ```bash
-  openssl rand -base64 48   # rode 2x, um para cada
-  ```
-- **`DATABASE_URL` / `DIRECT_URL`** — Supabase. Decida:
-  - **Projeto novo de produção** (recomendado) — isola dos dados de teste; ou
-  - **Reutilizar o de dev** — mais rápido para só testar o webhook (ver Passo 4, caso B).
-- **`CORS_ORIGIN=https://cutmakers.derek.dev.br`**
-- **`FRONTEND_URL=https://cutmakers.derek.dev.br`**
-- `CLOUDINARY_*`, `ABACATEPAY_API_KEY`, `ABACATEPAY_WEBHOOK_SECRET`.
+Atalho: como este staging **reaproveita o mesmo Supabase do dev**, o mais rápido é copiar
+o seu `packages/api/.env` de dev para `packages/api/.env.production` e ajustar só o que muda:
+
+- **`DATABASE_URL` / `DIRECT_URL`** — **mesmas URLs do dev** (mesmo projeto Supabase).
+  Copie exatamente do `packages/api/.env` de dev.
+- **`CORS_ORIGIN=https://cutmakers.derek.dev.br`** (novo — restringe o CORS ao domínio público)
+- **`FRONTEND_URL=https://cutmakers.derek.dev.br`** (troca do localhost)
+- **`JWT_SECRET` / `JWT_REFRESH_SECRET`** — pode reusar os do dev (banco compartilhado).
+  Para segredos separados: `openssl rand -base64 48` (rode 2x).
+- `CLOUDINARY_*`, `ABACATEPAY_API_KEY`, `ABACATEPAY_WEBHOOK_SECRET` — mesmos do dev.
 
 > O frontend usa `/api` relativo, então **não é preciso** definir `VITE_API_URL`.
 
@@ -106,26 +106,32 @@ docker compose build
 
 Já existe a migration baseline `prisma/migrations/0_init` (todo o schema atual).
 
-### Caso A — banco de produção NOVO (vazio)
+> **Este deploy usa o banco de dev, que JÁ tem as tabelas (via `db push`).** Portanto siga
+> o **Caso B** (baseline) — não rode `migrate deploy` num banco já populado, senão ele
+> tentaria recriar tabelas que já existem e falharia.
 
-```bash
-docker compose run --rm cutmakers-api npx prisma migrate deploy
-```
-
-Isso cria todas as tabelas/enums a partir do `0_init`.
-
-### Caso B — reutilizando o banco de DEV (já tem as tabelas via `db push`)
+### Caso B — reutilizando o banco de DEV (já tem as tabelas) ← este é o seu caso
 
 O banco já está com o schema, mas sem histórico de migrations. **Baseline** a migration
-existente (marca como aplicada sem re-executar), senão o `deploy` tentaria recriar tabelas:
+existente (marca como aplicada sem re-executar):
 
 ```bash
 docker compose run --rm cutmakers-api npx prisma migrate resolve --applied 0_init
 ```
 
-Migrations futuras (novas) seguem via `npx prisma migrate deploy` normalmente.
+A partir daí, migrations **novas** (futuras alterações de schema) seguem via:
+
+```bash
+docker compose run --rm cutmakers-api npx prisma migrate deploy
+```
+
+### Caso A — se algum dia usar um banco NOVO (vazio)
+
+`docker compose run --rm cutmakers-api npx prisma migrate deploy` cria tudo a partir do `0_init`.
 
 > `migrate deploy`/`resolve` usam a `DIRECT_URL` (porta 5432) do `.env.production`.
+> ⚠️ Como o banco é o mesmo do dev, os dados (usuários, admin do seed, pedidos de teste)
+> **são compartilhados** com o ambiente de desenvolvimento.
 
 ## Passo 5 — Subir os containers
 
