@@ -247,12 +247,8 @@ Ver `packages/api/.env.example`. Precisa:
 - `FRONTEND_URL` (padrão `http://localhost:5173`, usado no returnUrl do Abacatepay)
 - `CORS_ORIGIN` (produção — lista separada por vírgula de origens permitidas; sem a var, libera todas em dev)
 
-### Deploy (produção)
-Ver **`DEPLOY.md`**. Docker Compose (`docker-compose.yml`) sobe `cutmakers-api` + `cutmakers-web`
-na rede externa `web`, atrás do Caddy central (`deploy/cutmakers.Caddyfile`), em
-`https://cutmakers.derek.dev.br`. Banco via Supabase. Migrations com `prisma migrate deploy`
-(baseline em `prisma/migrations/0_init`). Segredos em `packages/api/.env.production`
-(modelo em `.env.production.example`).
+> **Deploy:** feito manualmente pelo dono do projeto. Nada de Docker/Caddy/Compose no repo
+> — não criar/editar esses arquivos.
 
 ---
 
@@ -440,20 +436,14 @@ na rede externa `web`, atrás do Caddy central (`deploy/cutmakers.Caddyfile`), e
    [x] `tsc --noEmit` limpo em api + web, sem `any`
    ⚠️ Requer `pnpm --filter @cutmakers/api db:push` (novo campo User.banned)
 
-✅ Fase 8 — Deploy / Infra (produção em cutmakers.derek.dev.br)
-   [x] packages/api/Dockerfile: multi-stage Node 22, prisma generate + tsc, `pnpm deploy --prod`,
-       runtime non-root com openssl; `prisma` movido para dependencies (roda migrate/generate na imagem)
-   [x] packages/web/Dockerfile: build Vite (ARG VITE_API_URL, opcional — app usa '/api' relativo) + nginx (SPA fallback)
-   [x] docker-compose.yml: cutmakers-api + cutmakers-web na rede externa `web`; healthcheck em GET /health; sem DB (Supabase)
-   [x] deploy/cutmakers.Caddyfile: HTTPS automático, /api/* → api:3333, resto → web:80
-   [x] .env.production.example + .dockerignore (segredos fora da imagem)
-   [x] app.ts: CORS por env `CORS_ORIGIN` (lista; sem a var = libera tudo em dev) + `GET /health` (Docker)
-   [x] Prisma: baseline `prisma/migrations/0_init` (migrate diff); DEPLOY.md explica db push vs migrate deploy
-       — banco novo: `migrate deploy`; reusar dev DB: `migrate resolve --applied 0_init` (baseline)
-   [x] DEPLOY.md: passo a passo (build no VPS ARM, .env.production, migrations, Caddy reload, webhook Abacatepay, logs, rollback)
-   [x] Sem cookies no backend (JWT em Authorization header + localStorage) → sem secure/sameSite a ajustar
+✅ Fase 8 — Preparo p/ produção (só app; deploy é manual do dono)
+   [x] app.ts: CORS por env `CORS_ORIGIN` (lista; sem a var = libera tudo em dev) + `GET /health`
+   [x] Prisma: baseline `prisma/migrations/0_init` (migrate diff) + `prisma` em dependencies;
+       .gitignore versiona migrations/ e protege `.env*` (mantém `*.example`)
+   [x] Sem cookies no backend (JWT em Authorization header + localStorage) → sem secure/sameSite
    [x] Builds de produção validados: `api build` → dist/index.js, `web build` → dist/ ok; `tsc --noEmit` limpo
-   ℹ️ Infra apenas — nenhuma lógica de aplicação alterada
+   ❌ Docker/Caddy/Compose REMOVIDOS do repo — o deploy é feito 100% manualmente pelo dono.
+      Não recriar/editar Dockerfile, docker-compose, Caddyfile, nginx.conf, DEPLOY.md, etc.
 
 ⏳ Fase 9 — Polish (próxima)
    [ ] Notification bell na UI: dropdown de listagem + marcar como lido
