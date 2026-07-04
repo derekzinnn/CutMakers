@@ -6,6 +6,7 @@ import {
   IconEye,
   IconEyeOff,
   IconArrowRight,
+  IconArrowLeft,
   IconBrandGoogle,
 } from '@tabler/icons-react'
 import { api } from '@/lib/api'
@@ -148,6 +149,29 @@ export function LoginPage() {
 
         {/* ─── PAINEL DIREITO 60% — formulário ──────────────────────────────── */}
         <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-10 lg:px-12">
+          {/* Voltar para a landing */}
+          <Link
+            to="/"
+            className="absolute left-6 top-6 flex items-center gap-1.5 rounded-[8px] px-3 py-2 text-sm transition-colors lg:left-8 lg:top-8"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.6)',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.07)'
+              e.currentTarget.style.color = 'rgba(255,255,255,0.9)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+              e.currentTarget.style.color = 'rgba(255,255,255,0.6)'
+            }}
+          >
+            <IconArrowLeft size={16} stroke={1.5} />
+            Voltar
+          </Link>
+
           {/* Logo mobile */}
           <div className="mb-8 flex items-center gap-2 lg:hidden">
             <span className="h-2 w-2 rounded-full" style={{ background: '#F4631E' }} />
