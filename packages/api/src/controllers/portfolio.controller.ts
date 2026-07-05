@@ -12,19 +12,27 @@ const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional(),
 })
 
-const createSchema = z.object({
-  title: z.string().min(3, 'Título muito curto').max(100),
-  description: z.string().max(1000).optional(),
-  categoryId: z.string().uuid('categoryId inválido'),
-  videoUrl: z.string().url('videoUrl inválida'),
-  thumbnailUrl: z.string().url().optional(),
-  basePrice: z.number().positive('Preço deve ser positivo'),
-})
+const createSchema = z
+  .object({
+    title: z.string().min(3, 'Título muito curto').max(100),
+    description: z.string().max(1000).optional(),
+    categoryId: z.string().uuid('categoryId inválido').optional(),
+    // Categoria livre (opção "Outros" no form) — find-or-create no service
+    categoryName: z.string().trim().min(2, 'Categoria muito curta').max(40).optional(),
+    videoUrl: z.string().url('videoUrl inválida'),
+    thumbnailUrl: z.string().url().optional(),
+    basePrice: z.number().positive('Preço deve ser positivo'),
+  })
+  .refine((d) => d.categoryId || d.categoryName, {
+    message: 'Informe uma categoria',
+    path: ['categoryId'],
+  })
 
 const updateSchema = z.object({
   title: z.string().min(3).max(100).optional(),
   description: z.string().max(1000).optional(),
   categoryId: z.string().uuid().optional(),
+  categoryName: z.string().trim().min(2).max(40).optional(),
   videoUrl: z.string().url().optional(),
   thumbnailUrl: z.string().url().optional(),
   basePrice: z.number().positive().optional(),

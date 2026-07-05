@@ -7,7 +7,9 @@ import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 export interface CreatePortfolioData {
   title: string
   description?: string
-  categoryId: string
+  categoryId?: string
+  /** Categoria livre (opção "Outros") — find-or-create por nome */
+  categoryName?: string
   videoUrl: string
   thumbnailUrl?: string
   basePrice: number
@@ -17,6 +19,7 @@ export interface UpdatePortfolioData {
   title?: string
   description?: string
   categoryId?: string
+  categoryName?: string
   videoUrl?: string
   thumbnailUrl?: string
   basePrice?: number
@@ -47,6 +50,30 @@ type ItemWithRelations = Prisma.PortfolioItemGetPayload<{ include: typeof itemIn
 // ─── Serviço ──────────────────────────────────────────────────────────────────
 
 export class PortfolioService {
+  /**
+   * Resolve o categoryId a partir de um id existente OU de um nome livre
+   * (opção "Outros" no form). Nomes são normalizados e reutilizados
+   * case-insensitive para não duplicar categorias.
+   */
+  private async resolveCategoryId(categoryId?: string, categoryName?: string): Promise<string> {
+    if (categoryId) {
+      const category = await prisma.category.findUnique({ where: { id: categoryId } })
+      if (!category) throw BadRequest('Categoria não encontrada')
+      return category.id
+    }
+
+    const name = categoryName?.trim()
+    if (!name) throw BadRequest('Informe uma categoria')
+
+    const existing = await prisma.category.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    })
+    if (existing) return existing.id
+
+    const created = await prisma.category.create({ data: { name } })
+    return created.id
+  }
+
   /**
    * Lista itens de portfólio. Filtros opcionais por editor e/ou categoria.
    * Endpoint público — qualquer um (logado ou não) pode chamar.
@@ -103,16 +130,15 @@ export class PortfolioService {
       profile = await prisma.editorProfile.create({ data: { userId } })
     }
 
-    // valida categoria
-    const category = await prisma.category.findUnique({ where: { id: data.categoryId } })
-    if (!category) throw BadRequest('Categoria não encontrada')
+    // resolve categoria (id existente ou nome livre — "Outros")
+    const categoryId = await this.resolveCategoryId(data.categoryId, data.categoryName)
 
     if (data.basePrice <= 0) throw BadRequest('basePrice deve ser maior que zero')
 
     const item = await prisma.portfolioItem.create({
       data: {
         editorProfileId: profile.id,
-        categoryId: data.categoryId,
+        categoryId,
         title: data.title,
         description: data.description,
         videoUrl: data.videoUrl,
@@ -139,9 +165,10 @@ export class PortfolioService {
       throw Forbidden('Você não pode editar este item')
     }
 
-    if (data.categoryId) {
-      const cat = await prisma.category.findUnique({ where: { id: data.categoryId } })
-      if (!cat) throw BadRequest('Categoria não encontrada')
+    // resolve categoria se enviada (id existente ou nome livre — "Outros")
+    let resolvedCategoryId: string | undefined
+    if (data.categoryId || data.categoryName) {
+      resolvedCategoryId = await this.resolveCategoryId(data.categoryId, data.categoryName)
     }
 
     if (data.basePrice !== undefined && data.basePrice <= 0) {
@@ -153,7 +180,7 @@ export class PortfolioService {
       data: {
         ...(data.title !== undefined && { title: data.title }),
         ...(data.description !== undefined && { description: data.description }),
-        ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
+        ...(resolvedCategoryId !== undefined && { categoryId: resolvedCategoryId }),
         ...(data.videoUrl !== undefined && { videoUrl: data.videoUrl }),
         ...(data.thumbnailUrl !== undefined && { thumbnailUrl: data.thumbnailUrl }),
         ...(data.basePrice !== undefined && { basePrice: data.basePrice }),

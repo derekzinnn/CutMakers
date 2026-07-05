@@ -1,9 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
-import { IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck, IconCoin, IconX, IconAlertCircle } from '@tabler/icons-react'
+import {
+  IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck,
+  IconCoin, IconX, IconAlertCircle, IconChevronsLeft, IconChevronsRight,
+} from '@tabler/icons-react'
 import type { AuthUser } from '@/hooks/use-auth'
-import { CMLockup } from '@/components/ui/CMLogo'
+import { CMLogo, CMLockup } from '@/components/ui/CMLogo'
 import { fetchNotifications, markAllRead, markOneRead, type NotificationDTO } from '@/lib/notifications'
+
+const SIDEBAR_COLLAPSED_KEY = 'cm_sidebar_collapsed'
 
 export interface NavItem {
   id: string
@@ -24,6 +29,8 @@ interface Props {
   actions?: React.ReactNode
   children: React.ReactNode
   banner?: React.ReactNode
+  /** Chamado ao clicar no bloco de perfil (avatar/nome) da sidebar */
+  onProfileClick?: () => void
 }
 
 const NOTIF_ICONS: Record<string, React.ElementType> = {
@@ -266,8 +273,19 @@ export function DashboardShell({
   actions,
   banner,
   children,
+  onProfileClick,
 }: Props) {
   const navigate = useNavigate()
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1',
+  )
+
+  function toggleCollapsed() {
+    setCollapsed((v) => {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, v ? '0' : '1')
+      return !v
+    })
+  }
 
   function logout() {
     localStorage.clear()
@@ -282,38 +300,65 @@ export function DashboardShell({
     <div className="flex min-h-screen" style={{ background: '#0D1B2A' }}>
       {/* ── Sidebar ── */}
       <aside
-        className="flex w-64 shrink-0 flex-col"
+        className={`flex ${collapsed ? 'w-[68px]' : 'w-64'} shrink-0 flex-col`}
         style={{
           background: '#162436',
           borderRight: '1px solid rgba(255,255,255,0.06)',
           height: '100vh',
           position: 'sticky',
           top: 0,
+          transition: 'width 0.2s ease',
         }}
       >
-        {/* Logo + badge */}
+        {/* Logo + badge + toggle */}
         <div
-          className="flex items-center gap-2 px-5 py-4"
+          className={`flex items-center gap-2 py-4 ${collapsed ? 'justify-center px-2' : 'px-5'}`}
           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <CMLockup size={30} wordSize={16} color="#FFFFFF" variant="orange" gap={8} />
-          {badgeLabel && (
-            <span
-              className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={{
-                background: 'rgba(244,99,30,0.15)',
-                color: '#F4631E',
-                fontFamily: "'Syne', sans-serif",
-              }}
-            >
-              {badgeLabel}
-            </span>
+          {collapsed ? (
+            <CMLogo size={30} variant="orange" />
+          ) : (
+            <>
+              <CMLockup size={30} wordSize={16} color="#FFFFFF" variant="orange" gap={8} />
+              {badgeLabel && (
+                <span
+                  className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  style={{
+                    background: 'rgba(244,99,30,0.15)',
+                    color: '#F4631E',
+                    fontFamily: "'Syne', sans-serif",
+                  }}
+                >
+                  {badgeLabel}
+                </span>
+              )}
+            </>
           )}
         </div>
 
+        {/* Toggle de colapso */}
+        <button
+          onClick={toggleCollapsed}
+          title={collapsed ? 'Expandir menu' : 'Reduzir menu'}
+          aria-label={collapsed ? 'Expandir menu' : 'Reduzir menu'}
+          className={`mx-3 mt-3 flex items-center gap-3 rounded-[8px] px-3 py-2 text-xs transition-colors ${collapsed ? 'justify-center' : ''}`}
+          style={{
+            color: 'rgba(255,255,255,0.35)',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            cursor: 'pointer',
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+        >
+          {collapsed ? <IconChevronsRight size={15} stroke={1.5} /> : <IconChevronsLeft size={15} stroke={1.5} />}
+          {!collapsed && 'Reduzir menu'}
+        </button>
+
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {navLabel && (
+        <nav className={`flex-1 overflow-y-auto py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
+          {navLabel && !collapsed && (
             <p
               style={{
                 fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
@@ -331,7 +376,8 @@ export function DashboardShell({
               <button
                 key={id}
                 onClick={() => onNavigate(id)}
-                className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
+                title={collapsed ? label : undefined}
+                className={`mb-1 flex w-full items-center gap-3 rounded-[8px] py-2.5 text-sm transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
                 style={{
                   background: active ? '#F4631E' : 'transparent',
                   color: active ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
@@ -340,11 +386,12 @@ export function DashboardShell({
                   fontWeight: active ? 600 : 400,
                   cursor: 'pointer',
                   textAlign: 'left',
+                  position: 'relative',
                 }}
               >
-                <Icon size={16} stroke={1.5} />
-                <span className="flex-1">{label}</span>
-                {badge && (
+                <Icon size={collapsed ? 18 : 16} stroke={1.5} />
+                {!collapsed && <span className="flex-1">{label}</span>}
+                {badge && !collapsed && (
                   <span
                     className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
                     style={{ background: 'rgba(244,99,30,0.2)', color: '#F4631E' }}
@@ -352,30 +399,67 @@ export function DashboardShell({
                     {badge}
                   </span>
                 )}
+                {badge && collapsed && (
+                  <span
+                    style={{
+                      position: 'absolute', top: 4, right: 4,
+                      width: 7, height: 7, borderRadius: '50%',
+                      background: '#F4631E',
+                    }}
+                  />
+                )}
               </button>
             )
           })}
         </nav>
 
-        {/* Footer: usuário + logout */}
-        <div className="px-3 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="mb-2 flex items-center gap-3 rounded-[8px] px-3 py-2">
+        {/* Footer: perfil (clicável) + logout */}
+        <div className={`py-4 ${collapsed ? 'px-2' : 'px-3'}`} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <button
+            onClick={onProfileClick}
+            title="Meu perfil"
+            disabled={!onProfileClick}
+            className={`mb-2 flex w-full items-center gap-3 rounded-[8px] py-2 transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
+            style={{
+              background: 'none',
+              border: '1px solid transparent',
+              cursor: onProfileClick ? 'pointer' : 'default',
+              textAlign: 'left',
+            }}
+            onMouseEnter={(e) => {
+              if (onProfileClick) {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'none'
+              e.currentTarget.style.borderColor = 'transparent'
+            }}
+          >
             <div
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-heading text-xs font-bold text-white"
+              className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-xs font-bold text-white"
               style={{ background: '#F4631E' }}
             >
-              {user.name?.charAt(0).toUpperCase()}
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+              ) : (
+                user.name?.charAt(0).toUpperCase()
+              )}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">{user.name}</p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {user.email}
-              </p>
-            </div>
-          </div>
+            {!collapsed && (
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white">{user.name}</p>
+                <p className="truncate text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {onProfileClick ? 'Ver perfil' : user.email}
+                </p>
+              </div>
+            )}
+          </button>
           <button
             onClick={logout}
-            className="flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
+            title="Sair"
+            className={`flex w-full items-center gap-3 rounded-[8px] py-2.5 text-sm transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
             style={{
               color: 'rgba(255,255,255,0.4)',
               background: 'none',
@@ -393,7 +477,7 @@ export function DashboardShell({
             }}
           >
             <IconLogout size={16} stroke={1.5} />
-            Sair
+            {!collapsed && 'Sair'}
           </button>
         </div>
       </aside>
@@ -414,15 +498,10 @@ export function DashboardShell({
               </p>
             )}
           </div>
+          {/* Header enxuto: ações contextuais da página + apenas o sino de notificações */}
           <div className="flex items-center gap-3">
             {actions}
             <NotificationBell onNavigateToOrder={goToOrder} />
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-full font-heading text-sm font-bold text-white"
-              style={{ background: '#F4631E' }}
-            >
-              {user.name?.charAt(0).toUpperCase()}
-            </div>
           </div>
         </header>
 

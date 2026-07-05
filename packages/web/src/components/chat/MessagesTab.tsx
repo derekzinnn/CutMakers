@@ -147,7 +147,7 @@ export function MessagesTab() {
 
   return (
     <div style={{
-      display: 'flex', height: 'calc(100vh - 180px)', minHeight: 480,
+      display: 'flex', height: 'calc(100vh - 124px)', minHeight: 480,
       border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden',
     }}>
       {/* ── Left: People list ── */}

@@ -22,8 +22,10 @@ import { useCategories } from '@/hooks/use-categories'
 import { useOrders } from '@/hooks/use-orders'
 import { api } from '@/lib/api'
 import { OrderCard } from '@/components/orders/OrderCard'
+import { OrderStatusFilter, filterOrdersByStatus } from '@/components/orders/OrderStatusFilter'
 import { MessagesTab } from '@/components/chat/MessagesTab'
 import { OrderDetail } from '@/components/orders/OrderDetail'
+import type { OrderStatus } from '@/lib/orders'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -93,6 +95,7 @@ export function CreatorDashboard() {
 
   const { orders, loading: ordersLoading, error: ordersError } = useOrders({ role: 'creator' })
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [orderFilter, setOrderFilter] = useState<OrderStatus | 'ALL'>('ALL')
 
   const navItems: NavItem[] = useMemo(
     () => [
@@ -154,8 +157,9 @@ export function CreatorDashboard() {
 
       setEditors(sorted)
       setTotal(data.total)
-    } catch (err) {
-      console.error('Erro ao carregar editores:', err)
+    } catch {
+      // Falha silenciosa: mantém a lista atual; sem logs de payload no console
+      setEditors([])
     } finally {
       setLoading(false)
     }
@@ -182,6 +186,7 @@ export function CreatorDashboard() {
       navItems={navItems}
       activeId={section}
       onNavigate={(id) => changeSection(id as Section)}
+      onProfileClick={() => changeSection('account')}
       user={user}
       pageTitle={
         selectedOrderId
@@ -430,16 +435,19 @@ export function CreatorDashboard() {
             </button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
-            {orders.map(order => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                perspective="creator"
-                onClick={() => setSelectedOrderId(order.id)}
-              />
-            ))}
-          </div>
+          <>
+            <OrderStatusFilter orders={orders} active={orderFilter} onChange={setOrderFilter} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
+              {filterOrdersByStatus(orders, orderFilter).map(order => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  perspective="creator"
+                  onClick={() => setSelectedOrderId(order.id)}
+                />
+              ))}
+            </div>
+          </>
         )
       )}
 

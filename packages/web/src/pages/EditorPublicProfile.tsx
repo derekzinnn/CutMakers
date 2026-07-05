@@ -78,6 +78,7 @@ function formatPrice(value: number): string {
 
 interface DerivedPackage {
   name: string
+  categoryName: string
   description: string
   price: number
   highlighted: boolean
@@ -89,7 +90,8 @@ function derivePackages(items: PortfolioItem[]): DerivedPackage[] {
   const sorted = [...items].sort((a, b) => a.basePrice - b.basePrice)
   const tiers = ['Express', 'Pro', 'Studio']
   return sorted.slice(0, 3).map((item, i) => ({
-    name: tiers[i] ?? `Pacote ${i + 1}`,
+    name: tiers[i] ?? `Opção ${i + 1}`,
+    categoryName: item.category.name,
     description: item.description ?? item.title,
     price: item.basePrice,
     highlighted: i === 1,
@@ -241,7 +243,6 @@ export function EditorPublicProfile() {
   }
 
   const { profile } = editor
-  const packages = derivePackages(profile.portfolioItems)
   const portfolioCategories = Array.from(new Set(profile.portfolioItems.map(i => i.category.name)))
   const firstCategory = portfolioCategories[0]
   const minPrice = profile.portfolioItems.length
@@ -251,6 +252,9 @@ export function EditorPublicProfile() {
     activeCategory === 'all'
       ? profile.portfolioItems
       : profile.portfolioItems.filter(i => i.category.name === activeCategory)
+  // Contratação acompanha a categoria selecionada nas tabs do portfólio:
+  // preços de Reels aparecem quando "Reels" está ativo, e assim por diante.
+  const packages = derivePackages(filteredPortfolio)
 
   return (
     <div style={{ minHeight: '100vh', background: '#0D1B2A', fontFamily: "'DM Sans', sans-serif" }}>
@@ -707,10 +711,15 @@ export function EditorPublicProfile() {
         {/* ── Right sidebar ── */}
         <div style={{ flexShrink: 0, width: 280, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Pacotes */}
+          {/* Contratação (preços acompanham a categoria selecionada no portfólio) */}
           {packages.length > 0 && (
             <div style={sideCard}>
-              <h3 style={sideTitle}>Pacotes</h3>
+              <h3 style={sideTitle}>Contratação</h3>
+              {activeCategory !== 'all' && (
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '-6px 0 10px' }}>
+                  Valores para <span style={{ color: '#F4631E', fontWeight: 600 }}>{activeCategory}</span>
+                </p>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
                 {packages.map(pkg => (
                   <div
@@ -730,6 +739,18 @@ export function EditorPublicProfile() {
                         }}
                       >
                         {pkg.name}
+                        <span
+                          style={{
+                            marginLeft: 6, fontSize: 9, fontWeight: 600,
+                            padding: '2px 6px', borderRadius: 10,
+                            background: 'rgba(255,255,255,0.07)',
+                            color: 'rgba(255,255,255,0.5)',
+                            fontFamily: "'DM Sans', sans-serif",
+                            verticalAlign: 'middle',
+                          }}
+                        >
+                          {pkg.categoryName}
+                        </span>
                       </span>
                       <span
                         style={{
@@ -864,11 +885,23 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
       onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)')}
     >
       {item.thumbnailUrl && (
-        <img
-          src={item.thumbnailUrl}
-          alt={item.title}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-        />
+        <>
+          {/* Fundo desfocado preenche o frame; a thumb em "contain" preserva
+              vídeos verticais/quadrados sem cortar (não quebra posts ≠ 16:9) */}
+          <div
+            style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: `url(${item.thumbnailUrl})`,
+              backgroundSize: 'cover', backgroundPosition: 'center',
+              filter: 'blur(14px) brightness(0.5)', transform: 'scale(1.15)',
+            }}
+          />
+          <img
+            src={item.thumbnailUrl}
+            alt={item.title}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+          />
+        </>
       )}
       {/* Overlay with play */}
       <div
@@ -912,6 +945,11 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
         <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', margin: 0, fontWeight: 600, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {item.title.toUpperCase()}
         </p>
+        {item.description && (
+          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {item.description}
+          </p>
+        )}
       </div>
     </div>
   )

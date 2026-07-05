@@ -445,8 +445,37 @@ Ver `packages/api/.env.example`. Precisa:
    ❌ Docker/Caddy/Compose REMOVIDOS do repo — o deploy é feito 100% manualmente pelo dono.
       Não recriar/editar Dockerfile, docker-compose, Caddyfile, nginx.conf, DEPLOY.md, etc.
 
-⏳ Fase 9 — Polish (próxima)
-   [ ] Notification bell na UI: dropdown de listagem + marcar como lido
+✅ Fase 9 — PD1: UX/Performance/Higiene
+   [x] Code splitting: App.tsx com React.lazy + Suspense — cada página vira chunk próprio
+       (resolve "todas as páginas buildadas ao acessar o site"; 40 chunks no build)
+   [x] Favicon SVG (public/favicon.svg, marca CMLogo) + meta description no index.html
+   [x] DashboardShell: header enxuto (só ações da página + sino), avatar removido do header
+       — perfil clicável no rodapé da sidebar (prop onProfileClick)
+       — sidebar colapsável (toggle "Reduzir menu", persistido em localStorage, ícones + tooltips)
+   [x] NotificationBell validado (já existia: dropdown, badge não lidas, marcar uma/todas, polling 20s)
+   [x] MessagesTab ocupa a altura toda (calc(100vh - 124px) — antes sobrava espaço)
+   [x] Filtro de pedidos por status: OrderStatusFilter (chips com contagem) nos dashboards creator+editor
+   [x] Portfólio:
+       — categoria "Outros" no PortfolioForm → input livre; backend find-or-create case-insensitive
+         (portfolio.controller: categoryName no create/update; portfolio.service.resolveCategoryId)
+       — descrição visível nos cards (dashboard) e no overlay do grid (perfil público)
+       — previews não-16:9 não quebram mais: object-contain sobre fundo desfocado (blur)
+       — exclusão com Modal de confirmação (substitui window.confirm/alert)
+   [x] Perfil do editor inline: seção "Perfil" renderiza ProfileForm dentro do dashboard (sidebar visível);
+       clicar no avatar/nome da sidebar abre o perfil
+   [x] Dashboard do editor com gráficos: StatusBarChart (pedidos por status, SVG puro) +
+       UpcomingDeadlines (prazos ≤7 dias com urgência colorida) — sem dependências novas
+   [x] EditorPublicProfile: "Pacotes" → "Contratação", tiers filtrados pela categoria ativa das tabs
+       (preço de Reels aparece ao selecionar Reels), badge de categoria por tier
+   [x] Higiene: sem console.log/alert no web (Google login vira botão disabled "Em breve");
+       prisma já loga só 'error' fora de dev; CORS por env (Fase 8); AuthUser.avatarUrl opcional
+   [x] `tsc --noEmit` + builds de produção limpos em api + web, sem `any`
+
+⏳ Fase 10 — Próximos (pendem decisão/credenciais do dono)
+   [ ] Login com Google funcional (requer GOOGLE_CLIENT_ID/SECRET do Google Cloud — decisão do dono)
+   [ ] Geração de documento/contrato para aceite de ambas as partes por pedido
+       (proposta: termos gerados no aceite da proposta + aceite registrado antes do pagamento)
+   [ ] Modo de publicação de projeto para CREATORS (marketplace invertido — feature grande, própria fase)
    [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)
    [ ] Aprovação/verificação manual de editores pelo admin (badge verificado curado)
    [ ] Testes automatizados (nenhum ainda em api/web)

@@ -31,9 +31,12 @@ const empty: PortfolioItemInput = {
   basePrice: '',
 }
 
+const OTHER_CATEGORY = '__other__'
+
 export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
   const { categories } = useCategories()
   const [form, setForm] = useState<PortfolioItemInput>(initial ?? empty)
+  const [customCategory, setCustomCategory] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -41,10 +44,12 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isEditing = !!initial?.id
+  const isOtherCategory = form.categoryId === OTHER_CATEGORY
 
   useEffect(() => {
     if (open) {
       setForm(initial ?? empty)
+      setCustomCategory('')
       setError(null)
       setUploadProgress(0)
     }
@@ -90,6 +95,10 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
       setError('Selecione uma categoria')
       return
     }
+    if (isOtherCategory && customCategory.trim().length < 2) {
+      setError('Informe o nome da categoria (mínimo 2 caracteres)')
+      return
+    }
     if (!form.videoUrl) {
       setError('Faça o upload do vídeo')
       return
@@ -105,7 +114,10 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
       const payload = {
         title: form.title,
         description: form.description || undefined,
-        categoryId: form.categoryId,
+        // "Outros" → envia o nome livre; o backend cria/reutiliza a categoria
+        ...(isOtherCategory
+          ? { categoryName: customCategory.trim() }
+          : { categoryId: form.categoryId }),
         videoUrl: form.videoUrl,
         thumbnailUrl: form.thumbnailUrl || undefined,
         basePrice: price,
@@ -302,7 +314,21 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
                   {c.name}
                 </option>
               ))}
+              <option value={OTHER_CATEGORY} style={{ background: '#162436' }}>
+                Outros...
+              </option>
             </select>
+            {isOtherCategory && (
+              <input
+                type="text"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                placeholder="Qual categoria?"
+                maxLength={40}
+                autoFocus
+                className="input-field mt-2"
+              />
+            )}
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard,
   IconBriefcase,
@@ -29,9 +28,13 @@ import { useEditorMe } from '@/hooks/use-editor-me'
 import { useOrders } from '@/hooks/use-orders'
 import { api } from '@/lib/api'
 import { OrderCard } from '@/components/orders/OrderCard'
+import { OrderStatusFilter, filterOrdersByStatus } from '@/components/orders/OrderStatusFilter'
 import { PortfolioForm, type PortfolioItemInput } from './components/PortfolioForm'
+import { ProfileForm } from './components/ProfileForm'
 import { MessagesTab } from '@/components/chat/MessagesTab'
 import { OrderDetail } from '@/components/orders/OrderDetail'
+import { Modal } from '@/components/ui/Modal'
+import { STATUS_LABELS, STATUS_COLORS, type OrderDTO, type OrderStatus } from '@/lib/orders'
 
 type Section = 'overview' | 'portfolio' | 'orders' | 'messages' | 'premium' | 'profile'
 
@@ -47,12 +50,15 @@ const NAV: NavItem[] = [
 export function EditorDashboard() {
   const { user } = useAuth()
   const { editor, loading, refetch } = useEditorMe()
-  const navigate = useNavigate()
 
   const [section, setSection] = useState<Section>('overview')
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<PortfolioItemInput | undefined>(undefined)
+  const [orderFilter, setOrderFilter] = useState<OrderStatus | 'ALL'>('ALL')
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const { orders, loading: ordersLoading, error: ordersError } = useOrders({ role: 'editor' })
 
@@ -86,14 +92,19 @@ export function EditorDashboard() {
     setFormOpen(true)
   }
 
-  async function deleteItem(id: string) {
-    if (!confirm('Tem certeza que deseja remover este item?')) return
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError(null)
     try {
-      await api.delete(`/portfolio/${id}`)
+      await api.delete(`/portfolio/${deleteTarget.id}`)
+      setDeleteTarget(null)
       refetch()
     } catch (err) {
       const e = err as { response?: { data?: { message?: string } } }
-      alert(e?.response?.data?.message ?? 'Erro ao remover')
+      setDeleteError(e?.response?.data?.message ?? 'Erro ao remover o projeto')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -104,9 +115,9 @@ export function EditorDashboard() {
         navItems={NAV}
         activeId={section}
         onNavigate={(id) => {
-          if (id === 'profile') { navigate(`/editors/${user.id}`); return }
           setSelectedOrderId(null); setSection(id as Section)
         }}
+        onProfileClick={() => { setSelectedOrderId(null); setSection('profile') }}
         user={user}
         pageTitle={sectionTitle}
         pageSubtitle={
@@ -153,7 +164,7 @@ export function EditorDashboard() {
         ) : (
           <>
             {section === 'overview' && (
-              <OverviewSection editor={editor} totalItems={items.length} />
+              <OverviewSection editor={editor} totalItems={items.length} orders={orders} />
             )}
 
             {section === 'portfolio' && (
@@ -161,7 +172,7 @@ export function EditorDashboard() {
                 items={items}
                 onAdd={openCreate}
                 onEdit={openEdit}
-                onDelete={deleteItem}
+                onDelete={(id, title) => { setDeleteError(null); setDeleteTarget({ id, title }) }}
               />
             )}
 
@@ -206,22 +217,31 @@ export function EditorDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  {orders.map((order) => (
-                    <OrderCard
-                      key={order.id}
-                      order={order}
-                      perspective="editor"
-                      onClick={() => setSelectedOrderId(order.id)}
-                    />
-                  ))}
-                </div>
+                <>
+                  <OrderStatusFilter orders={orders} active={orderFilter} onChange={setOrderFilter} />
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    {filterOrdersByStatus(orders, orderFilter).map((order) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        perspective="editor"
+                        onClick={() => setSelectedOrderId(order.id)}
+                      />
+                    ))}
+                  </div>
+                </>
               )
             )}
 
             {section === 'messages' && <MessagesTab />}
 
             {section === 'premium' && <PremiumSection />}
+
+            {section === 'profile' && (
+              <div className="mx-auto max-w-2xl">
+                <ProfileForm editor={editor} userName={user.name} onSaved={refetch} />
+              </div>
+            )}
 
           </>
         )}
@@ -233,18 +253,158 @@ export function EditorDashboard() {
         onClose={() => setFormOpen(false)}
         onSaved={refetch}
       />
+
+      {/* Confirmação de exclusão de item do portfólio */}
+      <Modal
+        open={deleteTarget !== null}
+        onClose={() => { if (!deleting) setDeleteTarget(null) }}
+        title="Remover projeto"
+        subtitle={deleteTarget?.title}
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              className="rounded-[8px] px-4 py-2 text-sm"
+              style={{
+                background: 'transparent',
+                color: 'rgba(255,255,255,0.6)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                cursor: deleting ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="rounded-[8px] px-4 py-2 text-sm font-semibold"
+              style={{
+                background: '#EF4444',
+                color: 'white',
+                border: 'none',
+                cursor: deleting ? 'not-allowed' : 'pointer',
+                opacity: deleting ? 0.7 : 1,
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              {deleting ? 'Removendo...' : 'Remover'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          Esta ação não pode ser desfeita. O vídeo será removido do seu portfólio.
+        </p>
+        {deleteError && (
+          <p
+            className="mt-3 rounded-[8px] px-3 py-2 text-xs"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#FCA5A5' }}
+          >
+            {deleteError}
+          </p>
+        )}
+      </Modal>
     </>
   )
 }
 
 // ─── Section: Overview ─────────────────────────────────────────────────────────
 
+// ── Mini gráfico de barras (SVG puro, sem dependências) ───────────────────────
+
+function StatusBarChart({ orders }: { orders: OrderDTO[] }) {
+  const counts = new Map<OrderStatus, number>()
+  for (const o of orders) counts.set(o.status, (counts.get(o.status) ?? 0) + 1)
+  const entries = [...counts.entries()].sort((a, b) => b[1] - a[1])
+  const max = Math.max(...entries.map(([, c]) => c), 1)
+
+  if (entries.length === 0) {
+    return (
+      <p className="py-6 text-center text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        Sem pedidos ainda — seus projetos aparecerão aqui.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-2.5">
+      {entries.map(([status, count]) => (
+        <div key={status} className="flex items-center gap-3">
+          <span className="w-32 shrink-0 truncate text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            {STATUS_LABELS[status]}
+          </span>
+          <div className="h-4 flex-1 overflow-hidden rounded-[4px]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+            <div
+              className="h-full rounded-[4px] transition-all"
+              style={{ width: `${(count / max) * 100}%`, background: STATUS_COLORS[status], opacity: 0.85 }}
+            />
+          </div>
+          <span className="w-6 shrink-0 text-right text-xs font-semibold text-white">{count}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Prazos próximos (pedidos ativos com deadline em até 7 dias) ───────────────
+
+const ACTIVE_STATUSES: OrderStatus[] = ['NEGOTIATING', 'AWAITING_PAYMENT', 'PENDING', 'ACCEPTED', 'IN_PROGRESS', 'DELIVERED', 'REVISION_REQUESTED']
+
+function UpcomingDeadlines({ orders }: { orders: OrderDTO[] }) {
+  const now = Date.now()
+  const upcoming = orders
+    .filter((o) => o.deadline && ACTIVE_STATUSES.includes(o.status))
+    .map((o) => ({ order: o, daysLeft: Math.ceil((new Date(o.deadline!).getTime() - now) / (24 * 60 * 60 * 1000)) }))
+    .filter(({ daysLeft }) => daysLeft <= 7)
+    .sort((a, b) => a.daysLeft - b.daysLeft)
+    .slice(0, 5)
+
+  if (upcoming.length === 0) {
+    return (
+      <p className="py-6 text-center text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        Nenhum prazo vencendo nos próximos 7 dias. 🎉
+      </p>
+    )
+  }
+
+  return (
+    <ul className="space-y-2">
+      {upcoming.map(({ order, daysLeft }) => {
+        const overdue = daysLeft < 0
+        const urgent = daysLeft <= 2
+        const color = overdue ? '#EF4444' : urgent ? '#EAB308' : '#3B82F6'
+        return (
+          <li
+            key={order.id}
+            className="flex items-center gap-3 rounded-[8px] px-3 py-2.5"
+            style={{ background: `${color}0D`, border: `1px solid ${color}33` }}
+          >
+            <IconClock size={14} stroke={1.5} style={{ color, flexShrink: 0 }} />
+            <span className="flex-1 truncate text-xs text-white">{order.title}</span>
+            <span className="shrink-0 text-[11px] font-semibold" style={{ color }}>
+              {overdue
+                ? `${Math.abs(daysLeft)}d atrasado`
+                : daysLeft === 0
+                  ? 'vence hoje'
+                  : `${daysLeft}d restantes`}
+            </span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 function OverviewSection({
   editor,
   totalItems,
+  orders,
 }: {
   editor: ReturnType<typeof useEditorMe>['editor']
   totalItems: number
+  orders: OrderDTO[]
 }) {
   const stats = [
     {
@@ -304,6 +464,24 @@ function OverviewSection({
         ))}
       </div>
 
+      {/* Gráficos: pedidos por status + prazos próximos */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div
+          className="rounded-card p-5"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <h3 className="mb-4 font-heading text-sm font-semibold text-white">Pedidos por status</h3>
+          <StatusBarChart orders={orders} />
+        </div>
+        <div
+          className="rounded-card p-5"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <h3 className="mb-4 font-heading text-sm font-semibold text-white">Prazos próximos</h3>
+          <UpcomingDeadlines orders={orders} />
+        </div>
+      </div>
+
       {/* Estado vazio se não tem portfólio */}
       {totalItems === 0 && (
         <div
@@ -343,7 +521,7 @@ function PortfolioSection({
   items: NonNullable<ReturnType<typeof useEditorMe>['editor']>['profile']['portfolioItems']
   onAdd: () => void
   onEdit: (item: NonNullable<ReturnType<typeof useEditorMe>['editor']>['profile']['portfolioItems'][number]) => void
-  onDelete: (id: string) => void
+  onDelete: (id: string, title: string) => void
 }) {
   if (items.length === 0) {
     return (
@@ -396,11 +574,22 @@ function PortfolioSection({
           {/* Thumbnail */}
           <div className="relative aspect-video w-full overflow-hidden" style={{ background: '#0D1B2A' }}>
             {item.thumbnailUrl ? (
-              <img
-                src={item.thumbnailUrl}
-                alt={item.title}
-                className="h-full w-full object-cover"
-              />
+              <>
+                {/* Fundo desfocado + contain: vídeos verticais não quebram o card */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${item.thumbnailUrl})`,
+                    backgroundSize: 'cover', backgroundPosition: 'center',
+                    filter: 'blur(14px) brightness(0.5)', transform: 'scale(1.15)',
+                  }}
+                />
+                <img
+                  src={item.thumbnailUrl}
+                  alt={item.title}
+                  className="relative h-full w-full object-contain"
+                />
+              </>
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <IconPlayerPlay size={32} stroke={1.5} style={{ color: 'rgba(255,255,255,0.2)' }} />
@@ -433,6 +622,11 @@ function PortfolioSection({
             <h3 className="mt-2 line-clamp-2 text-sm font-semibold text-white">
               {item.title}
             </h3>
+            {item.description && (
+              <p className="mt-1 line-clamp-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                {item.description}
+              </p>
+            )}
             <p
               className="mt-2 font-heading text-base font-bold"
               style={{ color: '#F4631E' }}
@@ -462,7 +656,7 @@ function PortfolioSection({
                   <IconEdit size={13} stroke={1.5} />
                 </button>
                 <button
-                  onClick={() => onDelete(item.id)}
+                  onClick={() => onDelete(item.id, item.title)}
                   className="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                   style={{
                     background: 'rgba(239,68,68,0.05)',

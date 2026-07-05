@@ -305,24 +305,29 @@ export function LoginPage() {
               <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
             </div>
 
-            {/* Google (placeholder — OAuth não está na Fase 1) */}
+            {/* Google (OAuth em fase futura — requer credenciais do Google Cloud) */}
             <button
               type="button"
-              onClick={() => alert('Login com Google será implementado em fase futura.')}
-              className="flex w-full items-center justify-center gap-2 rounded-[8px] py-2.5 text-sm font-medium transition-colors"
+              disabled
+              title="Login com Google em breve"
+              className="flex w-full items-center justify-center gap-2 rounded-[8px] py-2.5 text-sm font-medium"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.85)',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                color: 'rgba(255,255,255,0.4)',
                 fontFamily: "'DM Sans', sans-serif",
-                cursor: 'pointer',
+                cursor: 'not-allowed',
                 height: '42px',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
             >
               <IconBrandGoogle size={16} stroke={1.5} />
               Continuar com Google
+              <span
+                className="rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase"
+                style={{ background: 'rgba(244,99,30,0.12)', color: '#F4631E' }}
+              >
+                Em breve
+              </span>
             </button>
 
             {/* Cadastrar */}
