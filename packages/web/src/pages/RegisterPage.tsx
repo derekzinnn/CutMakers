@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { IconUser, IconMail, IconLock, IconCamera, IconMovie } from '@tabler/icons-react'
 import { api } from '@/lib/api'
 import { useAuth, type AuthUser } from '@/hooks/use-auth'
+import { Modal } from '@/components/ui/Modal'
+import { PLATFORM_TERMS } from '@/lib/terms'
 
 type Role = 'CREATOR' | 'EDITOR'
 
@@ -14,18 +16,26 @@ export function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [acceptTerms, setAcceptTerms] = useState(false)
+  const [termsOpen, setTermsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+
+    if (!acceptTerms) {
+      setError('É necessário aceitar os Termos de Uso para criar a conta.')
+      return
+    }
+
     setLoading(true)
 
     try {
       const { data } = await api.post<{ token: string; refreshToken: string; user: AuthUser }>(
         '/auth/register',
-        { name, email, password, role },
+        { name, email, password, role, acceptTerms },
       )
 
       login(data.token, data.refreshToken, data.user)
@@ -172,6 +182,32 @@ export function RegisterPage() {
               />
             </div>
 
+            {/* Aceite dos Termos de Uso */}
+            <label
+              className="flex cursor-pointer items-start gap-2.5 rounded-[8px] px-3 py-2.5"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#F4631E]"
+              />
+              <span className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Li e aceito os{' '}
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="font-medium hover:underline"
+                  style={{ color: '#F4631E', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                >
+                  Termos de Uso
+                </button>{' '}
+                da CutMakers. Entendo que a plataforma atua como intermediadora e que cada
+                usuário é responsável pelo conteúdo e pelos compromissos que assume.
+              </span>
+            </label>
+
             {error && (
               <p
                 className="rounded-[8px] px-3 py-2 text-xs text-red-400"
@@ -181,7 +217,12 @@ export function RegisterPage() {
               </p>
             )}
 
-            <button type="submit" disabled={loading} className="btn-primary">
+            <button
+              type="submit"
+              disabled={loading || !acceptTerms}
+              className="btn-primary"
+              style={{ opacity: loading || !acceptTerms ? 0.6 : 1, cursor: loading || !acceptTerms ? 'not-allowed' : 'pointer' }}
+            >
               {loading ? 'Criando conta...' : 'Criar conta'}
             </button>
           </form>
@@ -194,6 +235,31 @@ export function RegisterPage() {
           </p>
         </div>
       </div>
+
+      {/* Modal com os Termos de Uso completos */}
+      <Modal
+        open={termsOpen}
+        onClose={() => setTermsOpen(false)}
+        title="Termos de Uso"
+        subtitle="CutMakers — plataforma de intermediação"
+        size="lg"
+        footer={
+          <button
+            onClick={() => { setAcceptTerms(true); setTermsOpen(false) }}
+            className="rounded-[8px] px-5 py-2 text-sm font-semibold"
+            style={{ background: '#F4631E', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+          >
+            Li e aceito
+          </button>
+        }
+      >
+        <pre
+          className="whitespace-pre-wrap text-xs leading-relaxed"
+          style={{ color: 'rgba(255,255,255,0.7)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}
+        >
+          {PLATFORM_TERMS}
+        </pre>
+      </Modal>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { AuthService } from '../services/auth.service'
 import { subscriptionService } from '../services/subscription.service'
+import { orderService } from '../services/order.service'
 
 const authService = new AuthService()
 
@@ -11,6 +12,10 @@ const registerSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(8, 'Senha deve ter ao menos 8 caracteres'),
   role: z.enum(['CREATOR', 'EDITOR']),
+  // Aceite obrigatório dos Termos de Uso da plataforma
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: 'É necessário aceitar os Termos de Uso para criar a conta' }),
+  }),
 })
 
 const loginSchema = z.object({
@@ -38,7 +43,8 @@ export class AuthController {
     const passwordHash = await authService.hashPassword(password)
 
     const user = await prisma.user.create({
-      data: { name, email, passwordHash, role },
+      // termsAcceptedAt registra o aceite dos Termos de Uso (validado pelo schema)
+      data: { name, email, passwordHash, role, termsAcceptedAt: new Date() },
       select: { id: true, name: true, email: true, role: true },
     })
 
@@ -73,8 +79,10 @@ export class AuthController {
       return res.status(401).json({ message: 'Conta suspensa. Entre em contato com o suporte.' })
     }
 
-    // Aplica expiração de assinaturas vencidas de forma oportunista (sem cron por enquanto)
+    // Rotinas oportunistas no login (sem cron por enquanto):
+    // expira assinaturas vencidas + aprova entregas paradas há 7+ dias (cláusula 4b)
     await subscriptionService.checkAndExpireSubscriptions()
+    await orderService.autoApproveStaleDeliveries()
 
     const tokens = authService.generateTokens(user.id, user.role)
 

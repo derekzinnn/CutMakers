@@ -19,6 +19,10 @@ import {
   IconArrowRight,
   IconGavel,
   IconAlertTriangle,
+  IconFileText,
+  IconPrinter,
+  IconChevronDown,
+  IconChevronUp,
 } from '@tabler/icons-react'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -43,6 +47,7 @@ import {
 import { createReview } from '@/lib/reviews'
 import { createRevision, REVISION_STATUS_LABELS, type RevisionDTO } from '@/lib/revisions'
 import { openDispute, resolveDispute, type DisputeResolution } from '@/lib/disputes'
+import { acceptAgreement } from '@/lib/agreements'
 import { uploadFile } from '@/lib/upload'
 import { getOrCreateConversationByOrder, type ConversationDTO } from '@/lib/conversations'
 import { ChatPanel } from '@/components/chat/ChatPanel'
@@ -556,6 +561,7 @@ function AwaitingPaymentSection({
 
   // Creator view
   const alreadyInitiated = order.transaction !== null
+  const contractPending = order.agreement !== null && !order.agreement.bothAccepted
 
   async function handlePay() {
     setBusy(true)
@@ -579,7 +585,17 @@ function AwaitingPaymentSection({
           </div>
         </div>
 
-        {!alreadyInitiated ? (
+        {contractPending && !alreadyInitiated ? (
+          <div
+            className="flex items-center gap-2 rounded-[8px] px-4 py-3"
+            style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)' }}
+          >
+            <IconFileText size={16} stroke={1.5} style={{ color: '#EAB308', flexShrink: 0 }} />
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              O pagamento libera após <strong style={{ color: '#EAB308' }}>ambas as partes aceitarem o contrato</strong> (seção acima).
+            </p>
+          </div>
+        ) : !alreadyInitiated ? (
           <button
             onClick={handlePay}
             disabled={busy}
@@ -1091,6 +1107,161 @@ function ReviewFormSection({ orderId, onDone }: { orderId: string; onDone: () =>
         </button>
       </form>
     </ContentSection>
+  )
+}
+
+// ─── Contract section (termos do pedido, aceite de ambas as partes) ───────────
+
+function escapeHtml(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function printAgreement(content: string, title: string) {
+  const w = window.open('', '_blank', 'width=820,height=940')
+  if (!w) return
+  w.document.write(
+    `<!doctype html><html><head><title>${escapeHtml(title)}</title><style>body{font-family:Georgia,'Times New Roman',serif;padding:48px;white-space:pre-wrap;font-size:13px;line-height:1.65;color:#111;max-width:760px;margin:0 auto}</style></head><body>${escapeHtml(content)}</body></html>`,
+  )
+  w.document.close()
+  w.focus()
+  w.print()
+}
+
+function AcceptanceRow({ label, acceptedAt }: { label: string; acceptedAt: string | null }) {
+  return (
+    <div className="flex items-center gap-2">
+      {acceptedAt ? (
+        <IconCircleCheck size={14} stroke={2} style={{ color: '#22C55E' }} />
+      ) : (
+        <IconClock size={14} stroke={1.5} style={{ color: '#EAB308' }} />
+      )}
+      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>{label}</span>
+      <span className="ml-auto text-[11px]" style={{ color: acceptedAt ? '#22C55E' : '#EAB308' }}>
+        {acceptedAt
+          ? `aceito em ${new Date(acceptedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+          : 'aguardando aceite'}
+      </span>
+    </div>
+  )
+}
+
+function ContractSection({
+  order,
+  perspective,
+  onRefresh,
+}: {
+  order: OrderDetailDTO
+  perspective: 'creator' | 'editor' | 'admin'
+  onRefresh: () => Promise<void>
+}) {
+  const agreement = order.agreement
+  const needsMyAcceptance =
+    agreement !== null &&
+    perspective !== 'admin' &&
+    (perspective === 'creator' ? !agreement.creatorAcceptedAt : !agreement.editorAcceptedAt)
+
+  // Expande automaticamente enquanto falta aceite; depois fica recolhido
+  const [expanded, setExpanded] = useState(order.status === 'AWAITING_PAYMENT' && !agreement?.bothAccepted)
+  const [accepting, setAccepting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  if (!agreement) return null
+
+  async function handleAccept() {
+    setAccepting(true)
+    setError(null)
+    try {
+      await acceptAgreement(order.id)
+      await onRefresh()
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setError(e?.response?.data?.message ?? 'Erro ao aceitar os termos')
+    } finally {
+      setAccepting(false)
+    }
+  }
+
+  return (
+    <div
+      className="rounded-[12px] p-5"
+      style={{
+        background: agreement.bothAccepted ? 'rgba(255,255,255,0.03)' : 'rgba(244,99,30,0.05)',
+        border: agreement.bothAccepted ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(244,99,30,0.25)',
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <IconFileText size={16} stroke={1.5} style={{ color: '#F4631E' }} />
+        <h2 className="font-heading text-sm font-semibold text-white">Contrato do projeto</h2>
+        <span
+          className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+          style={{
+            background: agreement.bothAccepted ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)',
+            color: agreement.bothAccepted ? '#22C55E' : '#EAB308',
+          }}
+        >
+          {agreement.bothAccepted ? 'Aceito por ambos' : 'Aguardando aceites'}
+        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => printAgreement(agreement.content, `Contrato — ${order.title}`)}
+            title="Imprimir / Salvar PDF"
+            className="flex h-7 w-7 items-center justify-center rounded-[6px]"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+          >
+            <IconPrinter size={13} stroke={1.5} />
+          </button>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            title={expanded ? 'Recolher' : 'Ler contrato'}
+            className="flex h-7 w-7 items-center justify-center rounded-[6px]"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+          >
+            {expanded ? <IconChevronUp size={13} stroke={1.5} /> : <IconChevronDown size={13} stroke={1.5} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Status dos aceites */}
+      <div className="mt-3 space-y-1.5 rounded-[8px] px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <AcceptanceRow label={`Criador — ${order.creator.name}`} acceptedAt={agreement.creatorAcceptedAt} />
+        <AcceptanceRow label={`Editor — ${order.editor.name}`} acceptedAt={agreement.editorAcceptedAt} />
+      </div>
+
+      {/* Conteúdo do contrato */}
+      {expanded && (
+        <pre
+          className="mt-3 max-h-[380px] overflow-y-auto whitespace-pre-wrap rounded-[8px] p-4 text-xs leading-relaxed"
+          style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}
+        >
+          {agreement.content}
+        </pre>
+      )}
+
+      {/* Aceite da parte logada */}
+      {needsMyAcceptance && (
+        <div className="mt-4">
+          <button
+            onClick={handleAccept}
+            disabled={accepting}
+            className="flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-semibold transition-all"
+            style={{
+              background: '#F4631E', color: 'white', border: 'none',
+              cursor: accepting ? 'not-allowed' : 'pointer',
+              opacity: accepting ? 0.7 : 1,
+              fontFamily: "'Syne', sans-serif",
+            }}
+          >
+            {accepting ? <IconLoader2 size={14} className="animate-spin" /> : <IconCircleCheck size={14} stroke={2} />}
+            Li e aceito os termos
+          </button>
+          <p className="mt-2 text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            O aceite eletrônico é registrado com data e hora (cláusula 12).
+          </p>
+        </div>
+      )}
+      {error && <p className="mt-2 text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+    </div>
   )
 }
 
@@ -1691,6 +1862,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       {currentTab === 'pagamento' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
           <div className="space-y-6">
+            <ContractSection order={order} perspective={perspective} onRefresh={load} />
             {order.status === 'NEGOTIATING' && (
               <NegotiationSection order={order} perspective={perspective} currentUserId={user.id} onRefresh={load} />
             )}
@@ -1766,6 +1938,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       {currentTab === 'briefing' && perspective === 'editor' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
           <div className="space-y-6">
+            <ContractSection order={order} perspective={perspective} onRefresh={load} />
             {order.status === 'NEGOTIATING' && (
               <NegotiationSection order={order} perspective={perspective} currentUserId={user.id} onRefresh={load} />
             )}

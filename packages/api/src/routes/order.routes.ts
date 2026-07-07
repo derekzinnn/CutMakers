@@ -4,6 +4,7 @@ import { reviewController } from '../controllers/review.controller'
 import { proposalController } from '../controllers/proposal.controller'
 import { revisionController } from '../controllers/revision.controller'
 import { disputeController } from '../controllers/dispute.controller'
+import { agreementController } from '../controllers/agreement.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
 import { requireRole } from '../middlewares/role.middleware'
 
@@ -46,3 +47,6 @@ orderRoutes.post('/:id/revisions', requireRole('CREATOR', 'BOTH'), revisionContr
 // Disputas (creator abre, apenas ADMIN resolve)
 orderRoutes.post('/:id/dispute', requireRole('CREATOR', 'BOTH'), disputeController.open)
 orderRoutes.post('/:id/dispute/resolve', requireRole('ADMIN'), disputeController.resolve)
+
+// Contrato do pedido — aceite de cada parte (o service valida quem é parte)
+orderRoutes.post('/:id/agreement/accept', agreementController.accept)

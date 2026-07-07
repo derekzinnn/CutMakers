@@ -113,6 +113,14 @@ export class PaymentService {
     }
     if (order.transaction) throw BadRequest('Pagamento já foi iniciado para este pedido')
 
+    // Gate contratual: ambas as partes precisam ter aceitado os termos do pedido.
+    // Lazy import evita ciclo de dependência entre payment e agreement services.
+    const { agreementService } = await import('./agreement.service')
+    const agreement = await agreementService.ensureAgreement(orderId)
+    if (!agreement.bothAccepted) {
+      throw BadRequest('Ambas as partes precisam aceitar os termos do contrato antes do pagamento')
+    }
+
     const amount = Number(order.budget)
     const platformFee = Number(order.platformFee)
     const netAmount = amount - platformFee

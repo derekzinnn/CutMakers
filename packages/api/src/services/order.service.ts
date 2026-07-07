@@ -5,6 +5,7 @@ import { paymentService } from './payment.service'
 import { proposalToDTO } from './proposal.service'
 import { revisionService, revisionToDTO } from './revision.service'
 import { disputeToDTO } from './dispute.service'
+import { agreementToDTO, AUTO_APPROVE_DAYS } from './agreement.service'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -123,6 +124,7 @@ const orderDetailInclude = {
     orderBy: { createdAt: 'desc' as const },
   },
   dispute: true,
+  agreement: true,
   _count: { select: { deliveries: true, revisions: true } },
 } satisfies Prisma.OrderInclude
 
@@ -382,6 +384,49 @@ export class OrderService {
     return { count: created.count }
   }
 
+  /**
+   * Cláusula 4b do contrato: entregas sem resposta do creator por mais de
+   * AUTO_APPROVE_DAYS dias são aprovadas automaticamente (pagamento liberado).
+   * Chamado de forma oportunista no login (sem cron por enquanto).
+   */
+  async autoApproveStaleDeliveries() {
+    const cutoff = new Date(Date.now() - AUTO_APPROVE_DAYS * 24 * 60 * 60 * 1000)
+    const stale = await prisma.order.findMany({
+      // updatedAt marca a última transição de status (→ DELIVERED)
+      where: { status: 'DELIVERED', updatedAt: { lt: cutoff } },
+      select: { id: true, title: true, creatorId: true, editorId: true },
+    })
+
+    for (const order of stale) {
+      await prisma.$transaction([
+        prisma.order.update({ where: { id: order.id }, data: { status: 'COMPLETED' } }),
+        prisma.editorProfile.updateMany({
+          where: { userId: order.editorId },
+          data: { totalJobs: { increment: 1 } },
+        }),
+        prisma.notification.create({
+          data: {
+            userId: order.creatorId,
+            type: 'PAYMENT_RELEASED',
+            title: 'Entrega aprovada automaticamente',
+            body: `A entrega de "${order.title}" foi aprovada automaticamente após ${AUTO_APPROVE_DAYS} dias sem resposta (cláusula 4b do contrato).`,
+            relatedOrderId: order.id,
+          },
+        }),
+        prisma.notification.create({
+          data: {
+            userId: order.editorId,
+            type: 'PAYMENT_RELEASED',
+            title: 'Pedido concluído — pagamento liberado!',
+            body: `A entrega de "${order.title}" foi aprovada automaticamente e o pagamento foi liberado.`,
+            relatedOrderId: order.id,
+          },
+        }),
+      ])
+      await paymentService.releasePayment(order.id)
+    }
+  }
+
   // ─── Helpers privados ─────────────────────────────────────────────────────
 
   private async notifyStatusChange(
@@ -516,6 +561,7 @@ export class OrderService {
       proposals: o.proposals.map(proposalToDTO),
       revisions: o.revisions.map(revisionToDTO),
       dispute: o.dispute ? disputeToDTO(o.dispute) : null,
+      agreement: o.agreement ? agreementToDTO(o.agreement) : null,
       deliveriesCount: o._count.deliveries,
       revisionsCount: o._count.revisions,
       createdAt: o.createdAt,
@@ -523,3 +569,5 @@ export class OrderService {
     }
   }
 }
+
+export const orderService = new OrderService()

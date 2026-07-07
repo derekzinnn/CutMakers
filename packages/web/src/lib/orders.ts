@@ -2,6 +2,7 @@ import { api } from './api'
 import type { ProposalDTO } from './proposals'
 import type { RevisionDTO } from './revisions'
 import type { DisputeDTO } from './disputes'
+import type { AgreementDTO } from './agreements'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ export interface OrderDetailDTO extends OrderDTO {
   proposals: ProposalDTO[]
   revisions: RevisionDTO[]
   dispute: DisputeDTO | null
+  agreement: AgreementDTO | null
   filesHidden: boolean
 }
 

@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
+import { agreementService } from './agreement.service'
 
 const PLATFORM_FEE_RATE = 0.1
 
@@ -151,6 +152,10 @@ export class ProposalService {
         },
       }),
     ])
+
+    // Gera (ou regenera, em caso de renegociação) o contrato com o valor final acordado.
+    // Ambas as partes precisam aceitar antes do pagamento (gate no payment.service).
+    await agreementService.regenerateAgreement(orderId)
 
     return proposalToDTO(updatedProposal)
   }

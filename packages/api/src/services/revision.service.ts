@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
+import { INCLUDED_REVISIONS } from './agreement.service'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -50,6 +51,14 @@ export class RevisionService {
     }
     if (order.status !== 'DELIVERED') {
       throw BadRequest('Só é possível solicitar revisão de um pedido entregue')
+    }
+
+    // Cláusula 3b do contrato: até 2 rodadas de revisão inclusas
+    const revisionCount = await prisma.revision.count({ where: { orderId } })
+    if (revisionCount >= INCLUDED_REVISIONS) {
+      throw BadRequest(
+        `Limite de ${INCLUDED_REVISIONS} revisões inclusas atingido. Aprove a entrega ou abra uma disputa para análise da equipe.`,
+      )
     }
 
     // A revisão precisa apontar para a entrega mais recente do pedido

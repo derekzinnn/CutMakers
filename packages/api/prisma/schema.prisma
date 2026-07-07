@@ -74,6 +74,7 @@ enum NotificationType {
   PAYMENT_CONFIRMED
   DISPUTE_OPENED
   DISPUTE_RESOLVED
+  CONTRACT_ACCEPTED
 }
 
 model User {
@@ -85,6 +86,8 @@ model User {
   avatarUrl    String?
   bio          String?
   banned       Boolean  @default(false)
+  // Aceite dos Termos de Uso da plataforma no cadastro
+  termsAcceptedAt DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -183,6 +186,7 @@ model Order {
   notifications Notification[]
   proposals     OrderProposal[]
   dispute       Dispute?
+  agreement     OrderAgreement?
 }
 
 model OrderFile {
@@ -308,6 +312,19 @@ model OrderProposal {
   message    String?
   status     ProposalStatus @default(PENDING)
   createdAt  DateTime       @default(now())
+}
+
+// Contrato do pedido — snapshot imutável dos termos gerados no aceite da proposta.
+// Ambas as partes precisam aceitar antes do pagamento (gate no payment.service).
+model OrderAgreement {
+  id                String    @id @default(uuid())
+  orderId           String    @unique
+  order             Order     @relation(fields: [orderId], references: [id])
+  termsVersion      String
+  content           String
+  creatorAcceptedAt DateTime?
+  editorAcceptedAt  DateTime?
+  createdAt         DateTime  @default(now())
 }
 
 model Dispute {

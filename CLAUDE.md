@@ -159,6 +159,20 @@ Texto:
   - Retorna `{ paymentUrl }` — abrir no browser para pagamento
   - Sem chave configurada (dev): Transaction criada mas sem URL real
 
+### Agreements — Contrato por pedido (`/api/orders/:id/agreement`)
+- Gerado automaticamente no aceite da proposta (`agreementService.regenerateAgreement`)
+  — snapshot imutável do termo (v1.0) com partes, valores, prazo; renegociação regenera e zera aceites
+- `POST /accept` — registra o aceite da parte logada (creator ou editor); notifica a contraparte
+  (`CONTRACT_ACCEPTED`); quando ambos aceitam, notifica o creator para pagar
+- **Gate de pagamento:** `POST /orders/:id/payment` recusa enquanto ambos não aceitarem
+- Regras codificadas do contrato (agreement.service): 2 revisões inclusas (revision.service bloqueia a 3ª),
+  aprovação automática após 7 dias em DELIVERED (`orderService.autoApproveStaleDeliveries`, roda no login)
+- O termo vem no `GET /orders/:id` (campo `agreement` com content + aceites)
+
+### Termos de Uso da plataforma (cadastro)
+- `POST /auth/register` exige `acceptTerms: true` (Zod literal) → grava `User.termsAcceptedAt`
+- Texto em `packages/web/src/lib/terms.ts` (modal no RegisterPage, checkbox obrigatório)
+
 ### Revisions (`/api/orders/:id/revisions`) — auth
 - `POST /` — creator solicita revisão (CREATOR/BOTH). Body: `{ deliveryId, description }`
   - Valida: order em DELIVERED, requester = creator, deliveryId é a entrega mais recente
@@ -258,7 +272,7 @@ Ver `packages/api/.env.example`. Precisa:
 ✅ Fase 1 — Base
    [x] Monorepo pnpm workspaces
    [x] API Express + TypeScript + Prisma
-   [x] Schema Prisma completo (17 modelos)
+   [x] Schema Prisma completo (18 modelos)
    [x] Auth: register, login, refresh, JWT middleware
    [x] Seed do admin + categorias
    [x] Frontend: Login, Register, AdminPage (com switcher de view)
@@ -471,10 +485,27 @@ Ver `packages/api/.env.example`. Precisa:
        prisma já loga só 'error' fora de dev; CORS por env (Fase 8); AuthUser.avatarUrl opcional
    [x] `tsc --noEmit` + builds de produção limpos em api + web, sem `any`
 
-⏳ Fase 10 — Próximos (pendem decisão/credenciais do dono)
+✅ Fase 10 — Contratos e Termos (aceite eletrônico de ambas as partes)
+   [x] Schema: OrderAgreement (orderId @unique, termsVersion, content snapshot, creatorAcceptedAt,
+       editorAcceptedAt) + User.termsAcceptedAt + NotificationType.CONTRACT_ACCEPTED
+   [x] agreement.service.ts: template do Termo de Prestação de Serviço (12 cláusulas, equilibrado
+       editor/criador) gerado com dados reais do pedido; constantes: 2 revisões, 7d auto-aprovação
+       — ensureAgreement (self-healing), regenerateAgreement (renegociação zera aceites),
+         acceptAgreement (valida parte, notifica contraparte / criador quando ambos aceitam)
+   [x] proposal.accept → regenerateAgreement; payment.initiatePayment → gate "ambos aceitaram"
+   [x] revision.service: máximo 2 revisões inclusas (cláusula 3b)
+   [x] order.service.autoApproveStaleDeliveries: DELIVERED >7d → COMPLETED + release + notifs
+       (cláusula 4b) — chamado no login junto com expiração de assinaturas
+   [x] auth.register: acceptTerms obrigatório (z.literal(true)) → User.termsAcceptedAt
+   [x] Frontend: lib/terms.ts (Termos de Uso da plataforma, 12 cláusulas — intermediação,
+       responsabilidade de cada parte, escrow/taxa, LGPD), lib/agreements.ts
+   [x] RegisterPage: checkbox obrigatório + modal com termos ("Li e aceito" marca o checkbox)
+   [x] OrderDetail: ContractSection (status de aceite por parte, texto expandível, botão
+       "Li e aceito os termos", imprimir/salvar PDF); botão de pagar bloqueado até ambos aceitarem
+   [x] tsc --noEmit + builds limpos em api + web, sem `any`; db push aplicado
+
+⏳ Fase 11 — Próximos (pendem decisão/credenciais do dono)
    [ ] Login com Google funcional (requer GOOGLE_CLIENT_ID/SECRET do Google Cloud — decisão do dono)
-   [ ] Geração de documento/contrato para aceite de ambas as partes por pedido
-       (proposta: termos gerados no aceite da proposta + aceite registrado antes do pagamento)
    [ ] Modo de publicação de projeto para CREATORS (marketplace invertido — feature grande, própria fase)
    [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)
    [ ] Aprovação/verificação manual de editores pelo admin (badge verificado curado)
