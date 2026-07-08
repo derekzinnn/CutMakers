@@ -239,10 +239,10 @@ function Hero({ onRegister }: { onRegister: () => void }) {
   return (
     <section
       style={{
-        padding: '90px 56px 80px',
+        padding: '56px 48px 52px',
         display: 'grid',
         gridTemplateColumns: '1.05fr 1fr',
-        gap: 64,
+        gap: 48,
         alignItems: 'center',
         position: 'relative',
         overflow: 'hidden',
@@ -286,7 +286,7 @@ function Hero({ onRegister }: { onRegister: () => void }) {
           style={{
             fontFamily: C.syne,
             fontWeight: 800,
-            fontSize: 'clamp(44px, 5vw, 68px)',
+            fontSize: 'clamp(34px, 4vw, 50px)',
             lineHeight: 1.02,
             letterSpacing: '-0.035em',
             margin: 0,
@@ -302,11 +302,11 @@ function Hero({ onRegister }: { onRegister: () => void }) {
         <p
           style={{
             fontFamily: C.dm,
-            fontSize: 18,
+            fontSize: 15,
             lineHeight: 1.55,
             color: C.text80,
-            marginTop: 24,
-            maxWidth: 520,
+            marginTop: 18,
+            maxWidth: 480,
             fontWeight: 400,
           }}
         >
@@ -582,7 +582,7 @@ function Logos() {
             style={{
               fontFamily: C.syne,
               fontWeight: 700,
-              fontSize: 22,
+              fontSize: 18,
               color: C.text40,
               letterSpacing: '-0.02em',
             }}
@@ -620,7 +620,7 @@ function HowItWorks() {
   ]
   return (
     <section
-      style={{ padding: '90px 56px', borderBottom: `1px solid ${C.border}` }}
+      style={{ padding: '60px 48px', borderBottom: `1px solid ${C.border}` }}
     >
       <div
         style={{
@@ -648,7 +648,7 @@ function HowItWorks() {
             style={{
               fontFamily: C.syne,
               fontWeight: 800,
-              fontSize: 48,
+              fontSize: 34,
               color: '#fff',
               letterSpacing: '-0.03em',
               lineHeight: 1.05,
@@ -723,7 +723,7 @@ function HowItWorks() {
               style={{
                 fontFamily: C.syne,
                 fontWeight: 700,
-                fontSize: 22,
+                fontSize: 18,
                 color: '#fff',
                 letterSpacing: '-0.02em',
                 marginTop: 12,
@@ -757,7 +757,7 @@ function Categories() {
   return (
     <section
       style={{
-        padding: '90px 56px',
+        padding: '60px 48px',
         background: C.navyMid,
         borderBottom: `1px solid ${C.border}`,
       }}
@@ -780,7 +780,7 @@ function Categories() {
           style={{
             fontFamily: C.syne,
             fontWeight: 800,
-            fontSize: 48,
+            fontSize: 34,
             color: '#fff',
             letterSpacing: '-0.03em',
             lineHeight: 1.05,
@@ -850,7 +850,7 @@ function FeaturedEditors({ onRegister }: { onRegister: () => void }) {
     { name: 'Júlia Tavares', tags: 'Corporativo · Cases', rate: 'R$ 950', rating: '5.0', jobs: '87', tone: 3, premium: true },
   ]
   return (
-    <section style={{ padding: '90px 56px', borderBottom: `1px solid ${C.border}` }}>
+    <section style={{ padding: '60px 48px', borderBottom: `1px solid ${C.border}` }}>
       <div
         style={{
           display: 'flex',
@@ -877,7 +877,7 @@ function FeaturedEditors({ onRegister }: { onRegister: () => void }) {
             style={{
               fontFamily: C.syne,
               fontWeight: 800,
-              fontSize: 48,
+              fontSize: 34,
               color: '#fff',
               letterSpacing: '-0.03em',
               lineHeight: 1.05,
@@ -1005,7 +1005,7 @@ function StatsBar() {
     { n: '94%', l: 'Aprovação na 1ª entrega' },
   ]
   return (
-    <section style={{ padding: '70px 56px', background: C.orange }}>
+    <section style={{ padding: '48px 48px', background: C.orange }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32 }}>
         {stats.map((s) => (
           <div key={s.l}>
@@ -1013,7 +1013,7 @@ function StatsBar() {
               style={{
                 fontFamily: C.syne,
                 fontWeight: 800,
-                fontSize: 64,
+                fontSize: 44,
                 color: '#fff',
                 letterSpacing: '-0.04em',
                 lineHeight: 1,
@@ -1043,12 +1043,12 @@ function StatsBar() {
 
 function CTA({ onRegister }: { onRegister: () => void }) {
   return (
-    <section style={{ padding: '90px 56px', borderBottom: `1px solid ${C.border}` }}>
+    <section style={{ padding: '60px 48px', borderBottom: `1px solid ${C.border}` }}>
       <div
         style={{
           background: C.navyMid,
           borderRadius: 20,
-          padding: '64px 64px',
+          padding: '44px 48px',
           border: `1px solid ${C.border}`,
           display: 'grid',
           gridTemplateColumns: '1.3fr 1fr',
@@ -1074,37 +1074,38 @@ function CTA({ onRegister }: { onRegister: () => void }) {
             style={{
               fontFamily: C.syne,
               fontWeight: 800,
-              fontSize: 44,
+              fontSize: 32,
               color: '#fff',
               letterSpacing: '-0.03em',
-              lineHeight: 1.05,
+              lineHeight: 1.1,
               margin: 0,
             }}
           >
-            Comece com o primeiro
+            Pronto para encontrar
             <br />
-            vídeo grátis.
+            o editor certo?
           </h2>
           <p
             style={{
               fontFamily: C.dm,
-              fontSize: 16,
+              fontSize: 14.5,
               color: C.text80,
               lineHeight: 1.55,
-              marginTop: 18,
-              maxWidth: 460,
+              marginTop: 14,
+              maxWidth: 440,
             }}
           >
-            Crie sua conta como criador e ganhe R$ 100 de crédito para testar o primeiro corte. Sem cartão.
+            Crie sua conta gratuita, publique seu briefing e negocie direto com editores
+            verificados. O pagamento fica protegido em escrow até você aprovar a entrega.
           </p>
-          <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
+          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
             <button
               onClick={onRegister}
               style={{
                 fontFamily: C.syne,
                 fontWeight: 600,
-                fontSize: 15,
-                padding: '12px 22px',
+                fontSize: 14,
+                padding: '11px 20px',
                 borderRadius: 8,
                 border: 'none',
                 background: C.orange,
@@ -1115,30 +1116,15 @@ function CTA({ onRegister }: { onRegister: () => void }) {
                 gap: 8,
               }}
             >
-              Criar conta grátis <IconArrowRight size={16} stroke={2.2} />
-            </button>
-            <button
-              style={{
-                fontFamily: C.syne,
-                fontWeight: 600,
-                fontSize: 15,
-                padding: '12px 22px',
-                borderRadius: 8,
-                background: 'transparent',
-                color: '#fff',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Falar com vendas
+              Criar conta grátis <IconArrowRight size={15} stroke={2.2} />
             </button>
           </div>
         </div>
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
             { icon: <IconShieldCheck size={18} color={C.orange} />, t: 'Pagamento em escrow', d: 'Liberado só após sua aprovação' },
-            { icon: <IconBolt size={18} color={C.orange} />, t: 'Entrega rápida', d: 'Editores premium em 24-72h' },
-            { icon: <IconUsers size={18} color={C.orange} />, t: 'Suporte humano', d: 'Time CutMakers no WhatsApp' },
+            { icon: <IconBolt size={18} color={C.orange} />, t: 'Contrato por projeto', d: 'Termos aceitos pelas duas partes' },
+            { icon: <IconUsers size={18} color={C.orange} />, t: 'Mediação de disputas', d: 'Equipe CutMakers analisa cada caso' },
           ].map((b) => (
             <div
               key={b.t}
@@ -1191,7 +1177,7 @@ function Footer() {
     { t: 'Legal', items: ['Termos de uso', 'Privacidade', 'Cookies', 'LGPD'] },
   ]
   return (
-    <footer style={{ padding: '64px 56px 32px' }}>
+    <footer style={{ padding: '48px 48px 28px' }}>
       <div
         style={{
           display: 'grid',
