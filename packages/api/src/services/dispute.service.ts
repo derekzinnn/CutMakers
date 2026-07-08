@@ -1,6 +1,7 @@
 import { Dispute, Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
+import { logEvent } from './audit.service'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,14 @@ export class DisputeService {
       return created
     })
 
+    await logEvent({
+      actorId: userId,
+      action: 'DISPUTE_OPENED',
+      entityType: 'Dispute',
+      entityId: dispute.id,
+      metadata: { orderId, reason: trimmed },
+    })
+
     return disputeToDTO(dispute)
   }
 
@@ -87,7 +96,7 @@ export class DisputeService {
         status: true,
         title: true,
         dispute: true,
-        transaction: { select: { id: true, status: true } },
+        transaction: { select: { id: true, status: true, amount: true, netAmount: true } },
       },
     })
     if (!order) throw NotFound('Pedido não encontrado')
@@ -164,6 +173,27 @@ export class DisputeService {
     )
 
     await prisma.$transaction(ops)
+
+    await logEvent({
+      actorId: adminId,
+      action: 'DISPUTE_RESOLVED',
+      entityType: 'Dispute',
+      entityId: order.dispute.id,
+      metadata: { orderId, resolution },
+    })
+
+    // Movimentação do escrow decidida pelo admin (se havia valor retido)
+    if (order.transaction && order.transaction.status === 'HELD') {
+      await logEvent({
+        actorId: adminId,
+        action: isRelease ? 'PAYMENT_RELEASED' : 'PAYMENT_REFUNDED',
+        entityType: 'Transaction',
+        entityId: order.transaction.id,
+        metadata: isRelease
+          ? { orderId, amount: Number(order.transaction.amount), netAmount: Number(order.transaction.netAmount) }
+          : { orderId, amount: Number(order.transaction.amount) },
+      })
+    }
 
     const updated = await prisma.dispute.findUniqueOrThrow({ where: { id: order.dispute.id } })
     return disputeToDTO(updated)

@@ -2,6 +2,7 @@ import { Subscription } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { BadRequest, NotFound } from '../lib/errors'
 import { paymentService } from './payment.service'
+import { logEvent } from './audit.service'
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
@@ -147,6 +148,15 @@ export class SubscriptionService {
         data: { isPremium: true, premiumExpiresAt: expiresAt },
       }),
     ])
+
+    // Evento de sistema — confirmação vem do webhook (ou auto-confirm em dev)
+    await logEvent({
+      actorId: null,
+      action: 'SUBSCRIPTION_ACTIVATED',
+      entityType: 'Subscription',
+      entityId: subscription.id,
+      metadata: { amount: Number(subscription.amount), expiresAt: expiresAt.toISOString() },
+    })
 
     return subscriptionToDTO(updated)
   }

@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
+import { logEvent } from './audit.service'
 
 const ABACATEPAY_API_URL = 'https://api.abacatepay.com/v1'
 
@@ -182,7 +183,7 @@ export class PaymentService {
       pixQrCode = null
       expiresAt = null
 
-      await prisma.$transaction([
+      const [devTransaction] = await prisma.$transaction([
         prisma.transaction.create({
           data: {
             orderId: order.id,
@@ -210,10 +211,26 @@ export class PaymentService {
         }),
       ])
 
+      await logEvent({
+        actorId: requesterId,
+        action: 'PAYMENT_INITIATED',
+        entityType: 'Transaction',
+        entityId: devTransaction.id,
+        metadata: { orderId: order.id, amount, externalPaymentId },
+      })
+      // Dev mode auto-confirma — evento de sistema
+      await logEvent({
+        actorId: null,
+        action: 'PAYMENT_CONFIRMED',
+        entityType: 'Transaction',
+        entityId: devTransaction.id,
+        metadata: { orderId: order.id, devMode: true },
+      })
+
       return { paymentUrl, pixCode, pixQrCode, expiresAt }
     }
 
-    await prisma.transaction.create({
+    const transaction = await prisma.transaction.create({
       data: {
         orderId: order.id,
         payerId: order.creatorId,
@@ -224,6 +241,14 @@ export class PaymentService {
         status: 'PENDING',
         externalPaymentId,
       },
+    })
+
+    await logEvent({
+      actorId: requesterId,
+      action: 'PAYMENT_INITIATED',
+      entityType: 'Transaction',
+      entityId: transaction.id,
+      metadata: { orderId: order.id, amount, externalPaymentId },
     })
 
     return { paymentUrl, pixCode, pixQrCode, expiresAt }
@@ -291,17 +316,97 @@ export class PaymentService {
         } else {
           await prisma.$transaction([...baseOps])
         }
+
+        // Evento de sistema — confirmado pelo webhook do Abacatepay
+        await logEvent({
+          actorId: null,
+          action: 'PAYMENT_CONFIRMED',
+          entityType: 'Transaction',
+          entityId: transaction.id,
+          metadata: { orderId: transaction.orderId, externalPaymentId: externalId },
+        })
       }
     }
 
     return { received: true }
   }
 
-  // Chamado internamente quando um order é marcado como COMPLETED
-  async releasePayment(orderId: string) {
+  /**
+   * Histórico de pagamentos do creator logado (transações onde ele é o pagador),
+   * com resumo do pedido e totais para os cards da aba Pagamentos.
+   */
+  async getMyPayments(userId: string, page = 1) {
+    const PER_PAGE = 20
+    const currentPage = Math.max(page, 1)
+    const where = { payerId: userId }
+
+    const [transactions, total, held, released, allPaid] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        skip: (currentPage - 1) * PER_PAGE,
+        take: PER_PAGE,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          amount: true,
+          platformFee: true,
+          status: true,
+          externalPaymentId: true,
+          createdAt: true,
+          order: {
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              editor: { select: { name: true } },
+              category: { select: { name: true } },
+            },
+          },
+        },
+      }),
+      prisma.transaction.count({ where }),
+      prisma.transaction.aggregate({ where: { ...where, status: 'HELD' }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { ...where, status: 'RELEASED' }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({
+        where: { ...where, status: { in: ['HELD', 'RELEASED'] } },
+        _sum: { amount: true },
+      }),
+    ])
+
+    return {
+      payments: transactions.map((t) => ({
+        id: t.id,
+        amount: Number(t.amount),
+        platformFee: Number(t.platformFee),
+        status: t.status,
+        externalPaymentId: t.externalPaymentId,
+        createdAt: t.createdAt,
+        order: {
+          id: t.order.id,
+          title: t.order.title,
+          status: t.order.status,
+          editorName: t.order.editor.name,
+          categoryName: t.order.category.name,
+        },
+      })),
+      summary: {
+        totalPaid: Number(allPaid._sum.amount ?? 0),
+        totalHeld: Number(held._sum.amount ?? 0),
+        totalCompleted: Number(released._sum.amount ?? 0),
+      },
+      total,
+      page: currentPage,
+      limit: PER_PAGE,
+      totalPages: Math.ceil(total / PER_PAGE),
+    }
+  }
+
+  // Chamado internamente quando um order é marcado como COMPLETED.
+  // actorId: quem disparou (creator aprovando, admin) — null em fluxos automáticos.
+  async releasePayment(orderId: string, actorId: string | null = null) {
     const transaction = await prisma.transaction.findUnique({
       where: { orderId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, amount: true, netAmount: true },
     })
     if (!transaction || transaction.status !== 'HELD') return
 
@@ -310,13 +415,21 @@ export class PaymentService {
       where: { id: transaction.id },
       data: { status: 'RELEASED' },
     })
+
+    await logEvent({
+      actorId,
+      action: 'PAYMENT_RELEASED',
+      entityType: 'Transaction',
+      entityId: transaction.id,
+      metadata: { orderId, amount: Number(transaction.amount), netAmount: Number(transaction.netAmount) },
+    })
   }
 
   // Chamado internamente quando uma disputa é resolvida em favor do creator
-  async refundPayment(orderId: string) {
+  async refundPayment(orderId: string, actorId: string | null = null) {
     const transaction = await prisma.transaction.findUnique({
       where: { orderId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, amount: true },
     })
     if (!transaction || transaction.status !== 'HELD') return
 
@@ -324,6 +437,14 @@ export class PaymentService {
     await prisma.transaction.update({
       where: { id: transaction.id },
       data: { status: 'REFUNDED' },
+    })
+
+    await logEvent({
+      actorId,
+      action: 'PAYMENT_REFUNDED',
+      entityType: 'Transaction',
+      entityId: transaction.id,
+      metadata: { orderId, amount: Number(transaction.amount) },
     })
   }
 }

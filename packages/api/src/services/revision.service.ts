@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 import { INCLUDED_REVISIONS } from './agreement.service'
+import { logEvent } from './audit.service'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,14 @@ export class RevisionService {
       })
 
       return created
+    })
+
+    await logEvent({
+      actorId: requestedById,
+      action: 'REVISION_REQUESTED',
+      entityType: 'Order',
+      entityId: orderId,
+      metadata: { deliveryVersion: latestDelivery.version },
     })
 
     return revisionToDTO(revision)

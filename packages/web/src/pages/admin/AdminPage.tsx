@@ -28,6 +28,9 @@ import {
   IconGavel,
   IconAlertTriangle,
   IconRosetteDiscountCheck,
+  IconHistory,
+  IconChevronDown,
+  IconChevronUp,
 } from '@tabler/icons-react'
 import { Modal } from '@/components/ui/Modal'
 import { STATUS_LABELS, STATUS_COLORS, TRANSACTION_LABELS, type OrderStatus, type TransactionStatus } from '@/lib/orders'
@@ -40,18 +43,20 @@ import {
   listAdminDisputes,
   getFinancialSummary,
   listAdminTransactions,
+  listAuditLog,
   type AdminUser,
   type AdminOrder,
   type AdminDispute,
   type AdminTransaction,
   type FinancialSummary,
   type UserRole,
+  type AuditLogEntry,
 } from '@/lib/admin'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 type ViewMode = 'ADMIN' | 'CREATOR' | 'EDITOR'
-type AdminSection = 'dashboard' | 'users' | 'orders' | 'transactions' | 'subscriptions'
+type AdminSection = 'dashboard' | 'users' | 'orders' | 'transactions' | 'subscriptions' | 'audit'
 type UserSection = 'feed' | 'projects' | 'account'
 
 // ─── Helpers compartilhados ───────────────────────────────────────────────────
@@ -796,6 +801,195 @@ function SubscriptionsSection() {
   )
 }
 
+// ─── Auditoria ────────────────────────────────────────────────────────────────
+
+const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
+  ORDER_CREATED: { label: 'Pedido criado', color: '#3B82F6' },
+  ORDER_CANCELLED: { label: 'Pedido cancelado', color: '#EF4444' },
+  PROPOSAL_ACCEPTED: { label: 'Proposta aceita', color: '#3B82F6' },
+  PAYMENT_INITIATED: { label: 'Pagamento iniciado', color: '#F4631E' },
+  PAYMENT_CONFIRMED: { label: 'Pagamento confirmado', color: '#22C55E' },
+  PAYMENT_RELEASED: { label: 'Pagamento liberado', color: '#22C55E' },
+  PAYMENT_REFUNDED: { label: 'Pagamento reembolsado', color: '#EF4444' },
+  REVISION_REQUESTED: { label: 'Revisão solicitada', color: '#EAB308' },
+  DISPUTE_OPENED: { label: 'Disputa aberta', color: '#F4631E' },
+  DISPUTE_RESOLVED: { label: 'Disputa resolvida', color: '#F4631E' },
+  SUBSCRIPTION_ACTIVATED: { label: 'Assinatura ativada', color: '#A855F7' },
+  USER_BANNED: { label: 'Usuário suspenso', color: '#EF4444' },
+  USER_UNBANNED: { label: 'Usuário reativado', color: '#22C55E' },
+}
+
+const ENTITY_LABELS: Record<string, string> = {
+  Order: 'Pedido',
+  Transaction: 'Transação',
+  Dispute: 'Disputa',
+  Subscription: 'Assinatura',
+  User: 'Usuário',
+}
+
+/** Converte o metadata JSON em pares legíveis (Valor: R$ 200,00 etc.) */
+function formatAuditMetadata(metadata: Record<string, unknown> | null): { label: string; value: string }[] {
+  if (!metadata) return []
+  const out: { label: string; value: string }[] = []
+  const asMoney = (v: unknown) => `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+  for (const [key, value] of Object.entries(metadata)) {
+    if (value === null || value === undefined) continue
+    switch (key) {
+      case 'amount': out.push({ label: 'Valor', value: asMoney(value) }); break
+      case 'netAmount': out.push({ label: 'Líquido ao editor', value: asMoney(value) }); break
+      case 'platformFee': out.push({ label: 'Taxa da plataforma', value: asMoney(value) }); break
+      case 'orderId': out.push({ label: 'Pedido', value: shortId(String(value)) }); break
+      case 'reason': out.push({ label: 'Motivo', value: String(value) }); break
+      case 'resolution':
+        out.push({ label: 'Resolução', value: value === 'RELEASE' ? 'Liberado ao editor' : 'Reembolsado ao criador' })
+        break
+      case 'deliveryVersion': out.push({ label: 'Entrega', value: `v${String(value)}` }); break
+      case 'externalPaymentId': out.push({ label: 'ID externo (gateway)', value: String(value) }); break
+      case 'expiresAt': out.push({ label: 'Válida até', value: new Date(String(value)).toLocaleDateString('pt-BR') }); break
+      case 'devMode': out.push({ label: 'Origem', value: 'Confirmação automática (dev)' }); break
+      default: out.push({ label: key, value: String(value) })
+    }
+  }
+  return out
+}
+
+function AuditSection() {
+  const [rawSearch, setRawSearch] = useState('')
+  const actorSearch = useDebounced(rawSearch)
+  const [action, setAction] = useState<string>('ALL')
+  const [page, setPage] = useState(1)
+  const [data, setData] = useState<{ logs: AuditLogEntry[]; totalPages: number } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    listAuditLog({
+      action: action === 'ALL' ? undefined : action,
+      actorSearch: actorSearch || undefined,
+      page,
+    })
+      .then((res) => { if (alive) setData({ logs: res.logs, totalPages: res.totalPages }) })
+      .catch(() => {})
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [action, actorSearch, page])
+
+  useEffect(() => { setPage(1) }, [action, actorSearch])
+
+  return (
+    <div className="rounded-card p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      {/* Filtros */}
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 rounded-[8px] px-3 py-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <IconSearch size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+          <input
+            value={rawSearch}
+            onChange={(e) => setRawSearch(e.target.value)}
+            placeholder="Buscar por usuário (nome/email)..."
+            className="w-60 bg-transparent text-xs text-white outline-none placeholder:text-white/40"
+          />
+        </div>
+        <select
+          value={action}
+          onChange={(e) => setAction(e.target.value)}
+          className="rounded-[8px] px-3 py-2 text-xs outline-none"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', colorScheme: 'dark' }}
+        >
+          <option value="ALL" style={{ background: '#162436' }}>Todas as ações</option>
+          {Object.entries(AUDIT_ACTIONS).map(([value, { label }]) => (
+            <option key={value} value={value} style={{ background: '#162436' }}>{label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Cabeçalho */}
+      <div className="grid grid-cols-[1.1fr_1.4fr_1.5fr_1fr_0.5fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)' }}>
+        <span>Data/hora</span>
+        <span>Ator</span>
+        <span>Ação</span>
+        <span>Entidade</span>
+        <span className="text-right">Detalhes</span>
+      </div>
+
+      {loading ? (
+        <Spinner />
+      ) : !data || data.logs.length === 0 ? (
+        <EmptyState message="Nenhum evento registrado ainda" />
+      ) : (
+        <div className="mt-1">
+          {data.logs.map((log) => {
+            const cfg = AUDIT_ACTIONS[log.action] ?? { label: log.action, color: 'rgba(255,255,255,0.5)' }
+            const details = formatAuditMetadata(log.metadata)
+            const expanded = expandedId === log.id
+            const hasDetails = details.length > 0
+            return (
+              <div key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div
+                  onClick={() => hasDetails && setExpandedId(expanded ? null : log.id)}
+                  className="grid grid-cols-[1.1fr_1.4fr_1.5fr_1fr_0.5fr] items-center gap-4 px-4 py-3 text-sm"
+                  style={{ cursor: hasDetails ? 'pointer' : 'default', background: expanded ? 'rgba(255,255,255,0.02)' : 'transparent' }}
+                >
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    {new Date(log.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className="truncate">
+                    {log.actor ? (
+                      <span className="text-white">{log.actor.name}</span>
+                    ) : (
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)' }}>
+                        Sistema
+                      </span>
+                    )}
+                  </span>
+                  <span>
+                    <span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ background: `${cfg.color}1A`, color: cfg.color, border: `1px solid ${cfg.color}33` }}>
+                      {cfg.label}
+                    </span>
+                  </span>
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {ENTITY_LABELS[log.entityType] ?? log.entityType}
+                    <span className="ml-1.5 font-mono text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{shortId(log.entityId)}</span>
+                  </span>
+                  <span className="flex justify-end">
+                    {hasDetails && (
+                      expanded
+                        ? <IconChevronUp size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+                        : <IconChevronDown size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+                    )}
+                  </span>
+                </div>
+
+                {expanded && hasDetails && (
+                  <div className="mx-4 mb-3 rounded-[8px] px-4 py-3" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                      {details.map((d) => (
+                        <div key={d.label} className="flex items-baseline gap-2 text-xs">
+                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>{d.label}:</span>
+                          <span className="truncate text-white">{d.value}</span>
+                        </div>
+                      ))}
+                      {log.actor && (
+                        <div className="flex items-baseline gap-2 text-xs">
+                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>Email do ator:</span>
+                          <span className="truncate text-white">{log.actor.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+          <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Seções Creator / Editor (placeholder por enquanto) ──────────────────────
 
 function FeedSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
@@ -962,6 +1156,7 @@ const NAV_ITEMS: { id: AdminSection; label: string; Icon: React.ElementType }[] 
   { id: 'orders', label: 'Ordens', Icon: IconBriefcase },
   { id: 'transactions', label: 'Financeiro', Icon: IconCreditCard },
   { id: 'subscriptions', label: 'Assinaturas', Icon: IconCrown },
+  { id: 'audit', label: 'Auditoria', Icon: IconHistory },
 ]
 
 const USER_NAV_ITEMS: { id: UserSection; label: string; Icon: React.ElementType }[] = [
@@ -1011,6 +1206,7 @@ export function AdminPage() {
     orders: 'Ordens',
     transactions: 'Financeiro',
     subscriptions: 'Assinaturas',
+    audit: 'Auditoria',
   }
 
   function handleViewUser(u: AdminUser) {
@@ -1298,6 +1494,7 @@ export function AdminPage() {
               {section === 'orders' && <OrdersSection onOpenOrder={(id) => navigate(`/orders/${id}`)} />}
               {section === 'transactions' && <FinanceiroSection />}
               {section === 'subscriptions' && <SubscriptionsSection />}
+              {section === 'audit' && <AuditSection />}
             </>
           )}
           {viewMode !== 'ADMIN' && (

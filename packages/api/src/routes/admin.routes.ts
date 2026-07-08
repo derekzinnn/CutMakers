@@ -23,3 +23,6 @@ adminRoutes.get('/disputes', adminController.listDisputes)
 // Financeiro
 adminRoutes.get('/financial-summary', adminController.financialSummary)
 adminRoutes.get('/transactions', adminController.listTransactions)
+
+// Auditoria
+adminRoutes.get('/audit-log', adminController.listAuditLog)

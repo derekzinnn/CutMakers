@@ -217,6 +217,20 @@ Texto:
   (status ACTIVE, `expiresAt` = agora/vencimento + 30d, `EditorProfile.isPremium = true`)
 - Expiração: `checkAndExpireSubscriptions()` roda no login — vencidas → EXPIRED + `isPremium = false`
 
+### Payments (`/api/payments`) — auth
+- `GET /me` — histórico de pagamentos do creator logado (CREATOR/BOTH/ADMIN), 20/pág
+  - Transações onde `payerId = user`, com resumo do pedido (título, editor, categoria, status)
+  - `summary`: { totalPaid (HELD+RELEASED), totalHeld, totalCompleted (RELEASED) }
+
+### Audit Log (trilha de auditoria)
+- Modelo `AuditLog` (actorId nullable = evento de sistema, action, entityType, entityId, metadata Json,
+  índices por entidade/ator/ação); `audit.service.logEvent()` é fire-safe (falha não derruba o fluxo)
+- Eventos registrados: ORDER_CREATED, ORDER_CANCELLED, PROPOSAL_ACCEPTED, PAYMENT_INITIATED,
+  PAYMENT_CONFIRMED (webhook/dev = Sistema), PAYMENT_RELEASED, PAYMENT_REFUNDED, REVISION_REQUESTED,
+  DISPUTE_OPENED, DISPUTE_RESOLVED, SUBSCRIPTION_ACTIVATED, USER_BANNED/UNBANNED
+- `GET /api/admin/audit-log` — ADMIN, 30/pág; filtros: `?entityType=`, `?action=`, `?actorId=`,
+  `?actorSearch=` (nome/email), `?orderId=` (atalho para entityType=Order)
+
 ### Admin (`/api/admin`) — auth + requireRole(ADMIN) em todas
 - `GET /users` — lista paginada (20/pág). Filtros: `?search=` (nome/email), `?role=`, `?page=`
   - Retorna id, name, email, role, banned, isPremium (join EditorProfile), createdAt
@@ -509,7 +523,29 @@ Ver `packages/api/.env.example`. Precisa:
        e ao "Solicitar revisão" (mostra Nª de 2 inclusas + preview da solicitação)
    [x] tsc --noEmit + builds limpos em api + web, sem `any`; db push aplicado
 
-⏳ Fase 11 — Próximos (pendem decisão/credenciais do dono)
+✅ Fase 11 — Auditoria + aba Pagamentos do creator
+   [x] Schema: AuditLog (actorId nullable p/ eventos de sistema, metadata Json, 3 índices) — db push aplicado
+   [x] audit.service.logEvent() fire-safe (try/catch — log nunca derruba o fluxo principal)
+   [x] 13 eventos ligados nos services: order create/cancel, proposal accept (amount+fee),
+       payment initiated/confirmed (webhook e dev)/released/refunded (com valores), revision,
+       dispute open (reason)/resolve (resolution + movimento do escrow), subscription activated,
+       user banned/unbanned (setBanned agora recebe adminId)
+       — releasePayment/refundPayment ganharam actorId opcional (creator aprova / admin resolve / null = auto)
+   [x] GET /api/admin/audit-log (30/pág; entityType/action/actorId/actorSearch/orderId) — Zod + DTO com ator
+   [x] AdminPage aba "Auditoria": badges coloridos por tipo (pagamento verde, disputa laranja, ban vermelho),
+       ator ou "Sistema", linha expansível com metadata formatada (Valor: R$ 200,00 — não JSON cru),
+       filtro por ação + busca por usuário debounced + paginação
+   [x] GET /api/payments/me (CREATOR/BOTH, 20/pág): transações do payer + resumo do pedido +
+       summary { totalPaid, totalHeld, totalCompleted }
+   [x] CreatorDashboard aba "Pagamentos" real (substitui placeholder): 3 cards de resumo,
+       tabela com projeto (clica → /orders/:id), editor, valor, badge de status, data,
+       empty state com CTA "Explorar editores", paginação
+   [x] Trace E2E validado (script): criar → negociar → contrato → pagar → HELD na aba →
+       entregar → aprovar → RELEASED na aba; auditoria com a sequência completa
+       (ORDER_CREATED → PROPOSAL_ACCEPTED → PAYMENT_INITIATED → PAYMENT_CONFIRMED [Sistema] → PAYMENT_RELEASED)
+   [x] tsc --noEmit + builds limpos em api + web, sem `any`
+
+⏳ Fase 12 — Próximos (pendem decisão/credenciais do dono)
    [ ] Login com Google funcional (requer GOOGLE_CLIENT_ID/SECRET do Google Cloud — decisão do dono)
    [ ] Modo de publicação de projeto para CREATORS (marketplace invertido — feature grande, própria fase)
    [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)

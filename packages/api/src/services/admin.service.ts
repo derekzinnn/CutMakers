@@ -1,6 +1,7 @@
 import { OrderStatus, Prisma, Role } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { BadRequest, NotFound } from '../lib/errors'
+import { logEvent } from './audit.service'
 
 // ─── Tipos de parâmetros ───────────────────────────────────────────────────────
 
@@ -18,6 +19,18 @@ export interface ListAdminOrdersParams {
 const USERS_PER_PAGE = 20
 const ORDERS_PER_PAGE = 20
 const TRANSACTIONS_PER_PAGE = 50
+const AUDIT_PER_PAGE = 30
+
+export interface ListAuditLogParams {
+  entityType?: string
+  action?: string
+  actorId?: string
+  /** Busca por nome/email do ator */
+  actorSearch?: string
+  /** Atalho: resolve para entityType=Order + entityId=orderId */
+  orderId?: string
+  page?: number
+}
 
 // ─── Serviço ──────────────────────────────────────────────────────────────────
 
@@ -71,7 +84,7 @@ export class AdminService {
     }
   }
 
-  async setBanned(userId: string, banned: boolean) {
+  async setBanned(userId: string, banned: boolean, adminId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, role: true },
@@ -84,6 +97,14 @@ export class AdminService {
       data: { banned },
       select: { id: true, name: true, email: true, role: true, banned: true },
     })
+
+    await logEvent({
+      actorId: adminId,
+      action: banned ? 'USER_BANNED' : 'USER_UNBANNED',
+      entityType: 'User',
+      entityId: userId,
+    })
+
     return updated
   }
 
@@ -187,6 +208,56 @@ export class AdminService {
       totalPlatformFees: Number(released._sum.platformFee ?? 0),
       totalHeldInEscrow: Number(held._sum.amount ?? 0),
       totalRefunded: Number(refunded._sum.amount ?? 0),
+    }
+  }
+
+  async listAuditLog(params: ListAuditLogParams) {
+    const page = Math.max(params.page ?? 1, 1)
+    const skip = (page - 1) * AUDIT_PER_PAGE
+
+    const where: Prisma.AuditLogWhereInput = {}
+    if (params.orderId) {
+      where.entityType = 'Order'
+      where.entityId = params.orderId
+    } else if (params.entityType) {
+      where.entityType = params.entityType
+    }
+    if (params.action) where.action = params.action
+    if (params.actorId) where.actorId = params.actorId
+    if (params.actorSearch) {
+      where.actor = {
+        OR: [
+          { name: { contains: params.actorSearch, mode: 'insensitive' } },
+          { email: { contains: params.actorSearch, mode: 'insensitive' } },
+        ],
+      }
+    }
+
+    const [logs, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        skip,
+        take: AUDIT_PER_PAGE,
+        orderBy: { createdAt: 'desc' },
+        include: { actor: { select: { id: true, name: true, email: true } } },
+      }),
+      prisma.auditLog.count({ where }),
+    ])
+
+    return {
+      logs: logs.map((l) => ({
+        id: l.id,
+        action: l.action,
+        entityType: l.entityType,
+        entityId: l.entityId,
+        metadata: l.metadata,
+        createdAt: l.createdAt,
+        actor: l.actor ? { id: l.actor.id, name: l.actor.name, email: l.actor.email } : null,
+      })),
+      total,
+      page,
+      limit: AUDIT_PER_PAGE,
+      totalPages: Math.ceil(total / AUDIT_PER_PAGE),
     }
   }
 

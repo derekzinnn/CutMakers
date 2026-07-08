@@ -106,6 +106,7 @@ model User {
   proposals              OrderProposal[]
   disputesOpened         Dispute[]      @relation("DisputeOpener")
   disputesResolved       Dispute[]      @relation("DisputeResolver")
+  auditLogs              AuditLog[]
 }
 
 model EditorProfile {
@@ -312,6 +313,23 @@ model OrderProposal {
   message    String?
   status     ProposalStatus @default(PENDING)
   createdAt  DateTime       @default(now())
+}
+
+// Trilha de auditoria — registra pagamentos, disputas, mudanças de status e ações
+// administrativas. actorId null = evento de sistema (webhook, auto-aprovação).
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
 }
 
 // Contrato do pedido — snapshot imutável dos termos gerados no aceite da proposta.

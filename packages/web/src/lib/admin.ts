@@ -119,3 +119,36 @@ export async function listAdminTransactions(params: { page?: number }): Promise<
   const { data } = await api.get<ListTransactionsResponse>('/admin/transactions', { params })
   return data
 }
+
+// ─── Auditoria ─────────────────────────────────────────────────────────────────
+
+export type AuditEntityType = 'Order' | 'Transaction' | 'Dispute' | 'Subscription' | 'User'
+
+export interface AuditLogEntry {
+  id: string
+  action: string
+  entityType: AuditEntityType
+  entityId: string
+  metadata: Record<string, unknown> | null
+  createdAt: string
+  actor: { id: string; name: string; email: string } | null
+}
+
+interface ListAuditLogResponse {
+  logs: AuditLogEntry[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+export async function listAuditLog(params: {
+  entityType?: AuditEntityType
+  action?: string
+  actorSearch?: string
+  orderId?: string
+  page?: number
+}): Promise<ListAuditLogResponse> {
+  const { data } = await api.get<ListAuditLogResponse>('/admin/audit-log', { params })
+  return data
+}

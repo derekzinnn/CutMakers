@@ -6,6 +6,7 @@ import { proposalToDTO } from './proposal.service'
 import { revisionService, revisionToDTO } from './revision.service'
 import { disputeToDTO } from './dispute.service'
 import { agreementToDTO, AUTO_APPROVE_DAYS } from './agreement.service'
+import { logEvent } from './audit.service'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -212,6 +213,8 @@ export class OrderService {
       return created
     })
 
+    await logEvent({ actorId: creatorId, action: 'ORDER_CREATED', entityType: 'Order', entityId: order.id })
+
     return this.toDTO(order)
   }
 
@@ -294,11 +297,15 @@ export class OrderService {
     })
 
     if (newStatus === 'COMPLETED') {
-      await paymentService.releasePayment(orderId)
+      await paymentService.releasePayment(orderId, userId)
       await prisma.editorProfile.updateMany({
         where: { userId: order.editorId },
         data: { totalJobs: { increment: 1 } },
       })
+    }
+
+    if (newStatus === 'CANCELLED') {
+      await logEvent({ actorId: userId, action: 'ORDER_CANCELLED', entityType: 'Order', entityId: orderId })
     }
 
     await this.notifyStatusChange(order.id, order.title, order.creatorId, order.editorId, newStatus, userId)

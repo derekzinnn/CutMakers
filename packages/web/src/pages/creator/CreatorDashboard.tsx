@@ -15,6 +15,11 @@ import {
   IconPlus,
   IconChevronDown,
   IconAdjustmentsHorizontal,
+  IconLoader2,
+  IconChevronLeft,
+  IconChevronRight,
+  IconLock,
+  IconCircleCheck,
 } from '@tabler/icons-react'
 import { DashboardShell, type NavItem } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
@@ -25,7 +30,8 @@ import { OrderCard } from '@/components/orders/OrderCard'
 import { OrderStatusFilter, filterOrdersByStatus } from '@/components/orders/OrderStatusFilter'
 import { MessagesTab } from '@/components/chat/MessagesTab'
 import { OrderDetail } from '@/components/orders/OrderDetail'
-import type { OrderStatus } from '@/lib/orders'
+import { TRANSACTION_LABELS, type OrderStatus, type TransactionStatus } from '@/lib/orders'
+import { getMyPayments, type MyPayment, type PaymentsSummary } from '@/lib/payments'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -454,8 +460,16 @@ export function CreatorDashboard() {
       {/* ── Mensagens ── */}
       {section === 'messages' && <MessagesTab />}
 
+      {/* ── Pagamentos ── */}
+      {section === 'payments' && (
+        <PaymentsSection
+          onOpenOrder={(id) => navigate(`/orders/${id}`)}
+          onBrowse={() => changeSection('feed')}
+        />
+      )}
+
       {/* ── Em breve ── */}
-      {(section === 'favorites' || section === 'payments' || section === 'account') && (
+      {(section === 'favorites' || section === 'account') && (
         <ComingSoon section={section} />
       )}
     </DashboardShell>
@@ -737,6 +751,181 @@ function ComingSoon({ section }: { section: Section }) {
       <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: 0 }}>
         Esta seção está sendo construída e chegará em breve.
       </p>
+    </div>
+  )
+}
+
+// ─── Pagamentos ───────────────────────────────────────────────────────────────
+
+const TX_COLORS: Record<TransactionStatus, string> = {
+  PENDING: '#F4631E',
+  HELD: '#3B82F6',
+  RELEASED: '#22C55E',
+  REFUNDED: '#EF4444',
+}
+
+const money = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+function PaymentsSection({
+  onOpenOrder,
+  onBrowse,
+}: {
+  onOpenOrder: (orderId: string) => void
+  onBrowse: () => void
+}) {
+  const [payments, setPayments] = useState<MyPayment[]>([])
+  const [summary, setSummary] = useState<PaymentsSummary | null>(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    getMyPayments(page)
+      .then((res) => {
+        if (!alive) return
+        setPayments(res.payments)
+        setSummary(res.summary)
+        setTotalPages(res.totalPages)
+      })
+      .catch(() => {})
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [page])
+
+  const cards = [
+    { label: 'Total pago', value: summary?.totalPaid ?? 0, Icon: IconCreditCard, color: '#F4631E' },
+    { label: 'Em custódia (escrow)', value: summary?.totalHeld ?? 0, Icon: IconLock, color: '#3B82F6' },
+    { label: 'Total concluído', value: summary?.totalCompleted ?? 0, Icon: IconCircleCheck, color: '#22C55E' },
+  ]
+
+  if (loading && payments.length === 0) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+        <IconLoader2 size={26} className="animate-spin" style={{ color: '#F4631E' }} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Cards de resumo */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {cards.map((c) => (
+          <div
+            key={c.label}
+            className="rounded-[12px] p-5"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>{c.label}</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${c.color}1A` }}>
+                <c.Icon size={16} stroke={1.5} color={c.color} />
+              </span>
+            </div>
+            <p className="font-heading text-2xl font-bold text-white">{money(c.value)}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Lista de pagamentos */}
+      {payments.length === 0 ? (
+        <div
+          className="rounded-[12px] p-12 text-center"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'rgba(244,99,30,0.1)' }}>
+            <IconCreditCard size={28} stroke={1.5} color="#F4631E" />
+          </div>
+          <h3 className="font-heading text-lg font-bold text-white">Você ainda não fez nenhum pagamento</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            Contrate um editor e o pagamento ficará registrado aqui, protegido em custódia até você aprovar a entrega.
+          </p>
+          <button
+            onClick={onBrowse}
+            className="mt-6 inline-flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-semibold"
+            style={{ background: '#F4631E', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+          >
+            <IconSearch size={15} stroke={2} />
+            Explorar editores
+          </button>
+        </div>
+      ) : (
+        <div
+          className="overflow-hidden rounded-[12px]"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          {/* Cabeçalho */}
+          <div
+            className="grid grid-cols-[2fr_1.2fr_1fr_1.3fr_1fr] gap-4 px-5 py-3 text-xs font-medium"
+            style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <span>Projeto</span>
+            <span>Editor</span>
+            <span>Valor</span>
+            <span>Status</span>
+            <span>Data</span>
+          </div>
+
+          {payments.map((p) => {
+            const color = TX_COLORS[p.status]
+            return (
+              <button
+                key={p.id}
+                onClick={() => onOpenOrder(p.order.id)}
+                className="grid w-full grid-cols-[2fr_1.2fr_1fr_1.3fr_1fr] items-center gap-4 px-5 py-3.5 text-left text-sm transition-colors"
+                style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              >
+                <span className="truncate">
+                  <span className="font-medium text-white">{p.order.title}</span>
+                  <span className="ml-2 text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{p.order.categoryName}</span>
+                </span>
+                <span className="truncate" style={{ color: 'rgba(255,255,255,0.65)' }}>{p.order.editorName}</span>
+                <span className="font-heading font-semibold text-white">{money(p.amount)}</span>
+                <span>
+                  <span
+                    className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                    style={{ background: `${color}1A`, color, border: `1px solid ${color}33` }}
+                  >
+                    {TRANSACTION_LABELS[p.status]}
+                  </span>
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {new Date(p.createdAt).toLocaleDateString('pt-BR')}
+                </span>
+              </button>
+            )
+          })}
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Página {page} de {totalPages}</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page <= 1}
+                  className="flex h-8 w-8 items-center justify-center rounded-[8px]"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: page <= 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)', cursor: page <= 1 ? 'not-allowed' : 'pointer' }}
+                >
+                  <IconChevronLeft size={15} stroke={1.5} />
+                </button>
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= totalPages}
+                  className="flex h-8 w-8 items-center justify-center rounded-[8px]"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: page >= totalPages ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)', cursor: page >= totalPages ? 'not-allowed' : 'pointer' }}
+                >
+                  <IconChevronRight size={15} stroke={1.5} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

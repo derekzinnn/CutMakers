@@ -10,6 +10,7 @@ import { conversationRoutes } from './conversation.routes'
 import { notificationRoutes } from './notification.routes'
 import { subscriptionRoutes } from './subscription.routes'
 import { adminRoutes } from './admin.routes'
+import { paymentRoutes } from './payment.routes'
 
 export const routes: Router = Router()
 
@@ -25,3 +26,4 @@ routes.use('/conversations', conversationRoutes)
 routes.use('/notifications', notificationRoutes)
 routes.use('/subscriptions', subscriptionRoutes)
 routes.use('/admin', adminRoutes)
+routes.use('/payments', paymentRoutes)

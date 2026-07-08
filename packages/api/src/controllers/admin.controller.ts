@@ -31,6 +31,15 @@ const listTransactionsQuery = z.object({
   page: z.coerce.number().int().min(1).optional(),
 })
 
+const listAuditLogQuery = z.object({
+  entityType: z.enum(['Order', 'Transaction', 'Dispute', 'Subscription', 'User']).optional(),
+  action: z.string().trim().min(1).max(50).optional(),
+  actorId: z.string().uuid().optional(),
+  actorSearch: z.string().trim().min(1).max(120).optional(),
+  orderId: z.string().uuid().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+})
+
 export const adminController = {
   async listUsers(req: Request, res: Response, next: NextFunction) {
     try {
@@ -43,7 +52,7 @@ export const adminController = {
 
   async banUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await adminService.setBanned(req.params.id as string, true)
+      const user = await adminService.setBanned(req.params.id as string, true, req.user!.sub)
       res.json({ user })
     } catch (err) {
       next(err)
@@ -52,7 +61,7 @@ export const adminController = {
 
   async unbanUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await adminService.setBanned(req.params.id as string, false)
+      const user = await adminService.setBanned(req.params.id as string, false, req.user!.sub)
       res.json({ user })
     } catch (err) {
       next(err)
@@ -88,6 +97,15 @@ export const adminController = {
     try {
       const query = listTransactionsQuery.parse(req.query)
       res.json(await adminService.listTransactions(query))
+    } catch (err) {
+      next(err)
+    }
+  },
+
+  async listAuditLog(req: Request, res: Response, next: NextFunction) {
+    try {
+      const query = listAuditLogQuery.parse(req.query)
+      res.json(await adminService.listAuditLog(query))
     } catch (err) {
       next(err)
     }
