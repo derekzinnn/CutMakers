@@ -502,6 +502,11 @@ Ver `packages/api/.env.example`. Precisa:
    [x] RegisterPage: checkbox obrigatório + modal com termos ("Li e aceito" marca o checkbox)
    [x] OrderDetail: ContractSection (status de aceite por parte, texto expandível, botão
        "Li e aceito os termos", imprimir/salvar PDF); botão de pagar bloqueado até ambos aceitarem
+   [x] Abas do creator reorganizadas: pré-pagamento = Pagamento / Briefing & Arquivos / Mensagens;
+       pós-pagamento a aba Pagamento some → Briefing (contrato + entregas + aprovar/revisar + sidebar
+       financeiro) / Arquivos / Mensagens
+   [x] Confirmações: modal ao "Aprovar entrega" (mostra valor liberado, irreversível — cláusula 4a)
+       e ao "Solicitar revisão" (mostra Nª de 2 inclusas + preview da solicitação)
    [x] tsc --noEmit + builds limpos em api + web, sem `any`; db push aplicado
 
 ⏳ Fase 11 — Próximos (pendem decisão/credenciais do dono)

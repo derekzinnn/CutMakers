@@ -51,6 +51,7 @@ import { acceptAgreement } from '@/lib/agreements'
 import { uploadFile } from '@/lib/upload'
 import { getOrCreateConversationByOrder, type ConversationDTO } from '@/lib/conversations'
 import { ChatPanel } from '@/components/chat/ChatPanel'
+import { Modal } from '@/components/ui/Modal'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -1269,25 +1270,35 @@ function ContractSection({
 
 function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => Promise<void> }) {
   const [open, setOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [description, setDescription] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const latestDelivery = order.deliveries[order.deliveries.length - 1] ?? null
+  const usedRevisions = order.revisions.length
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!latestDelivery) return setError('Não há entrega para revisar')
     if (!description.trim()) return setError('Descreva o que precisa ser alterado')
+    setError(null)
+    setConfirmOpen(true)
+  }
+
+  async function confirmSubmit() {
+    if (!latestDelivery) return
     setSubmitting(true)
     setError(null)
     try {
       await createRevision(order.id, { deliveryId: latestDelivery.id, description: description.trim() })
       setDescription('')
+      setConfirmOpen(false)
       setOpen(false)
       await onDone()
     } catch (err) {
       const e = err as { response?: { data?: { message?: string } } }
+      setConfirmOpen(false)
       setError(e?.response?.data?.message ?? 'Erro ao solicitar revisão')
     } finally {
       setSubmitting(false)
@@ -1308,40 +1319,81 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-[12px] p-4 space-y-3" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.25)' }}>
-      <p className="text-sm font-semibold" style={{ color: '#EAB308' }}>Solicitar revisão</p>
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="O que precisa ser alterado?"
-        rows={3}
-        maxLength={2000}
-        autoFocus
-        className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
-        disabled={submitting}
-      />
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => { setOpen(false); setError(null) }}
-          className="rounded-[8px] px-3 py-2 text-xs"
-          style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={submitting || !description.trim()}
-          className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
-          style={{ background: '#EAB308', color: '#1a1400', border: 'none', cursor: submitting || !description.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !description.trim() ? 0.6 : 1, fontFamily: "'Syne', sans-serif" }}
-        >
-          {submitting && <IconLoader2 size={12} className="animate-spin" />}
-          Enviar solicitação
-        </button>
-      </div>
-    </form>
+    <>
+      <form onSubmit={handleSubmit} className="rounded-[12px] p-4 space-y-3" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.25)' }}>
+        <p className="text-sm font-semibold" style={{ color: '#EAB308' }}>Solicitar revisão</p>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="O que precisa ser alterado?"
+          rows={3}
+          maxLength={2000}
+          autoFocus
+          className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+          disabled={submitting}
+        />
+        {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => { setOpen(false); setError(null) }}
+            className="rounded-[8px] px-3 py-2 text-xs"
+            style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={submitting || !description.trim()}
+            className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
+            style={{ background: '#EAB308', color: '#1a1400', border: 'none', cursor: submitting || !description.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !description.trim() ? 0.6 : 1, fontFamily: "'Syne', sans-serif" }}
+          >
+            {submitting && <IconLoader2 size={12} className="animate-spin" />}
+            Enviar solicitação
+          </button>
+        </div>
+      </form>
+
+      {/* Confirmação — mostra a rodada de revisão que será usada (2 inclusas) */}
+      <Modal
+        open={confirmOpen}
+        onClose={() => { if (!submitting) setConfirmOpen(false) }}
+        title="Confirmar solicitação de revisão"
+        subtitle={order.title}
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setConfirmOpen(false)}
+              disabled={submitting}
+              className="rounded-[8px] px-4 py-2 text-sm"
+              style={{ background: 'transparent', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)', cursor: submitting ? 'not-allowed' : 'pointer' }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmSubmit}
+              disabled={submitting}
+              className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
+              style={{ background: '#EAB308', color: '#1a1400', border: 'none', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            >
+              {submitting && <IconLoader2 size={14} className="animate-spin" />}
+              Solicitar revisão
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          Esta será a <strong style={{ color: '#EAB308' }}>{usedRevisions + 1}ª de 2 revisões inclusas</strong> no
+          contrato. O editor será notificado para ajustar a entrega.
+        </p>
+        <div className="mt-3 rounded-[8px] px-3 py-2" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>O que será solicitado</p>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{description}</p>
+        </div>
+      </Modal>
+    </>
   )
 }
 
@@ -1554,6 +1606,7 @@ function ActionButtons({
 }) {
   const [busy, setBusy] = useState<string | null>(null)
   const [showDelivery, setShowDelivery] = useState(false)
+  const [confirmApprove, setConfirmApprove] = useState(false)
 
   async function doAction(status: OrderStatus) {
     setBusy(status)
@@ -1633,13 +1686,54 @@ function ActionButtons({
     }
     if (status === 'DELIVERED') {
       return (
-        <div className="flex flex-col gap-3">
-          {btn('Aprovar entrega', () => doAction('COMPLETED'), 'COMPLETED', 'primary', <IconCheck size={14} stroke={2} />)}
-          <RevisionRequestForm order={order} onDone={onRefresh} />
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
-            <DisputeForm order={order} onDone={onRefresh} />
+        <>
+          <div className="flex flex-col gap-3">
+            {btn('Aprovar entrega', () => setConfirmApprove(true), 'COMPLETED', 'primary', <IconCheck size={14} stroke={2} />)}
+            <RevisionRequestForm order={order} onDone={onRefresh} />
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+              <DisputeForm order={order} onDone={onRefresh} />
+            </div>
           </div>
-        </div>
+
+          {/* Confirmação de aprovação — ação irreversível: libera o pagamento */}
+          <Modal
+            open={confirmApprove}
+            onClose={() => { if (busy === null) setConfirmApprove(false) }}
+            title="Aprovar entrega"
+            subtitle={order.title}
+            size="sm"
+            footer={
+              <>
+                <button
+                  onClick={() => setConfirmApprove(false)}
+                  disabled={busy !== null}
+                  className="rounded-[8px] px-4 py-2 text-sm"
+                  style={{ background: 'transparent', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)', cursor: busy ? 'not-allowed' : 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={async () => { await doAction('COMPLETED'); setConfirmApprove(false) }}
+                  disabled={busy !== null}
+                  className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
+                  style={{ background: '#22C55E', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+                >
+                  {busy === 'COMPLETED' ? <IconLoader2 size={14} className="animate-spin" /> : <IconCheck size={14} stroke={2} />}
+                  Confirmar aprovação
+                </button>
+              </>
+            }
+          >
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              Ao aprovar, o pagamento de{' '}
+              <strong style={{ color: '#22C55E' }}>{fmtBRL(order.budget - order.platformFee)}</strong>{' '}
+              será liberado ao editor e o pedido será concluído.
+            </p>
+            <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Esta ação não pode ser desfeita (cláusula 4a do contrato).
+            </p>
+          </Modal>
+        </>
       )
     }
     if (status === 'REVISION_REQUESTED') {
@@ -1706,9 +1800,6 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
     return 'creator' as const
   })()
 
-  const defaultTab = perspective === 'editor' ? 'briefing' : 'pagamento'
-  const currentTab = activeTab ?? defaultTab
-
   async function handleAction(newStatus: OrderStatus) {
     if (!order) return
     setActionError(null)
@@ -1772,18 +1863,30 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
 
   if (!order) return null
 
-  // Tab definitions per perspective
+  // Tab definitions per perspective.
+  // Para o creator, a aba "Pagamento" só existe até o pagamento ser confirmado;
+  // depois o fluxo vira Briefing / Arquivos / Mensagens (entregas + aprovação no Briefing).
+  const prePayment = ['NEGOTIATING', 'AWAITING_PAYMENT', 'PENDING', 'ACCEPTED'].includes(order.status)
   const tabs = perspective === 'editor'
     ? [
         { id: 'briefing', label: 'Briefing' },
         { id: 'arquivos', label: 'Arquivos' },
         { id: 'mensagens', label: 'Mensagens' },
       ]
-    : [
-        { id: 'pagamento', label: 'Pagamento' },
-        { id: 'briefing', label: 'Briefing & Arquivos' },
-        { id: 'mensagens', label: 'Mensagens' },
-      ]
+    : prePayment
+      ? [
+          { id: 'pagamento', label: 'Pagamento' },
+          { id: 'briefing', label: 'Briefing & Arquivos' },
+          { id: 'mensagens', label: 'Mensagens' },
+        ]
+      : [
+          { id: 'briefing', label: 'Briefing' },
+          { id: 'arquivos', label: 'Arquivos' },
+          { id: 'mensagens', label: 'Mensagens' },
+        ]
+  const defaultTab = perspective === 'editor' || !prePayment ? 'briefing' : 'pagamento'
+  const requestedTab = activeTab ?? defaultTab
+  const currentTab = tabs.some((t) => t.id === requestedTab) ? requestedTab : defaultTab
 
   return (
     <div>
@@ -1988,12 +2091,151 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       )}
 
       {/* ── TAB: BRIEFING & ARQUIVOS (creator / admin) ── */}
-      {currentTab === 'briefing' && perspective !== 'editor' && (
+      {/* Pré-pagamento: Briefing & Arquivos juntos (aba Pagamento cuida do resto) */}
+      {currentTab === 'briefing' && perspective !== 'editor' && prePayment && (
         <div className="space-y-6">
           <ContentSection title="Briefing">
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.description}</p>
           </ContentSection>
 
+          <ContentSection
+            title={`Arquivos de referência${order.files.length > 0 ? ` (${order.files.length})` : ''}`}
+            action={
+              <button
+                onClick={() => setAddFilesOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'rgba(244,99,30,0.1)', border: '1px solid rgba(244,99,30,0.25)', color: '#F4631E', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+              >
+                <IconUpload size={11} stroke={2} />
+                Novos arquivos
+              </button>
+            }
+          >
+            {order.files.length > 0 ? (
+              <ul className="space-y-2">
+                {order.files.map((f) => (
+                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <IconFile size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                    <span className="flex-1 truncate text-white">{f.fileName}</span>
+                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{f.fileType}</span>
+                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'rgba(244,99,30,0.1)', color: '#F4631E', textDecoration: 'none' }}>
+                      <IconDownload size={13} stroke={1.5} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="py-1 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhum arquivo adicionado ainda.</p>
+            )}
+          </ContentSection>
+        </div>
+      )}
+
+      {/* Pós-pagamento: Briefing vira a aba principal — entregas + aprovação aqui */}
+      {currentTab === 'briefing' && perspective !== 'editor' && !prePayment && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+          <div className="space-y-6">
+            <ContractSection order={order} perspective={perspective} onRefresh={load} />
+
+            <ContentSection title="Briefing">
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.description}</p>
+            </ContentSection>
+
+            {order.deliveries.length > 0 && (
+              <ContentSection title={`Entregas (${order.deliveries.length})`}>
+                <ul className="space-y-3">
+                  {order.deliveries.map((d) => (
+                    <li key={d.id} className="rounded-[8px] p-4" style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>v{d.version}</span>
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      {d.message && <p className="mb-3 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{d.message}</p>}
+                      <a href={d.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-[6px] px-3 py-1.5 text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', textDecoration: 'none', border: '1px solid rgba(168,85,247,0.3)' }}>
+                        <IconPlayerPlay size={12} stroke={1.5} />
+                        Abrir vídeo
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </ContentSection>
+            )}
+
+            {/* Ações do creator (aprovar / revisar / disputa) logo abaixo das entregas */}
+            {(order.status === 'DELIVERED' || order.status === 'REVISION_REQUESTED') && (
+              <ContentSection title="Ações">
+                <ActionButtons order={order} perspective={perspective} onAction={handleAction} onRefresh={load} />
+                {actionError && (
+                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+                    {actionError}
+                  </div>
+                )}
+              </ContentSection>
+            )}
+
+            <RevisionHistorySection revisions={order.revisions} />
+
+            {order.status === 'COMPLETED' && perspective === 'creator' && (
+              order.review ? (
+                <ContentSection title="Sua avaliação">
+                  <div className="flex items-center gap-2 mb-2">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <IconStarFilled key={s} size={18} style={{ color: s <= order.review!.rating ? '#F4631E' : 'rgba(255,255,255,0.12)' }} />
+                    ))}
+                    <span className="text-sm font-semibold text-white ml-1">{order.review.rating}/5</span>
+                  </div>
+                  {order.review.comment && <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.review.comment}</p>}
+                  <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Avaliado em {new Date(order.review.createdAt).toLocaleDateString('pt-BR')}</p>
+                </ContentSection>
+              ) : (
+                <ReviewFormSection orderId={order.id} onDone={load} />
+              )
+            )}
+          </div>
+
+          {/* Sidebar: contraparte + financeiro + status do pagamento */}
+          <div className="space-y-4">
+            {counterpart && (
+              <SideCard>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>{counterpartLabel}</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
+                    {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="font-medium text-white">{counterpart.name}</p>
+                </div>
+              </SideCard>
+            )}
+            <SideCard>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Financeiro</p>
+              <div className="space-y-2">
+                <Row label="Orçamento" value={fmtBRL(order.budget)} />
+                <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
+                  <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
+                </div>
+                {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
+              </div>
+            </SideCard>
+            <SideCard>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Pagamento</p>
+              {order.transaction ? (
+                <span className="inline-block rounded-full px-2.5 py-1 text-[11px] font-medium" style={{
+                  background: order.transaction.status === 'RELEASED' ? 'rgba(34,197,94,0.15)' : order.transaction.status === 'HELD' ? 'rgba(59,130,246,0.15)' : 'rgba(244,99,30,0.15)',
+                  color: order.transaction.status === 'RELEASED' ? '#22C55E' : order.transaction.status === 'HELD' ? '#3B82F6' : '#F4631E',
+                }}>
+                  {TRANSACTION_LABELS[order.transaction.status]}
+                </span>
+              ) : (
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Sem transação registrada.</p>
+              )}
+            </SideCard>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: ARQUIVOS (creator/admin, pós-pagamento) ── */}
+      {currentTab === 'arquivos' && perspective !== 'editor' && (
+        <div className="space-y-6">
           <ContentSection
             title={`Arquivos de referência${order.files.length > 0 ? ` (${order.files.length})` : ''}`}
             action={
@@ -2025,45 +2267,6 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <p className="py-1 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhum arquivo adicionado ainda.</p>
             )}
           </ContentSection>
-
-          {order.deliveries.length > 0 && (
-            <ContentSection title={`Entregas (${order.deliveries.length})`}>
-              <ul className="space-y-3">
-                {order.deliveries.map((d) => (
-                  <li key={d.id} className="rounded-[8px] p-4" style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)' }}>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>v{d.version}</span>
-                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                    {d.message && <p className="mb-3 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{d.message}</p>}
-                    <a href={d.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-[6px] px-3 py-1.5 text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', textDecoration: 'none', border: '1px solid rgba(168,85,247,0.3)' }}>
-                      <IconPlayerPlay size={12} stroke={1.5} />
-                      Abrir vídeo
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </ContentSection>
-          )}
-
-          <RevisionHistorySection revisions={order.revisions} />
-
-          {order.status === 'COMPLETED' && perspective === 'creator' && (
-            order.review ? (
-              <ContentSection title="Sua avaliação">
-                <div className="flex items-center gap-2 mb-2">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <IconStarFilled key={s} size={18} style={{ color: s <= order.review!.rating ? '#F4631E' : 'rgba(255,255,255,0.12)' }} />
-                  ))}
-                  <span className="text-sm font-semibold text-white ml-1">{order.review.rating}/5</span>
-                </div>
-                {order.review.comment && <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.review.comment}</p>}
-                <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Avaliado em {new Date(order.review.createdAt).toLocaleDateString('pt-BR')}</p>
-              </ContentSection>
-            ) : (
-              <ReviewFormSection orderId={order.id} onDone={load} />
-            )
-          )}
         </div>
       )}
 
