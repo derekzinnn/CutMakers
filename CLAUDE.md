@@ -545,9 +545,38 @@ Ver `packages/api/.env.example`. Precisa:
        (ORDER_CREATED → PROPOSAL_ACCEPTED → PAYMENT_INITIATED → PAYMENT_CONFIRMED [Sistema] → PAYMENT_RELEASED)
    [x] tsc --noEmit + builds limpos em api + web, sem `any`
 
-⏳ Fase 12 — Próximos (pendem decisão/credenciais do dono)
+✅ Fase 11.1 — Fix landing page
+   [x] CTA final: removida a promo inexistente "Comece com o primeiro vídeo grátis / R$100 de
+       crédito" (feature nunca existiu) → novo copy real sobre conta grátis + escrow;
+       botão morto "Falar com vendas" removido
+   [x] Cards do CTA ajustados pra claims reais: escrow, contrato por projeto, mediação de
+       disputas (no lugar de "entrega 24-72h" e "suporte WhatsApp", que não existem)
+   [x] Redução geral de escala (~20-25%): hero, h2 de seções, stats, títulos de card e
+       paddings de seção todos reduzidos — estava desproporcional em telas grandes
+
+🚧 Fase 12 — PD2: Marketplace invertido (editor envia proposta pro criador)
+   Planejamento em andamento — 4 decisões de produto pendentes do dono antes de iniciar:
+   [ ] 1. Visibilidade do briefing aberto: feed público filtrado por categoria (A) vs. só
+       editores com portfólio na categoria (B) vs. convite direto do creator (C)?
+       (recomendação dada: A como base, com filtro de categoria como lente default)
+   [ ] 2. Limite de propostas: 1 proposta ativa por projeto por editor? Existe prazo mínimo
+       antes do creator poder fechar, ou aceita a primeira que chegar?
+   [ ] 3. Propostas não escolhidas: viram REJECTED automático + notificação "projeto fechado
+       com outro editor" quando o creator aceita uma?
+   [ ] 4. Pré-visualização: editores concorrentes veem o briefing completo (descrição +
+       arquivos) ou só um resumo até serem selecionados?
+
+   Complexidade técnica principal identificada: `Order.editorId` precisa virar nullable
+   (hoje é `String` obrigatório no schema, linha ~166) — isso tem efeito cascata em
+   `Conversation.editorId` (também obrigatório), `agreement.service` (contrato assume
+   editor conhecido desde o início), notificações, `dispute.service`, `revision.service` e
+   todos os includes/DTOs de Order. A `OrderProposal` atual também é 1:1 (negociação de
+   valor com editor já definido); o modo aberto precisa de N propostas concorrentes por
+   pedido até o creator escolher uma, com uma máquina de estados nova (OPEN → editor
+   selecionado → fluxo atual de negociação/contrato/pagamento).
+
+⏳ Fase 13 — Próximos (pendem decisão/credenciais do dono)
    [ ] Login com Google funcional (requer GOOGLE_CLIENT_ID/SECRET do Google Cloud — decisão do dono)
-   [ ] Modo de publicação de projeto para CREATORS (marketplace invertido — feature grande, própria fase)
    [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)
    [ ] Aprovação/verificação manual de editores pelo admin (badge verificado curado)
    [ ] Testes automatizados (nenhum ainda em api/web)
