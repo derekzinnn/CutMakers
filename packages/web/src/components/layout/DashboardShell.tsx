@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck,
   IconCoin, IconX, IconAlertCircle, IconChevronsLeft, IconChevronsRight,
+  IconSend, IconFileText, IconGavel,
 } from '@tabler/icons-react'
 import type { AuthUser } from '@/hooks/use-auth'
 import { CMLogo, CMLockup } from '@/components/ui/CMLogo'
@@ -45,6 +46,25 @@ const NOTIF_ICONS: Record<string, React.ElementType> = {
   PROPOSAL_RECEIVED: IconAlertCircle,
   PROPOSAL_ACCEPTED: IconCheck,
   PROPOSAL_REJECTED: IconX,
+  CONTRACT_ACCEPTED: IconFileText,
+  DISPUTE_OPENED: IconGavel,
+  DISPUTE_RESOLVED: IconGavel,
+  REQUEST_PROPOSAL_RECEIVED: IconSend,
+  REQUEST_PROPOSAL_ACCEPTED: IconCheck,
+  REQUEST_PROPOSAL_REJECTED: IconX,
+}
+
+/** Destino de cada notificação ao ser clicada */
+function notificationTarget(n: NotificationDTO): string | null {
+  if (n.relatedOrderId) return `/orders/${n.relatedOrderId}`
+  if (n.relatedRequestId) {
+    if (n.type === 'REQUEST_PROPOSAL_RECEIVED') {
+      return `/dashboard/creator?section=requests&request=${n.relatedRequestId}`
+    }
+    // Proposta recusada / solicitação cancelada → histórico do editor
+    return '/dashboard/editor?section=my-proposals'
+  }
+  return null
 }
 
 function relativeDate(iso: string) {
@@ -57,7 +77,7 @@ function relativeDate(iso: string) {
   return `${Math.floor(hrs / 24)}d`
 }
 
-function NotificationBell({ onNavigateToOrder }: { onNavigateToOrder: (id: string) => void }) {
+function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => void }) {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationDTO[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -100,7 +120,8 @@ function NotificationBell({ onNavigateToOrder }: { onNavigateToOrder: (id: strin
       setUnreadCount((c) => Math.max(0, c - 1))
     }
     setOpen(false)
-    if (notif.relatedOrderId) onNavigateToOrder(notif.relatedOrderId)
+    const target = notificationTarget(notif)
+    if (target) onNavigateTo(target)
   }
 
   return (
@@ -292,8 +313,8 @@ export function DashboardShell({
     navigate('/login')
   }
 
-  function goToOrder(orderId: string) {
-    navigate(`/orders/${orderId}`)
+  function goTo(path: string) {
+    navigate(path)
   }
 
   return (
@@ -501,7 +522,7 @@ export function DashboardShell({
           {/* Header enxuto: ações contextuais da página + apenas o sino de notificações */}
           <div className="flex items-center gap-3">
             {actions}
-            <NotificationBell onNavigateToOrder={goToOrder} />
+            <NotificationBell onNavigateTo={goTo} />
           </div>
         </header>
 

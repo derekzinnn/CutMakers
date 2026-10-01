@@ -75,38 +75,56 @@ enum NotificationType {
   DISPUTE_OPENED
   DISPUTE_RESOLVED
   CONTRACT_ACCEPTED
+  REQUEST_PROPOSAL_RECEIVED
+  REQUEST_PROPOSAL_ACCEPTED
+  REQUEST_PROPOSAL_REJECTED
+}
+
+enum RequestStatus {
+  OPEN
+  FILLED
+  CANCELLED
+}
+
+enum RequestProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
 }
 
 model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(CREATOR)
-  avatarUrl    String?
-  bio          String?
-  banned       Boolean  @default(false)
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  passwordHash    String
+  role            Role      @default(CREATOR)
+  avatarUrl       String?
+  bio             String?
+  banned          Boolean   @default(false)
   // Aceite dos Termos de Uso da plataforma no cadastro
   termsAcceptedAt DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   editorProfile          EditorProfile?
-  ordersAsCreator        Order[]        @relation("CreatorOrders")
-  ordersAsEditor         Order[]        @relation("EditorOrders")
+  ordersAsCreator        Order[]           @relation("CreatorOrders")
+  ordersAsEditor         Order[]           @relation("EditorOrders")
   sentMessages           Message[]
-  conversationsAsCreator Conversation[] @relation("ConversationCreator")
-  conversationsAsEditor  Conversation[] @relation("ConversationEditor")
-  reviewsGiven           Review[]       @relation("ReviewerUser")
-  reviewsReceived        Review[]       @relation("RevieweeUser")
+  conversationsAsCreator Conversation[]    @relation("ConversationCreator")
+  conversationsAsEditor  Conversation[]    @relation("ConversationEditor")
+  reviewsGiven           Review[]          @relation("ReviewerUser")
+  reviewsReceived        Review[]          @relation("RevieweeUser")
   notifications          Notification[]
   revisionsRequested     Revision[]
-  transactionsAsPayer    Transaction[]  @relation("Payer")
-  transactionsAsPayee    Transaction[]  @relation("Payee")
+  transactionsAsPayer    Transaction[]     @relation("Payer")
+  transactionsAsPayee    Transaction[]     @relation("Payee")
   proposals              OrderProposal[]
-  disputesOpened         Dispute[]      @relation("DisputeOpener")
-  disputesResolved       Dispute[]      @relation("DisputeResolver")
+  disputesOpened         Dispute[]         @relation("DisputeOpener")
+  disputesResolved       Dispute[]         @relation("DisputeResolver")
   auditLogs              AuditLog[]
+  projectRequests        ProjectRequest[]
+  requestProposals       RequestProposal[]
 }
 
 model EditorProfile {
@@ -132,6 +150,7 @@ model Category {
   editorCategories EditorCategory[]
   portfolioItems   PortfolioItem[]
   orders           Order[]
+  projectRequests  ProjectRequest[]
 }
 
 model EditorCategory {
@@ -160,23 +179,28 @@ model PortfolioItem {
 }
 
 model Order {
-  id              String         @id @default(uuid())
-  creatorId       String
-  creator         User           @relation("CreatorOrders", fields: [creatorId], references: [id])
-  editorId        String
-  editor          User           @relation("EditorOrders", fields: [editorId], references: [id])
-  categoryId      String
-  category        Category       @relation(fields: [categoryId], references: [id])
-  portfolioItemId String?
-  portfolioItem   PortfolioItem? @relation(fields: [portfolioItemId], references: [id])
-  title           String
-  description     String
-  budget          Decimal        @db.Decimal(10, 2)
-  platformFee     Decimal        @db.Decimal(10, 2)
-  status          OrderStatus    @default(PENDING)
-  deadline        DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id                String          @id @default(uuid())
+  creatorId         String
+  creator           User            @relation("CreatorOrders", fields: [creatorId], references: [id])
+  editorId          String
+  editor            User            @relation("EditorOrders", fields: [editorId], references: [id])
+  categoryId        String
+  category          Category        @relation(fields: [categoryId], references: [id])
+  portfolioItemId   String?
+  portfolioItem     PortfolioItem?  @relation(fields: [portfolioItemId], references: [id])
+  title             String
+  description       String
+  budget            Decimal         @db.Decimal(10, 2)
+  platformFee       Decimal         @db.Decimal(10, 2)
+  status            OrderStatus     @default(PENDING)
+  deadline          DateTime?
+  // Rodadas de revisão inclusas no contrato (cláusula 3b). Vem da solicitação no fluxo invertido.
+  revisionsIncluded Int             @default(2)
+  // Preenchido só quando o pedido nasceu de uma ProjectRequest (marketplace invertido)
+  requestId         String?         @unique
+  request           ProjectRequest? @relation(fields: [requestId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   files         OrderFile[]
   deliveries    Delivery[]
@@ -291,16 +315,19 @@ model Review {
 }
 
 model Notification {
-  id             String           @id @default(uuid())
-  userId         String
-  user           User             @relation(fields: [userId], references: [id])
-  type           NotificationType
-  title          String
-  body           String
-  readAt         DateTime?
-  relatedOrderId String?
-  relatedOrder   Order?           @relation(fields: [relatedOrderId], references: [id])
-  createdAt      DateTime         @default(now())
+  id               String           @id @default(uuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  type             NotificationType
+  title            String
+  body             String
+  readAt           DateTime?
+  relatedOrderId   String?
+  relatedOrder     Order?           @relation(fields: [relatedOrderId], references: [id])
+  // Notificações do marketplace invertido apontam para a solicitação
+  relatedRequestId String?
+  relatedRequest   ProjectRequest?  @relation(fields: [relatedRequestId], references: [id])
+  createdAt        DateTime         @default(now())
 }
 
 model OrderProposal {
@@ -313,6 +340,52 @@ model OrderProposal {
   message    String?
   status     ProposalStatus @default(PENDING)
   createdAt  DateTime       @default(now())
+}
+
+// ─── Marketplace invertido ─────────────────────────────────────────────────────
+// O creator publica uma solicitação aberta; editores competem com propostas.
+// O Order só é criado no aceite de uma proposta — já com editor definido —, então
+// Order.editorId continua obrigatório (a fase sem editor vive inteira aqui).
+model ProjectRequest {
+  id                String        @id @default(uuid())
+  creatorId         String
+  creator           User          @relation(fields: [creatorId], references: [id])
+  categoryId        String
+  category          Category      @relation(fields: [categoryId], references: [id])
+  title             String
+  description       String
+  budgetMin         Decimal?      @db.Decimal(10, 2)
+  budgetMax         Decimal?      @db.Decimal(10, 2)
+  deadline          DateTime?
+  revisionsIncluded Int           @default(2)
+  referenceLinks    String[]      @default([])
+  status            RequestStatus @default(OPEN)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  proposals     RequestProposal[]
+  order         Order?
+  notifications Notification[]
+
+  @@index([status, categoryId])
+  @@index([creatorId])
+}
+
+model RequestProposal {
+  id           String                @id @default(uuid())
+  requestId    String
+  request      ProjectRequest        @relation(fields: [requestId], references: [id])
+  editorId     String
+  editor       User                  @relation(fields: [editorId], references: [id])
+  amount       Decimal               @db.Decimal(10, 2)
+  deliveryDays Int
+  message      String
+  status       RequestProposalStatus @default(PENDING)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@unique([requestId, editorId])
+  @@index([editorId])
 }
 
 // Trilha de auditoria — registra pagamentos, disputas, mudanças de status e ações

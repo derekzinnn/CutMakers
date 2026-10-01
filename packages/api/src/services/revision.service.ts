@@ -1,7 +1,6 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
-import { INCLUDED_REVISIONS } from './agreement.service'
 import { logEvent } from './audit.service'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -44,7 +43,7 @@ export class RevisionService {
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      select: { id: true, creatorId: true, editorId: true, status: true, title: true },
+      select: { id: true, creatorId: true, editorId: true, status: true, title: true, revisionsIncluded: true },
     })
     if (!order) throw NotFound('Pedido não encontrado')
     if (order.creatorId !== requestedById) {
@@ -54,11 +53,11 @@ export class RevisionService {
       throw BadRequest('Só é possível solicitar revisão de um pedido entregue')
     }
 
-    // Cláusula 3b do contrato: até 2 rodadas de revisão inclusas
+    // Cláusula 3b do contrato: rodadas de revisão inclusas definidas no pedido
     const revisionCount = await prisma.revision.count({ where: { orderId } })
-    if (revisionCount >= INCLUDED_REVISIONS) {
+    if (revisionCount >= order.revisionsIncluded) {
       throw BadRequest(
-        `Limite de ${INCLUDED_REVISIONS} revisões inclusas atingido. Aprove a entrega ou abra uma disputa para análise da equipe.`,
+        `Limite de ${order.revisionsIncluded} revisões inclusas atingido. Aprove a entrega ou abra uma disputa para análise da equipe.`,
       )
     }
 

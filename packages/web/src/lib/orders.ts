@@ -66,6 +66,10 @@ export interface OrderDTO {
   files: OrderFile[]
   deliveriesCount: number
   revisionsCount: number
+  /** Rodadas de revisão inclusas no contrato deste pedido */
+  revisionsIncluded: number
+  /** Preenchido quando o pedido nasceu de uma solicitação (marketplace invertido) */
+  requestId: string | null
   createdAt: string
   updatedAt: string
 }

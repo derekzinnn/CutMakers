@@ -32,7 +32,9 @@ const listTransactionsQuery = z.object({
 })
 
 const listAuditLogQuery = z.object({
-  entityType: z.enum(['Order', 'Transaction', 'Dispute', 'Subscription', 'User']).optional(),
+  entityType: z
+    .enum(['Order', 'Transaction', 'Dispute', 'Subscription', 'User', 'ProjectRequest', 'RequestProposal'])
+    .optional(),
   action: z.string().trim().min(1).max(50).optional(),
   actorId: z.string().uuid().optional(),
   actorSearch: z.string().trim().min(1).max(120).optional(),

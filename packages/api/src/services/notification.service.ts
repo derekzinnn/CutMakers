@@ -14,6 +14,7 @@ export class NotificationService {
         body: true,
         readAt: true,
         relatedOrderId: true,
+        relatedRequestId: true,
         createdAt: true,
       },
     })

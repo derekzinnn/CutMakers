@@ -7,6 +7,7 @@ export interface NotificationDTO {
   body: string
   readAt: string | null
   relatedOrderId: string | null
+  relatedRequestId: string | null
   createdAt: string
 }
 

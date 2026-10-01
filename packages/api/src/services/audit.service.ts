@@ -19,8 +19,19 @@ export type AuditAction =
   | 'SUBSCRIPTION_ACTIVATED'
   | 'USER_BANNED'
   | 'USER_UNBANNED'
+  | 'REQUEST_CREATED'
+  | 'REQUEST_CANCELLED'
+  | 'REQUEST_PROPOSAL_SENT'
+  | 'REQUEST_PROPOSAL_ACCEPTED'
 
-export type AuditEntityType = 'Order' | 'Transaction' | 'Dispute' | 'Subscription' | 'User'
+export type AuditEntityType =
+  | 'Order'
+  | 'Transaction'
+  | 'Dispute'
+  | 'Subscription'
+  | 'User'
+  | 'ProjectRequest'
+  | 'RequestProposal'
 
 export interface LogEventParams {
   /** Usuário que disparou a ação; null para eventos de sistema (webhook, auto-aprovação) */

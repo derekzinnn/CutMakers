@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
+  IconTargetArrow,
+  IconSend,
   IconLayoutDashboard,
   IconBriefcase,
   IconInbox,
@@ -35,11 +38,25 @@ import { MessagesTab } from '@/components/chat/MessagesTab'
 import { OrderDetail } from '@/components/orders/OrderDetail'
 import { Modal } from '@/components/ui/Modal'
 import { STATUS_LABELS, STATUS_COLORS, type OrderDTO, type OrderStatus } from '@/lib/orders'
+import { OpportunitiesSection } from '@/components/requests/OpportunitiesSection'
+import { MyProposalsSection } from '@/components/requests/MyProposalsSection'
 
-type Section = 'overview' | 'portfolio' | 'orders' | 'messages' | 'premium' | 'profile'
+type Section =
+  | 'overview'
+  | 'opportunities'
+  | 'my-proposals'
+  | 'portfolio'
+  | 'orders'
+  | 'messages'
+  | 'premium'
+  | 'profile'
+
+const SECTIONS: Section[] = ['overview', 'opportunities', 'my-proposals', 'portfolio', 'orders', 'messages', 'premium', 'profile']
 
 const NAV: NavItem[] = [
   { id: 'overview', label: 'Dashboard', Icon: IconLayoutDashboard },
+  { id: 'opportunities', label: 'Oportunidades', Icon: IconTargetArrow },
+  { id: 'my-proposals', label: 'Minhas propostas', Icon: IconSend },
   { id: 'portfolio', label: 'Portfólio', Icon: IconBriefcase },
   { id: 'orders', label: 'Pedidos', Icon: IconInbox },
   { id: 'messages', label: 'Mensagens', Icon: IconMessage2 },
@@ -50,8 +67,27 @@ const NAV: NavItem[] = [
 export function EditorDashboard() {
   const { user } = useAuth()
   const { editor, loading, refetch } = useEditorMe()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [section, setSection] = useState<Section>('overview')
+  const sectionParam = searchParams.get('section')
+  const parsedParam = SECTIONS.find((s) => s === sectionParam) ?? null
+  const [section, setSection] = useState<Section>(parsedParam ?? 'overview')
+
+  // Navegação externa (ex.: notificação) muda só a URL — sincroniza a seção
+  useEffect(() => {
+    if (parsedParam && parsedParam !== section) {
+      setSelectedOrderId(null)
+      setSection(parsedParam)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsedParam])
+
+  function goTo(next: Section) {
+    setSelectedOrderId(null)
+    setSection(next)
+    setSearchParams(next === 'overview' ? {} : { section: next })
+  }
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<PortfolioItemInput | undefined>(undefined)
@@ -67,6 +103,8 @@ export function EditorDashboard() {
   const items = editor?.profile.portfolioItems ?? []
   const sectionTitle = selectedOrderId ? 'Detalhes do pedido' : {
     overview: 'Dashboard',
+    opportunities: 'Oportunidades',
+    'my-proposals': 'Minhas propostas',
     portfolio: 'Portfólio',
     orders: 'Pedidos recebidos',
     messages: 'Mensagens',
@@ -114,10 +152,8 @@ export function EditorDashboard() {
         badgeLabel="EDITOR"
         navItems={NAV}
         activeId={section}
-        onNavigate={(id) => {
-          setSelectedOrderId(null); setSection(id as Section)
-        }}
-        onProfileClick={() => { setSelectedOrderId(null); setSection('profile') }}
+        onNavigate={(id) => goTo(id as Section)}
+        onProfileClick={() => goTo('profile')}
         user={user}
         pageTitle={sectionTitle}
         pageSubtitle={
@@ -125,6 +161,10 @@ export function EditorDashboard() {
             ? undefined
             : section === 'overview'
               ? 'Acompanhe seus projetos e métricas'
+              : section === 'opportunities'
+                ? 'Projetos publicados por criadores esperando propostas'
+              : section === 'my-proposals'
+                ? 'Acompanhe as propostas que você enviou'
               : section === 'portfolio'
                 ? `${items.length} ${items.length === 1 ? 'projeto' : 'projetos'}`
                 : section === 'orders'
@@ -236,6 +276,17 @@ export function EditorDashboard() {
             {section === 'messages' && <MessagesTab />}
 
             {section === 'premium' && <PremiumSection />}
+
+            {section === 'opportunities' && (
+              <OpportunitiesSection initialRequestId={searchParams.get('request')} />
+            )}
+
+            {section === 'my-proposals' && (
+              <MyProposalsSection
+                onBrowse={() => goTo('opportunities')}
+                onOpenOrder={(id) => navigate(`/orders/${id}`)}
+              />
+            )}
 
             {section === 'profile' && (
               <div className="mx-auto max-w-2xl">

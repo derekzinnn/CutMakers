@@ -1385,7 +1385,7 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
         }
       >
         <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
-          Esta será a <strong style={{ color: '#EAB308' }}>{usedRevisions + 1}ª de 2 revisões inclusas</strong> no
+          Esta será a <strong style={{ color: '#EAB308' }}>{usedRevisions + 1}ª de {order.revisionsIncluded} revis{order.revisionsIncluded === 1 ? 'ão inclusa' : 'ões inclusas'}</strong> no
           contrato. O editor será notificado para ajustar a entrega.
         </p>
         <div className="mt-3 rounded-[8px] px-3 py-2" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)' }}>

@@ -817,6 +817,10 @@ const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   SUBSCRIPTION_ACTIVATED: { label: 'Assinatura ativada', color: '#A855F7' },
   USER_BANNED: { label: 'Usuário suspenso', color: '#EF4444' },
   USER_UNBANNED: { label: 'Usuário reativado', color: '#22C55E' },
+  REQUEST_CREATED: { label: 'Solicitação publicada', color: '#3B82F6' },
+  REQUEST_CANCELLED: { label: 'Solicitação cancelada', color: '#EF4444' },
+  REQUEST_PROPOSAL_SENT: { label: 'Proposta enviada (solicitação)', color: '#EAB308' },
+  REQUEST_PROPOSAL_ACCEPTED: { label: 'Proposta aceita (solicitação)', color: '#22C55E' },
 }
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -825,6 +829,8 @@ const ENTITY_LABELS: Record<string, string> = {
   Dispute: 'Disputa',
   Subscription: 'Assinatura',
   User: 'Usuário',
+  ProjectRequest: 'Solicitação',
+  RequestProposal: 'Proposta',
 }
 
 /** Converte o metadata JSON em pares legíveis (Valor: R$ 200,00 etc.) */
@@ -848,6 +854,12 @@ function formatAuditMetadata(metadata: Record<string, unknown> | null): { label:
       case 'externalPaymentId': out.push({ label: 'ID externo (gateway)', value: String(value) }); break
       case 'expiresAt': out.push({ label: 'Válida até', value: new Date(String(value)).toLocaleDateString('pt-BR') }); break
       case 'devMode': out.push({ label: 'Origem', value: 'Confirmação automática (dev)' }); break
+      case 'requestId': out.push({ label: 'Solicitação', value: shortId(String(value)) }); break
+      case 'deliveryDays': out.push({ label: 'Prazo proposto', value: `${String(value)} dias` }); break
+      case 'budgetMin': out.push({ label: 'Orçamento mín.', value: asMoney(value) }); break
+      case 'budgetMax': out.push({ label: 'Orçamento máx.', value: asMoney(value) }); break
+      case 'rejectedProposals': out.push({ label: 'Propostas encerradas', value: String(value) }); break
+      case 'categoryId': break
       default: out.push({ label: key, value: String(value) })
     }
   }

@@ -1,10 +1,12 @@
-import { OrderAgreement } from '@prisma/client'
+import { OrderAgreement, Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 
 // ─── Regras do contrato (mantenha em sincronia com o template abaixo) ─────────
 
-export const TERMS_VERSION = '1.0'
+// v1.1: número de revisões inclusas passa a vir do pedido (Order.revisionsIncluded)
+export const TERMS_VERSION = '1.1'
+/** Padrão de revisões inclusas (pedidos de contratação direta e default de solicitações) */
 export const INCLUDED_REVISIONS = 2
 export const AUTO_APPROVE_DAYS = 7
 export const EDITOR_ABANDON_BUSINESS_DAYS = 5
@@ -37,6 +39,7 @@ interface AgreementData {
   amount: number
   platformFee: number
   deadline: Date | null
+  revisionsIncluded: number
 }
 
 const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -60,7 +63,7 @@ Prazo de entrega: ${deadline} · Data do acordo: ${today}
 
 3. ENTREGA E REVISÕES.
 a) O Editor entregará dentro do prazo acordado, pela plataforma.
-b) O Criador tem direito a até ${INCLUDED_REVISIONS} (duas) rodadas de revisão inclusas, desde que os ajustes estejam dentro do escopo original. Pedidos fora do escopo (novo material, mudança de conceito, duração maior) exigem nova negociação.
+b) O Criador tem direito a até ${d.revisionsIncluded} ${d.revisionsIncluded === 1 ? 'rodada' : 'rodadas'} de revisão inclusa${d.revisionsIncluded === 1 ? '' : 's'}, desde que os ajustes estejam dentro do escopo original. Pedidos fora do escopo (novo material, mudança de conceito, duração maior) exigem nova negociação.
 c) Cada solicitação de revisão deve descrever objetivamente o que deve ser alterado.
 
 4. APROVAÇÃO.
@@ -100,12 +103,13 @@ export class AgreementService {
   /**
    * Garante que o contrato do pedido existe (cria se necessário).
    * Chamado no aceite da proposta e, de forma self-healing, no gate de pagamento.
+   * `db` permite rodar dentro de um prisma.$transaction (aceite de solicitação).
    */
-  async ensureAgreement(orderId: string) {
-    const existing = await prisma.orderAgreement.findUnique({ where: { orderId } })
+  async ensureAgreement(orderId: string, db: Prisma.TransactionClient = prisma) {
+    const existing = await db.orderAgreement.findUnique({ where: { orderId } })
     if (existing) return agreementToDTO(existing)
 
-    const order = await prisma.order.findUnique({
+    const order = await db.order.findUnique({
       where: { id: orderId },
       select: {
         id: true,
@@ -113,6 +117,7 @@ export class AgreementService {
         budget: true,
         platformFee: true,
         deadline: true,
+        revisionsIncluded: true,
         creator: { select: { name: true, email: true } },
         editor: { select: { name: true, email: true } },
       },
@@ -129,9 +134,10 @@ export class AgreementService {
       amount: Number(order.budget),
       platformFee: Number(order.platformFee),
       deadline: order.deadline,
+      revisionsIncluded: order.revisionsIncluded,
     })
 
-    const created = await prisma.orderAgreement.create({
+    const created = await db.orderAgreement.create({
       data: { orderId, termsVersion: TERMS_VERSION, content },
     })
     return agreementToDTO(created)

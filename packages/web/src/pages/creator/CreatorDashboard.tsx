@@ -20,6 +20,7 @@ import {
   IconChevronRight,
   IconLock,
   IconCircleCheck,
+  IconFileDescription,
 } from '@tabler/icons-react'
 import { DashboardShell, type NavItem } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
@@ -32,6 +33,8 @@ import { MessagesTab } from '@/components/chat/MessagesTab'
 import { OrderDetail } from '@/components/orders/OrderDetail'
 import { TRANSACTION_LABELS, type OrderStatus, type TransactionStatus } from '@/lib/orders'
 import { getMyPayments, type MyPayment, type PaymentsSummary } from '@/lib/payments'
+import { listMyRequests } from '@/lib/requests'
+import { CreatorRequestsSection } from '@/components/requests/CreatorRequestsSection'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,7 +58,7 @@ interface ListResponse {
   totalPages: number
 }
 
-type Section = 'feed' | 'orders' | 'messages' | 'favorites' | 'payments' | 'account'
+type Section = 'feed' | 'orders' | 'requests' | 'messages' | 'favorites' | 'payments' | 'account'
 type SortBy = 'rating' | 'jobs' | 'price-asc' | 'price-desc'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -103,6 +106,15 @@ export function CreatorDashboard() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [orderFilter, setOrderFilter] = useState<OrderStatus | 'ALL'>('ALL')
 
+  // Badge de "Minhas solicitações": propostas pendentes em solicitações abertas
+  const [pendingProposals, setPendingProposals] = useState(0)
+  const refreshRequestsBadge = useCallback(() => {
+    listMyRequests(1)
+      .then((res) => setPendingProposals(res.pendingProposalsTotal))
+      .catch(() => {})
+  }, [])
+  useEffect(() => { refreshRequestsBadge() }, [refreshRequestsBadge])
+
   const navItems: NavItem[] = useMemo(
     () => [
       { id: 'feed', label: 'Buscar editores', Icon: IconSearch },
@@ -112,12 +124,18 @@ export function CreatorDashboard() {
         Icon: IconBriefcase,
         badge: orders.length > 0 ? String(orders.length) : undefined,
       },
+      {
+        id: 'requests',
+        label: 'Minhas solicitações',
+        Icon: IconFileDescription,
+        badge: pendingProposals > 0 ? String(pendingProposals) : undefined,
+      },
       { id: 'messages', label: 'Mensagens', Icon: IconMessage2 },
       { id: 'favorites', label: 'Favoritos', Icon: IconHeart },
       { id: 'payments', label: 'Pagamentos', Icon: IconCreditCard },
       { id: 'account', label: 'Minha conta', Icon: IconUser },
     ],
-    [orders.length],
+    [orders.length, pendingProposals],
   )
 
   function changeSection(next: Section) {
@@ -126,6 +144,16 @@ export function CreatorDashboard() {
     if (next !== 'feed') setSearchParams({ section: next })
     else setSearchParams({})
   }
+
+  // Navegação externa (ex.: clique numa notificação) muda só a URL — sincroniza a seção
+  const sectionParam = searchParams.get('section') as Section | null
+  useEffect(() => {
+    if (sectionParam && sectionParam !== section) {
+      setSelectedOrderId(null)
+      setSection(sectionParam)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionParam])
 
   const loadEditors = useCallback(async () => {
     setLoading(true)
@@ -201,6 +229,8 @@ export function CreatorDashboard() {
             ? 'Encontrar editor'
             : section === 'orders'
               ? 'Meus pedidos'
+              : section === 'requests'
+                ? 'Minhas solicitações'
               : section === 'messages'
                 ? 'Mensagens'
                 : section === 'favorites'
@@ -216,6 +246,8 @@ export function CreatorDashboard() {
             ? `${total.toLocaleString('pt-BR')} editores disponíveis · filtre por categoria e prazo`
             : section === 'orders'
               ? `${orders.length} ${orders.length === 1 ? 'projeto' : 'projetos'}`
+              : section === 'requests'
+                ? 'Publique um projeto e receba propostas de editores'
               : undefined
       }
       actions={
@@ -459,6 +491,16 @@ export function CreatorDashboard() {
 
       {/* ── Mensagens ── */}
       {section === 'messages' && <MessagesTab />}
+
+      {/* ── Minhas solicitações (marketplace invertido) ── */}
+      {section === 'requests' && (
+        <CreatorRequestsSection
+          initialRequestId={searchParams.get('request')}
+          onOpenOrder={(id) => navigate(`/orders/${id}`)}
+          onOpenEditor={(id) => navigate(`/editors/${id}`)}
+          onChanged={refreshRequestsBadge}
+        />
+      )}
 
       {/* ── Pagamentos ── */}
       {section === 'payments' && (

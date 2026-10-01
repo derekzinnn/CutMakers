@@ -231,6 +231,37 @@ Texto:
 - `GET /api/admin/audit-log` — ADMIN, 30/pág; filtros: `?entityType=`, `?action=`, `?actorId=`,
   `?actorSearch=` (nome/email), `?orderId=` (atalho para entityType=Order)
 
+### Requests — Marketplace invertido (`/api/requests`) — auth em todas
+Creator publica `ProjectRequest` (OPEN) → editores enviam `RequestProposal` → creator aceita uma →
+nasce um `Order` já com editor, em `AWAITING_PAYMENT`, que segue o pipeline normal (contrato → pagamento → entrega).
+- Rotas estáticas registradas antes de `/:id`: `GET /mine` (creator), `GET /proposals/mine` (editor)
+- **Creator (CREATOR/BOTH)**
+  - `POST /` — `{ categoryId, title, description, budgetMin?, budgetMax?, deadline?, revisionsIncluded?, referenceLinks? }`
+    (min ≤ max, prazo futuro, banido não publica)
+  - `GET /mine` — 20/pág, com `proposalCount`, `pendingProposalCount` e `pendingProposalsTotal` (badge da nav)
+  - `PATCH /:id` — edita título/descrição/orçamento/prazo/links (só OPEN; permitido mesmo com propostas)
+  - `POST /:id/cancel` — só OPEN → CANCELLED, propostas PENDING viram REJECTED + notificação
+  - `POST /:id/proposals/:proposalId/accept` — **transação única**: guard otimista OPEN→FILLED, cria Order
+    (budget = proposta, platformFee via `Prisma.Decimal`, AWAITING_PAYMENT, deadline = request.deadline ?? hoje + deliveryDays,
+    revisionsIncluded herdado), cria OrderProposal ACCEPTED, gera contrato (`ensureAgreement(orderId, tx)`),
+    rejeita as demais + notifica ("fechado com outro editor"), notifica o vencedor com `relatedOrderId`. Retorna `{ orderId }`
+  - `POST /:id/proposals/:proposalId/reject` — recusa uma; solicitação continua OPEN
+- **Editor (EDITOR/BOTH)**
+  - `GET /` — quadro só OPEN, 20/pág, filtros `?category=&budgetMin=&budgetMax=&search=&sort=recent|budget_desc`
+    (faixas por sobreposição); exclui as próprias do BOTH; item traz `descriptionPreview` (200 chars, sem links/arquivos)
+    e `myProposal: { status } | null`
+  - `POST /:id/proposals` — `{ amount > 0, deliveryDays, message }`; duplicata → **409**; própria solicitação → 403;
+    FILLED/CANCELLED → 400; banido → 403. Proposta WITHDRAWN pode ser reenviada (reaproveita a linha)
+  - `PATCH /:id/proposals/mine` / `DELETE /:id/proposals/mine` — editar / retirar (só PENDING)
+  - `GET /proposals/mine` — histórico com status + `orderId` (só para o vencedor)
+- `GET /:id` — o service decide a perspectiva: **creator/admin** vê todas as propostas (dados públicos do editor,
+  `?sort=amount|rating`, pendentes primeiro); **editor** vê descrição completa + links + só a própria proposta
+  (solicitação fechada só fica visível para quem participou). **Nunca** expõe arquivos — continuam atrás de IN_PROGRESS no pedido
+- Notificações: `REQUEST_PROPOSAL_RECEIVED|ACCEPTED|REJECTED` com `relatedRequestId` (novo campo em Notification)
+- Auditoria: `REQUEST_CREATED`, `REQUEST_CANCELLED`, `REQUEST_PROPOSAL_SENT`, `REQUEST_PROPOSAL_ACCEPTED`
+  (+ `ORDER_CREATED` do pedido gerado)
+- Trace E2E versionado: `pnpm --filter @cutmakers/api trace:requests` (API rodando, dev mode de pagamento)
+
 ### Admin (`/api/admin`) — auth + requireRole(ADMIN) em todas
 - `GET /users` — lista paginada (20/pág). Filtros: `?search=` (nome/email), `?role=`, `?page=`
   - Retorna id, name, email, role, banned, isPremium (join EditorProfile), createdAt
@@ -286,7 +317,7 @@ Ver `packages/api/.env.example`. Precisa:
 ✅ Fase 1 — Base
    [x] Monorepo pnpm workspaces
    [x] API Express + TypeScript + Prisma
-   [x] Schema Prisma completo (18 modelos)
+   [x] Schema Prisma completo (20 modelos)
    [x] Auth: register, login, refresh, JWT middleware
    [x] Seed do admin + categorias
    [x] Frontend: Login, Register, AdminPage (com switcher de view)
@@ -554,28 +585,48 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Redução geral de escala (~20-25%): hero, h2 de seções, stats, títulos de card e
        paddings de seção todos reduzidos — estava desproporcional em telas grandes
 
-🚧 Fase 12 — PD2: Marketplace invertido (editor envia proposta pro criador)
-   Planejamento em andamento — 4 decisões de produto pendentes do dono antes de iniciar:
-   [ ] 1. Visibilidade do briefing aberto: feed público filtrado por categoria (A) vs. só
-       editores com portfólio na categoria (B) vs. convite direto do creator (C)?
-       (recomendação dada: A como base, com filtro de categoria como lente default)
-   [ ] 2. Limite de propostas: 1 proposta ativa por projeto por editor? Existe prazo mínimo
-       antes do creator poder fechar, ou aceita a primeira que chegar?
-   [ ] 3. Propostas não escolhidas: viram REJECTED automático + notificação "projeto fechado
-       com outro editor" quando o creator aceita uma?
-   [ ] 4. Pré-visualização: editores concorrentes veem o briefing completo (descrição +
-       arquivos) ou só um resumo até serem selecionados?
-
-   Complexidade técnica principal identificada: `Order.editorId` precisa virar nullable
-   (hoje é `String` obrigatório no schema, linha ~166) — isso tem efeito cascata em
-   `Conversation.editorId` (também obrigatório), `agreement.service` (contrato assume
-   editor conhecido desde o início), notificações, `dispute.service`, `revision.service` e
-   todos os includes/DTOs de Order. A `OrderProposal` atual também é 1:1 (negociação de
-   valor com editor já definido); o modo aberto precisa de N propostas concorrentes por
-   pedido até o creator escolher uma, com uma máquina de estados nova (OPEN → editor
-   selecionado → fluxo atual de negociação/contrato/pagamento).
+✅ Fase 12 — PD2: Marketplace invertido (editor envia proposta pro criador)
+   Decisões de produto travadas:
+     1. Visibilidade: quadro público filtrado por categoria
+     2. 1 proposta ativa por editor por solicitação (editável/retirável enquanto PENDING); sem prazo mínimo p/ fechar
+     3. Aceite de uma → demais PENDING viram REJECTED + notificação "fechado com outro editor"
+     4. Concorrentes veem descrição completa + links de referência, NUNCA arquivos (gate IN_PROGRESS intacto)
+   Decisões técnicas:
+     — **`Order.editorId` continua obrigatório** (não virou nullable). A fase "sem editor" vive inteira em
+       `ProjectRequest`; o Order só nasce no aceite, já com o editor da proposta. Nullable espalharia
+       `string | null` + guards de um estado impossível por ~10 services e DTOs; com o campo obrigatório,
+       o próprio tipo do Prisma garante que dispute/revision/agreement/notificações nunca veem editor nulo
+     — **`Conversation.editorId` também obrigatório**: a conversa já é criada sob demanda e só para pedidos
+       (getOrCreateByOrder) — não existe conversa na fase de solicitação
+     — `Order.revisionsIncluded` (default 2) + `Order.requestId @unique` novos; contrato (TERMS_VERSION 1.1)
+       e limite do revision.service passam a usar o valor do pedido em vez da constante fixa
+     — `agreementService.ensureAgreement(orderId, db = prisma)` aceita client de transação → contrato gerado
+       atomicamente no aceite
+     — Corrida aceite×aceite / aceite×cancelamento: `updateMany where status OPEN` como guard otimista → 409
+     — `Conflict` (409) adicionado em lib/errors.ts; banimento checado no service (não só na UI)
+   [x] Schema: enums RequestStatus/RequestProposalStatus, models ProjectRequest/RequestProposal,
+       Order.requestId/revisionsIncluded, Notification.relatedRequestId, 3 NotificationType novos
+   [x] project-request.service/controller/routes (/api/requests) — 12 endpoints, Zod, DTOs, Decimal→Number
+   [x] Auditoria: 4 ações novas + entityTypes ProjectRequest/RequestProposal (filtro admin + labels na aba Auditoria)
+   [x] Frontend lib/requests.ts + components/requests/: shared, RequestFormModal (criar/editar),
+       CreatorRequestsSection (lista + detalhe + aceitar/recusar/cancelar com modais de confirmação e
+       breakdown "você paga / plataforma retém / editor recebe"), OpportunitiesSection (quadro + filtros +
+       OpportunityDetailModal), ProposalFormModal (preview ao vivo "Você recebe"), MyProposalsSection
+   [x] CreatorDashboard: nav "Minhas solicitações" com badge de propostas pendentes; aceite redireciona p/ /orders/:id
+   [x] EditorDashboard: navs "Oportunidades" e "Minhas propostas"; seção sincronizada com `?section=` na URL
+   [x] Notificações: ícones dos 3 tipos novos (+ CONTRACT/DISPUTE que faltavam); clique navega por tipo
+       (RECEIVED → detalhe da solicitação, ACCEPTED → pedido, REJECTED → Minhas propostas)
+   [x] OrderDetail: "Nª de N revisões inclusas" usa order.revisionsIncluded
+   [x] tsc --noEmit + builds de produção limpos em api + web, sem `any`
+   [x] Trace E2E versionado em packages/api/scripts/trace-request-flow.mjs (fluxo completo + edge cases:
+       409 duplicada, BOTH na própria, aceite em FILLED, edição com propostas, cancelamento com pendentes,
+       pipeline contrato→pagamento→entrega→aprovação intacto, auditoria)
+   ⚠️ Requer `pnpm --filter @cutmakers/api db:push` antes de rodar (o dono executa); depois `trace:requests`
 
 ⏳ Fase 13 — Próximos (pendem decisão/credenciais do dono)
+   [ ] Migration versionada das Fases 10–12 (hoje só existe o baseline 0_init; as mudanças posteriores
+       foram aplicadas via db push — produção com `migrate deploy` precisa de um 1_... gerado por migrate diff)
+   [ ] Decidir se edição de solicitação deve travar campos (orçamento/descrição) após a 1ª proposta
    [ ] Login com Google funcional (requer GOOGLE_CLIENT_ID/SECRET do Google Cloud — decisão do dono)
    [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)
    [ ] Aprovação/verificação manual de editores pelo admin (badge verificado curado)

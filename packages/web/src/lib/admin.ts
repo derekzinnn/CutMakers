@@ -122,7 +122,14 @@ export async function listAdminTransactions(params: { page?: number }): Promise<
 
 // ─── Auditoria ─────────────────────────────────────────────────────────────────
 
-export type AuditEntityType = 'Order' | 'Transaction' | 'Dispute' | 'Subscription' | 'User'
+export type AuditEntityType =
+  | 'Order'
+  | 'Transaction'
+  | 'Dispute'
+  | 'Subscription'
+  | 'User'
+  | 'ProjectRequest'
+  | 'RequestProposal'
 
 export interface AuditLogEntry {
   id: string

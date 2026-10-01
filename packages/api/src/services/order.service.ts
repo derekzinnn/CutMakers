@@ -507,6 +507,8 @@ export class OrderService {
     })),
     deliveriesCount: o._count.deliveries,
     revisionsCount: o._count.revisions,
+    revisionsIncluded: o.revisionsIncluded,
+    requestId: o.requestId,
     createdAt: o.createdAt,
     updatedAt: o.updatedAt,
   })
@@ -571,6 +573,8 @@ export class OrderService {
       agreement: o.agreement ? agreementToDTO(o.agreement) : null,
       deliveriesCount: o._count.deliveries,
       revisionsCount: o._count.revisions,
+    revisionsIncluded: o.revisionsIncluded,
+    requestId: o.requestId,
       createdAt: o.createdAt,
       updatedAt: o.updatedAt,
     }
