@@ -43,6 +43,9 @@ export interface CreateDeliveryData {
 
 const PLATFORM_FEE_RATE = 0.1
 
+/** Antes destes status o pedido ainda não foi pago — arquivos ficam retidos. */
+const PRE_WORK_STATUSES: OrderStatus[] = ['NEGOTIATING', 'AWAITING_PAYMENT', 'PENDING']
+
 // ─── Regras de transição de status ───────────────────────────────────────────
 
 type ActorRole = 'creator' | 'editor' | 'admin'
@@ -77,12 +80,15 @@ const VALID_TRANSITIONS: {
 
 // ─── Includes reutilizáveis ──────────────────────────────────────────────────
 
+// A listagem NAO carrega os arquivos de proposito. Os cards de dashboard só
+// precisam da contagem, e trazer as URLs aqui furaria o gate de pagamento do
+// detalhe (um editor listaria /orders e leria os links sem ter pago). De quebra
+// evita um join por linha em todo carregamento de dashboard.
 const orderInclude = {
   category: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, avatarUrl: true } },
   editor: { select: { id: true, name: true, avatarUrl: true } },
-  files: true,
-  _count: { select: { deliveries: true, revisions: true } },
+  _count: { select: { deliveries: true, revisions: true, files: true } },
 } satisfies Prisma.OrderInclude
 
 const orderDetailInclude = {
@@ -498,13 +504,7 @@ export class OrderService {
     category: o.category,
     creator: o.creator,
     editor: o.editor,
-    files: o.files.map((f) => ({
-      id: f.id,
-      fileUrl: f.fileUrl,
-      fileName: f.fileName,
-      fileType: f.fileType,
-      uploadedAt: f.uploadedAt,
-    })),
+    filesCount: o._count.files,
     deliveriesCount: o._count.deliveries,
     revisionsCount: o._count.revisions,
     revisionsIncluded: o.revisionsIncluded,
@@ -514,8 +514,13 @@ export class OrderService {
   })
 
   private toDetailDTO = (o: OrderDetailWithRelations, viewerId: string, isAdmin: boolean) => {
-    void viewerId
-    void isAdmin
+    // Gate de arquivos: o editor só acessa o material bruto do criador depois que o
+    // pagamento entra em custódia. Antes disso ele vê briefing, valor e prazo — o
+    // suficiente para negociar — mas não as URLs dos arquivos, que são links
+    // Cloudinary públicos e, uma vez entregues, não podem ser "desentregues".
+    // Regra do produto: Fase 4.2 (payment gate) e decisão 4 da Fase 12.
+    const filesHidden =
+      !isAdmin && o.editorId === viewerId && PRE_WORK_STATUSES.includes(o.status)
 
     return {
       id: o.id,
@@ -528,14 +533,19 @@ export class OrderService {
       category: o.category,
       creator: o.creator,
       editor: o.editor,
-      files: o.files.map((f) => ({
-        id: f.id,
-        fileUrl: f.fileUrl,
-        fileName: f.fileName,
-        fileType: f.fileType,
-        uploadedAt: f.uploadedAt,
-      })),
-      filesHidden: false,
+      files: filesHidden
+        ? []
+        : o.files.map((f) => ({
+            id: f.id,
+            fileUrl: f.fileUrl,
+            fileName: f.fileName,
+            fileType: f.fileType,
+            uploadedAt: f.uploadedAt,
+          })),
+      filesHidden,
+      // Contagem sempre visível: o editor precisa saber que existe material
+      // esperando por ele, sem conseguir baixá-lo ainda.
+      filesCount: o.files.length,
       deliveries: o.deliveries.map((d) => ({
         id: d.id,
         videoUrl: d.videoUrl,

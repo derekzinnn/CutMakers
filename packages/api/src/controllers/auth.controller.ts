@@ -102,12 +102,29 @@ export class AuthController {
       const payload = authService.verifyRefreshToken(refreshToken)
       const user = await prisma.user.findUnique({
         where: { id: payload.sub },
-        select: { id: true, name: true, email: true, role: true },
+        select: { id: true, name: true, email: true, role: true, banned: true },
       })
       if (!user) return res.status(401).json({ message: 'Usuário não encontrado' })
 
+      // O refresh é o ponto de revalidação da sessão. Sem esta checagem, banir um
+      // usuário não o expulsa: o front renova o par de tokens a cada 401 e a sessão
+      // rola indefinidamente, já que o authMiddleware só verifica a assinatura do JWT.
+      //
+      // Optamos por checar aqui, e não no authMiddleware, de propósito: validar no
+      // middleware custaria uma query ao banco em TODA request da API. Aqui o custo
+      // é um lookup por chave primária a cada expiração de access token (~15min por
+      // usuário ativo), e a janela máxima de acesso de um banido fica limitada à
+      // validade do access token em vez de ser infinita.
+      if (user.banned) {
+        return res.status(401).json({ message: 'Conta suspensa. Entre em contato com o suporte.' })
+      }
+
+      // DTO explícito — `banned` é estado interno de moderacão, não vai para o cliente
       const tokens = authService.generateTokens(user.id, user.role)
-      return res.json({ ...tokens, user })
+      return res.json({
+        ...tokens,
+        user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      })
     } catch {
       return res.status(401).json({ message: 'Refresh token inválido' })
     }

@@ -23,6 +23,7 @@ import {
   IconPrinter,
   IconChevronDown,
   IconChevronUp,
+  IconLock,
 } from '@tabler/icons-react'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -2273,8 +2274,27 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       {/* ── TAB: ARQUIVOS (editor only) ── */}
       {currentTab === 'arquivos' && perspective === 'editor' && (
         <div className="space-y-6">
-          <ContentSection title={`Arquivos de referência${order.files.length > 0 ? ` (${order.files.length})` : ''}`}>
-            {order.files.length > 0 ? (
+          <ContentSection title={`Arquivos de referência${order.filesCount > 0 ? ` (${order.filesCount})` : ''}`}>
+            {order.filesHidden ? (
+              /* Gate de pagamento: o material bruto do criador só é liberado quando
+                 o valor entra em custódia. Mostra a contagem para o editor saber
+                 que o material existe, sem entregar os links. */
+              <div
+                className="flex flex-col items-center gap-2 rounded-[8px] px-4 py-8 text-center"
+                style={{ background: 'rgba(244,99,30,0.06)', border: '1px solid rgba(244,99,30,0.2)' }}
+              >
+                <IconLock size={22} stroke={1.5} style={{ color: '#F4631E' }} />
+                <p className="text-sm font-medium text-white">
+                  {order.filesCount > 0
+                    ? `${order.filesCount} ${order.filesCount === 1 ? 'arquivo' : 'arquivos'} aguardando liberação`
+                    : 'Arquivos aguardando liberação'}
+                </p>
+                <p className="max-w-sm text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  O material de referência do criador fica disponível assim que o pagamento
+                  entrar em custódia. Isso protege o briefing dele e garante o seu recebimento.
+                </p>
+              </div>
+            ) : order.files.length > 0 ? (
               <ul className="space-y-2">
                 {order.files.map((f) => (
                   <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>

@@ -98,10 +98,10 @@ export function OrderCard({ order, perspective, onClick }: Props) {
             {new Date(order.deadline).toLocaleDateString('pt-BR')}
           </span>
         )}
-        {order.files.length > 0 && (
+        {order.filesCount > 0 && (
           <span className="flex items-center gap-1">
             <IconFile size={11} stroke={1.5} />
-            {order.files.length} {order.files.length === 1 ? 'arquivo' : 'arquivos'}
+            {order.filesCount} {order.filesCount === 1 ? 'arquivo' : 'arquivos'}
           </span>
         )}
         {order.deliveriesCount > 0 && (

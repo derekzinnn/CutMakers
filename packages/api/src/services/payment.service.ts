@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 import { logEvent } from './audit.service'
@@ -254,11 +254,40 @@ export class PaymentService {
     return { paymentUrl, pixCode, pixQrCode, expiresAt }
   }
 
-  async handleWebhook(rawBody: string, signature: string | undefined) {
-    if (this.webhookSecret && signature) {
-      const expected = `sha256=${createHmac('sha256', this.webhookSecret).update(rawBody).digest('hex')}`
-      if (signature !== expected) throw Forbidden('Assinatura do webhook inválida')
+  /**
+   * Valida a assinatura HMAC-SHA256 do webhook. Fail-closed por design — este
+   * endpoint é público e move dinheiro, então na dúvida ele recusa:
+   *   - secret configurado → assinatura é OBRIGATÓRIA (omitir o header não pula mais a checagem)
+   *   - produção sem secret → recusa tudo; não existe webhook confiável sem segredo
+   *   - dev sem secret → aceita, para o fluxo de demonstração local continuar funcionando
+   */
+  private verifyWebhookSignature(rawBody: string, signature: string | undefined) {
+    const secret = this.webhookSecret
+
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw Forbidden('Webhook não configurado: defina ABACATEPAY_WEBHOOK_SECRET')
+      }
+      return
     }
+
+    if (!signature) throw Forbidden('Assinatura do webhook ausente')
+
+    const digest = createHmac('sha256', secret).update(rawBody).digest('hex')
+    // Alguns gateways enviam "sha256=<hex>", outros só o hex puro
+    const received = signature.startsWith('sha256=') ? signature.slice(7) : signature
+
+    const expected = Buffer.from(digest, 'hex')
+    const provided = Buffer.from(received, 'hex')
+    // timingSafeEqual lança se os buffers tiverem tamanhos diferentes — compara antes.
+    // Hex malformado resulta em buffer curto e cai neste mesmo guard.
+    if (expected.length !== provided.length || !timingSafeEqual(expected, provided)) {
+      throw Forbidden('Assinatura do webhook inválida')
+    }
+  }
+
+  async handleWebhook(rawBody: string, signature: string | undefined) {
+    this.verifyWebhookSignature(rawBody, signature)
 
     const event = JSON.parse(rawBody) as {
       event: string
@@ -286,46 +315,56 @@ export class PaymentService {
         return { received: true }
       }
 
-      if (transaction) {
-        const isNewFlow = transaction.order.status === 'AWAITING_PAYMENT'
+      // Idempotência: gateways reenviam webhooks (retry automático, reenvio manual
+      // pelo painel, replay). Sem guard, um reenvio depois da aprovação regravaria
+      // RELEASED → HELD e corromperia o resumo financeiro.
+      //
+      // O updateMany com `status: 'PENDING'` no where é o lock otimista: só a
+      // primeira entrega encontra a linha nesse estado e a reivindica. Duas
+      // entregas simultâneas disputam a mesma row e exatamente uma vence.
+      // Tudo dentro de uma única transação — ou o escrow e o pedido avançam
+      // juntos, ou nada avança.
+      const claimed = await prisma.$transaction(async (tx) => {
+        const claim = await tx.transaction.updateMany({
+          where: { id: transaction.id, status: 'PENDING' },
+          data: { status: 'HELD' },
+        })
+        if (claim.count === 0) return false
 
-        const baseOps = [
-          prisma.transaction.update({
-            where: { id: transaction.id },
-            data: { status: 'HELD' },
-          }),
-          prisma.notification.create({
-            data: {
-              userId: transaction.payeeId,
-              type: 'PAYMENT_CONFIRMED',
-              title: 'Pagamento confirmado — pode iniciar o projeto!',
-              body: `Pagamento recebido para "${transaction.order.title}". Você já pode iniciar o trabalho.`,
-              relatedOrderId: transaction.orderId,
-            },
-          }),
-        ] as const
+        await tx.notification.create({
+          data: {
+            userId: transaction.payeeId,
+            type: 'PAYMENT_CONFIRMED',
+            title: 'Pagamento confirmado — pode iniciar o projeto!',
+            body: `Pagamento recebido para "${transaction.order.title}". Você já pode iniciar o trabalho.`,
+            relatedOrderId: transaction.orderId,
+          },
+        })
 
-        if (isNewFlow) {
-          await prisma.$transaction([
-            ...baseOps,
-            prisma.order.update({
-              where: { id: transaction.orderId },
-              data: { status: 'IN_PROGRESS' },
-            }),
-          ])
-        } else {
-          await prisma.$transaction([...baseOps])
+        // Fluxo novo (negociação/solicitação): o pagamento libera o início do trabalho.
+        // Fluxo legado (ACCEPTED) já tinha o pedido em andamento.
+        if (transaction.order.status === 'AWAITING_PAYMENT') {
+          await tx.order.update({
+            where: { id: transaction.orderId },
+            data: { status: 'IN_PROGRESS' },
+          })
         }
 
-        // Evento de sistema — confirmado pelo webhook do Abacatepay
-        await logEvent({
-          actorId: null,
-          action: 'PAYMENT_CONFIRMED',
-          entityType: 'Transaction',
-          entityId: transaction.id,
-          metadata: { orderId: transaction.orderId, externalPaymentId: externalId },
-        })
-      }
+        return true
+      })
+
+      // Reenvio de um pagamento já processado: responde 200 para o gateway parar
+      // de retentar, sem duplicar notificação nem mexer no escrow.
+      if (!claimed) return { received: true, duplicate: true }
+
+      // Evento de sistema — confirmado pelo webhook do Abacatepay
+      await logEvent({
+        actorId: null,
+        action: 'PAYMENT_CONFIRMED',
+        entityType: 'Transaction',
+        entityId: transaction.id,
+        metadata: { orderId: transaction.orderId, externalPaymentId: externalId },
+      })
     }
 
     return { received: true }

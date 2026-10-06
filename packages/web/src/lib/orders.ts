@@ -63,7 +63,8 @@ export interface OrderDTO {
   category: { id: string; name: string }
   creator: OrderUserRef
   editor: OrderUserRef
-  files: OrderFile[]
+  /** Só a contagem na listagem — as URLs vivem no detalhe, atrás do gate de pagamento */
+  filesCount: number
   deliveriesCount: number
   revisionsCount: number
   /** Rodadas de revisão inclusas no contrato deste pedido */
@@ -90,6 +91,9 @@ export interface OrderDetailDTO extends OrderDTO {
   revisions: RevisionDTO[]
   dispute: DisputeDTO | null
   agreement: AgreementDTO | null
+  /** Vazio quando `filesHidden` — use `filesCount` para saber que existe material */
+  files: OrderFile[]
+  /** true quando o editor ainda não pode baixar os arquivos (pré-pagamento) */
   filesHidden: boolean
 }
 
