@@ -1,6 +1,6 @@
 import { Prisma, OrderStatus } from '@prisma/client'
 import { prisma } from '../lib/prisma'
-import { NotFound, Forbidden, BadRequest } from '../lib/errors'
+import { NotFound, Forbidden, BadRequest, Conflict } from '../lib/errors'
 import { paymentService } from './payment.service'
 import { proposalToDTO } from './proposal.service'
 import { revisionService, revisionToDTO } from './revision.service'
@@ -42,6 +42,15 @@ export interface CreateDeliveryData {
 }
 
 const PLATFORM_FEE_RATE = 0.1
+
+/** Intervalo mínimo entre varreduras de auto-aprovação num mesmo processo. */
+const AUTO_APPROVE_THROTTLE_MS = 5 * 60 * 1000
+/** Teto de pedidos por varredura — evita uma passada única e longa quando há acumulo. */
+const AUTO_APPROVE_BATCH = 100
+let lastAutoApproveRun = 0
+
+/** Tentativas de gravar a entrega quando duas disputam a mesma versão. */
+const MAX_DELIVERY_ATTEMPTS = 3
 
 /** Antes destes status o pedido ainda não foi pago — arquivos ficam retidos. */
 const PRE_WORK_STATUSES: OrderStatus[] = ['NEGOTIATING', 'AWAITING_PAYMENT', 'PENDING']
@@ -296,11 +305,17 @@ export class OrderService {
       )
     }
 
-    const updated = await prisma.order.update({
-      where: { id: orderId },
+    // Claim otimista: a transição só vale se o pedido ainda estiver no status que
+    // acabamos de validar. Sem isso, dois cliques em "Aprovar entrega" passavam os
+    // dois pela validação e incrementavam totalJobs em dobro (mesma classe de bug
+    // da varredura de auto-aprovação).
+    const claim = await prisma.order.updateMany({
+      where: { id: orderId, status: order.status },
       data: { status: newStatus },
-      include: orderDetailInclude,
     })
+    if (claim.count === 0) {
+      throw Conflict('O status do pedido mudou enquanto você agia. Recarregue a página.')
+    }
 
     if (newStatus === 'COMPLETED') {
       await paymentService.releasePayment(orderId, userId)
@@ -314,7 +329,21 @@ export class OrderService {
       await logEvent({ actorId: userId, action: 'ORDER_CANCELLED', entityType: 'Order', entityId: orderId })
     }
 
-    await this.notifyStatusChange(order.id, order.title, order.creatorId, order.editorId, newStatus, userId)
+    await this.notifyStatusChange(
+      order.id,
+      order.title,
+      order.creatorId,
+      order.editorId,
+      newStatus,
+      userId,
+      actorRole,
+    )
+
+    // Lido após os efeitos colaterais para o DTO já refletir o escrow liberado
+    const updated = await prisma.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: orderDetailInclude,
+    })
 
     return this.toDetailDTO(updated, userId, isAdmin)
   }
@@ -327,52 +356,69 @@ export class OrderService {
       throw BadRequest('Pedido precisa estar em andamento para enviar uma entrega')
     }
 
-    const existingCount = await prisma.delivery.count({ where: { orderId } })
-    const version = existingCount + 1
+    // Conversa do pedido criada sob demanda para a mensagem da entrega cair no chat.
+    // upsert em vez de find-then-create: duas entregas simultâneas não tentam
+    // criar a mesma conversa (orderId é @unique — a segunda falharia).
+    const conversation = await prisma.conversation.upsert({
+      where: { orderId },
+      create: { creatorId: order.creatorId, editorId: order.editorId, orderId },
+      update: {},
+    })
 
-    // Find or create the conversation so the delivery message lands in chat
-    let conversation = await prisma.conversation.findUnique({ where: { orderId } })
-    if (!conversation) {
-      conversation = await prisma.conversation.create({
-        data: { creatorId: order.creatorId, editorId: order.editorId, orderId },
-      })
-    }
+    // A versão vem do número de entregas existentes. Sob concorrência duas chamadas
+    // podem calcular o mesmo número — aí a constraint @@unique([orderId, version])
+    // rejeita a segunda e o retry recalcula. Escolhemos isso em vez de um lock
+    // pessimista no pedido: o caso comum (sem corrida) não paga nada por isso.
+    for (let attempt = 1; ; attempt++) {
+      const existingCount = await prisma.delivery.count({ where: { orderId } })
+      const version = existingCount + 1
 
-    const chatMessage = data.message?.trim()
-      ? `📦 Entrega v${version}: ${data.message.trim()}`
-      : `📦 Entrega v${version} enviada. Revise e aprove!`
+      const chatMessage = data.message?.trim()
+        ? `📦 Entrega v${version}: ${data.message.trim()}`
+        : `📦 Entrega v${version} enviada. Revise e aprove!`
 
-    const [delivery] = await prisma.$transaction([
-      prisma.delivery.create({
-        data: { orderId, videoUrl: data.videoUrl, message: data.message, version },
-      }),
-      prisma.order.update({
-        where: { id: orderId },
-        data: { status: 'DELIVERED' },
-      }),
-      prisma.notification.create({
-        data: {
-          userId: order.creatorId,
-          type: 'DELIVERY_RECEIVED',
-          title: 'Entrega recebida!',
-          body: `O editor enviou a versão ${version} do pedido "${order.title}". Revise e aprove ou solicite revisão.`,
-          relatedOrderId: orderId,
-        },
-      }),
-      prisma.message.create({
-        data: { conversationId: conversation.id, senderId: editorId, content: chatMessage },
-      }),
-      // Uma nova entrega resolve automaticamente qualquer revisão pendente
-      revisionService.markAddressedOp(orderId),
-    ])
+      try {
+        const [delivery] = await prisma.$transaction([
+          prisma.delivery.create({
+            data: { orderId, videoUrl: data.videoUrl, message: data.message, version },
+          }),
+          prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'DELIVERED' },
+          }),
+          prisma.notification.create({
+            data: {
+              userId: order.creatorId,
+              type: 'DELIVERY_RECEIVED',
+              title: 'Entrega recebida!',
+              body: `O editor enviou a versão ${version} do pedido "${order.title}". Revise e aprove ou solicite revisão.`,
+              relatedOrderId: orderId,
+            },
+          }),
+          prisma.message.create({
+            data: { conversationId: conversation.id, senderId: editorId, content: chatMessage },
+          }),
+          // Uma nova entrega resolve automaticamente qualquer revisão pendente
+          revisionService.markAddressedOp(orderId),
+        ])
 
-    return {
-      id: delivery.id,
-      orderId: delivery.orderId,
-      videoUrl: delivery.videoUrl,
-      message: delivery.message,
-      version: delivery.version,
-      createdAt: delivery.createdAt,
+        return {
+          id: delivery.id,
+          orderId: delivery.orderId,
+          videoUrl: delivery.videoUrl,
+          message: delivery.message,
+          version: delivery.version,
+          createdAt: delivery.createdAt,
+        }
+      } catch (err) {
+        const lostRace =
+          err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
+        if (lostRace && attempt < MAX_DELIVERY_ATTEMPTS) continue
+        if (lostRace) {
+          throw Conflict('Não foi possível registrar a entrega. Tente novamente.')
+        }
+        throw err
+      }
     }
   }
 
@@ -408,36 +454,76 @@ export class OrderService {
       // updatedAt marca a última transição de status (→ DELIVERED)
       where: { status: 'DELIVERED', updatedAt: { lt: cutoff } },
       select: { id: true, title: true, creatorId: true, editorId: true },
+      take: AUTO_APPROVE_BATCH,
     })
 
     for (const order of stale) {
-      await prisma.$transaction([
-        prisma.order.update({ where: { id: order.id }, data: { status: 'COMPLETED' } }),
-        prisma.editorProfile.updateMany({
+      // Claim otimista dentro da transação: só quem efetivamente move
+      // DELIVERED→COMPLETED executa os efeitos. Antes, duas varreduras simultâneas
+      // (dois logins, duas instâncias) incrementavam totalJobs duas vezes pela
+      // mesma entrega e notificavam em dobro.
+      const processed = await prisma.$transaction(async (tx) => {
+        const claim = await tx.order.updateMany({
+          where: { id: order.id, status: 'DELIVERED' },
+          data: { status: 'COMPLETED' },
+        })
+        if (claim.count === 0) return false
+
+        await tx.editorProfile.updateMany({
           where: { userId: order.editorId },
           data: { totalJobs: { increment: 1 } },
-        }),
-        prisma.notification.create({
-          data: {
-            userId: order.creatorId,
-            type: 'PAYMENT_RELEASED',
-            title: 'Entrega aprovada automaticamente',
-            body: `A entrega de "${order.title}" foi aprovada automaticamente após ${AUTO_APPROVE_DAYS} dias sem resposta (cláusula 4b do contrato).`,
-            relatedOrderId: order.id,
-          },
-        }),
-        prisma.notification.create({
-          data: {
-            userId: order.editorId,
-            type: 'PAYMENT_RELEASED',
-            title: 'Pedido concluído — pagamento liberado!',
-            body: `A entrega de "${order.title}" foi aprovada automaticamente e o pagamento foi liberado.`,
-            relatedOrderId: order.id,
-          },
-        }),
-      ])
+        })
+
+        await tx.notification.createMany({
+          data: [
+            {
+              userId: order.creatorId,
+              type: 'PAYMENT_RELEASED',
+              title: 'Entrega aprovada automaticamente',
+              body: `A entrega de "${order.title}" foi aprovada automaticamente após ${AUTO_APPROVE_DAYS} dias sem resposta (cláusula 4b do contrato).`,
+              relatedOrderId: order.id,
+            },
+            {
+              userId: order.editorId,
+              type: 'PAYMENT_RELEASED',
+              title: 'Pedido concluído — pagamento liberado!',
+              body: `A entrega de "${order.title}" foi aprovada automaticamente e o pagamento foi liberado.`,
+              relatedOrderId: order.id,
+            },
+          ],
+        })
+
+        return true
+      })
+
+      // Outra varredura (ou o próprio creator aprovando) chegou primeiro
+      if (!processed) continue
+
       await paymentService.releasePayment(order.id)
     }
+
+    return { processed: stale.length }
+  }
+
+  /**
+   * Dispara a varredura em background, no máximo uma vez por janela de throttle.
+   *
+   * Isto é um job disfarçado de efeito colateral do login, e o destino é um cron
+   * chamando `autoApproveStaleDeliveries()` direto — a assinatura já serve. Enquanto
+   * isso não existe, três salvaguardas tornam o arranjo tolável:
+   *   1. throttle por processo: 100 logins/min não viram 100 varreduras
+   *   2. claim otimista por pedido: instâncias concorrentes não duplicam efeitos
+   *   3. fire-and-forget: a latência do login não depende do tamanho da tabela
+   */
+  triggerAutoApproveInBackground() {
+    const now = Date.now()
+    if (now - lastAutoApproveRun < AUTO_APPROVE_THROTTLE_MS) return
+    lastAutoApproveRun = now
+
+    void this.autoApproveStaleDeliveries().catch((err) => {
+      // Falha aqui nunca deve derrubar o login que disparou a varredura
+      console.error('[auto-approve] varredura falhou', err)
+    })
   }
 
   // ─── Helpers privados ─────────────────────────────────────────────────────
@@ -449,6 +535,7 @@ export class OrderService {
     editorId: string,
     newStatus: OrderStatus,
     changedById: string,
+    actorRole: ActorRole,
   ) {
     type NotifConfig = { type: Parameters<typeof prisma.notification.create>[0]['data']['type']; title: string; body: string }
 
@@ -478,16 +565,23 @@ export class OrderService {
     const config = notifMap[newStatus]
     if (!config) return
 
-    const recipientId = changedById === creatorId ? editorId : creatorId
+    // Quando quem muda o status é uma das partes, só a contraparte precisa saber.
+    // Quando é o admin (resolução de disputa, intervenção manual) não existe
+    // "contraparte": o ternário antigo caía sempre no creator e o editor nunca
+    // era avisado — inclusive ao ter o próprio pagamento liberado.
+    const recipientIds =
+      actorRole === 'admin'
+        ? [creatorId, editorId]
+        : [changedById === creatorId ? editorId : creatorId]
 
-    await prisma.notification.create({
-      data: {
-        userId: recipientId,
+    await prisma.notification.createMany({
+      data: recipientIds.map((userId) => ({
+        userId,
         type: config.type,
         title: config.title,
         body: config.body,
         relatedOrderId: orderId,
-      },
+      })),
     })
   }
 

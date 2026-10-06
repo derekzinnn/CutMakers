@@ -12,7 +12,9 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "trace:requests": "node scripts/trace-request-flow.mjs"
+    "trace:requests": "node scripts/trace-request-flow.mjs",
+    "emails:check": "tsx scripts/normalize-emails.ts",
+    "emails:normalize": "tsx scripts/normalize-emails.ts --apply"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

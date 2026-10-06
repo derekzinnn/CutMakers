@@ -212,6 +212,14 @@ model Order {
   proposals     OrderProposal[]
   dispute       Dispute?
   agreement     OrderAgreement?
+
+  // Dashboards do criador e do editor: where <parte> [+ status] order by createdAt desc
+  @@index([creatorId, createdAt])
+  @@index([editorId, createdAt])
+  // Lista de ordens do admin: where status order by createdAt desc
+  @@index([status, createdAt])
+  // Varredura de auto-aprovacao: where status DELIVERED + updatedAt < cutoff
+  @@index([status, updatedAt])
 }
 
 model OrderFile {
@@ -222,6 +230,8 @@ model OrderFile {
   fileName   String
   fileType   String
   uploadedAt DateTime @default(now())
+
+  @@index([orderId])
 }
 
 model Delivery {
@@ -234,6 +244,11 @@ model Delivery {
   createdAt DateTime @default(now())
 
   revisions Revision[]
+
+  // Duas entregas nunca compartilham a mesma versao no mesmo pedido. O calculo
+  // version = count + 1 corria solto; esta constraint e que torna impossivel
+  // gravar v2 duas vezes (o service faz retry quando a corrida acontece).
+  @@unique([orderId, version])
 }
 
 model Revision {
@@ -247,6 +262,10 @@ model Revision {
   description   String
   status        RevisionStatus @default(PENDING)
   createdAt     DateTime       @default(now())
+
+  @@index([orderId, createdAt])
+  // Nova entrega marca as pendentes como ADDRESSED
+  @@index([orderId, status])
 }
 
 model Transaction {
@@ -264,6 +283,14 @@ model Transaction {
   externalPaymentId String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+
+  // Aba Pagamentos do criador: where payerId order by createdAt desc
+  @@index([payerId, createdAt])
+  @@index([payeeId, createdAt])
+  // Resumo financeiro do admin: agregacoes por status
+  @@index([status])
+  // Webhook resolve a cobranca pelo id do gateway
+  @@index([externalPaymentId])
 }
 
 model Subscription {
@@ -275,6 +302,12 @@ model Subscription {
   startedAt              DateTime           @default(now())
   expiresAt              DateTime?
   externalSubscriptionId String?
+
+  @@index([editorProfileId, status])
+  // Expiracao varre as ativas vencidas
+  @@index([status, expiresAt])
+  // Webhook de assinatura resolve pelo id do gateway
+  @@index([externalSubscriptionId])
 }
 
 model Conversation {
@@ -288,6 +321,10 @@ model Conversation {
   createdAt DateTime @default(now())
 
   messages Message[]
+
+  // listForUser: where creatorId OR editorId (o Postgres combina os dois indices)
+  @@index([creatorId, createdAt])
+  @@index([editorId, createdAt])
 }
 
 model Message {
@@ -299,6 +336,9 @@ model Message {
   content        String
   readAt         DateTime?
   createdAt      DateTime     @default(now())
+
+  // Paginacao do chat: where conversationId order by createdAt asc
+  @@index([conversationId, createdAt])
 }
 
 model Review {
@@ -312,6 +352,9 @@ model Review {
   rating     Int
   comment    String?
   createdAt  DateTime @default(now())
+
+  // Avaliacoes do perfil publico + recalculo de avgRating
+  @@index([revieweeId, createdAt])
 }
 
 model Notification {
@@ -328,6 +371,11 @@ model Notification {
   relatedRequestId String?
   relatedRequest   ProjectRequest?  @relation(fields: [relatedRequestId], references: [id])
   createdAt        DateTime         @default(now())
+
+  // O sino faz polling a cada 20s por sessao aberta: sem estes indices cada
+  // tick era um full scan. Os dois mais quentes do schema.
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }
 
 model OrderProposal {
@@ -340,6 +388,10 @@ model OrderProposal {
   message    String?
   status     ProposalStatus @default(PENDING)
   createdAt  DateTime       @default(now())
+
+  @@index([orderId, createdAt])
+  // Guard de "1 proposta PENDING por pedido"
+  @@index([orderId, status])
 }
 
 // ─── Marketplace invertido ─────────────────────────────────────────────────────
@@ -431,4 +483,7 @@ model Dispute {
   status       DisputeStatus @default(OPEN)
   createdAt    DateTime      @default(now())
   resolvedAt   DateTime?
+
+  // Fila de disputas do admin: where status OPEN order by createdAt asc
+  @@index([status, createdAt])
 }

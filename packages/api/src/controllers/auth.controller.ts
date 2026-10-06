@@ -7,9 +7,15 @@ import { orderService } from '../services/order.service'
 
 const authService = new AuthService()
 
+// O unique de User.email é case-sensitive no Postgres, então normalizamos aqui:
+// sem isso "Derek@Gmail.com" criava uma segunda conta ao lado de "derek@gmail.com",
+// e quem digitasse a caixa errada no login levava "Credenciais inválidas" com a
+// senha certa. Normalizar no schema cobre registro e login pelo mesmo caminho.
+const emailField = z.string().trim().toLowerCase().email('Email inválido')
+
 const registerSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
+  name: z.string().trim().min(2, 'Nome deve ter ao menos 2 caracteres'),
+  email: emailField,
   password: z.string().min(8, 'Senha deve ter ao menos 8 caracteres'),
   role: z.enum(['CREATOR', 'EDITOR']),
   // Aceite obrigatório dos Termos de Uso da plataforma
@@ -19,7 +25,7 @@ const registerSchema = z.object({
 })
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: emailField,
   password: z.string().min(1),
 })
 
@@ -79,10 +85,14 @@ export class AuthController {
       return res.status(401).json({ message: 'Conta suspensa. Entre em contato com o suporte.' })
     }
 
-    // Rotinas oportunistas no login (sem cron por enquanto):
-    // expira assinaturas vencidas + aprova entregas paradas há 7+ dias (cláusula 4b)
+    // Rotinas oportunistas no login (sem cron por enquanto).
+    // A expiração de assinatura é aguardada: ela decide o `isPremium` que o
+    // dashboard vai ler a seguir, e consulta só as vencidas.
     await subscriptionService.checkAndExpireSubscriptions()
-    await orderService.autoApproveStaleDeliveries()
+    // A auto-aprovação vai para background com throttle: varre pedidos de todo
+    // mundo, então o custo cresce com a tabela e não tem nada a ver com quem
+    // está logando. Nenhum dado desta resposta depende dela.
+    orderService.triggerAutoApproveInBackground()
 
     const tokens = authService.generateTokens(user.id, user.role)
 
