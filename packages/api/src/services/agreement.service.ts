@@ -1,6 +1,7 @@
 import { OrderAgreement, Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
+import { PLATFORM_FEE_LABEL } from '../lib/fees'
 
 // ─── Regras do contrato (mantenha em sincronia com o template abaixo) ─────────
 
@@ -54,7 +55,7 @@ function buildAgreementContent(d: AgreementData): string {
 Pedido: ${d.orderTitle} · nº ${d.orderId}
 Contratante (Criador): ${d.creatorName} · ${d.creatorEmail}
 Contratado (Editor): ${d.editorName} · ${d.editorEmail}
-Valor acordado: R$ ${brl(d.amount)} · Taxa da plataforma (10%): R$ ${brl(d.platformFee)} · Valor líquido ao Editor: R$ ${brl(net)}
+Valor acordado: R$ ${brl(d.amount)} · Taxa da plataforma (${PLATFORM_FEE_LABEL}): R$ ${brl(d.platformFee)} · Valor líquido ao Editor: R$ ${brl(net)}
 Prazo de entrega: ${deadline} · Data do acordo: ${today}
 
 1. OBJETO. O Editor produzirá a edição de vídeo descrita no briefing do pedido e na proposta aceita, que definem o ESCOPO deste contrato. O que não está no briefing/proposta não faz parte do escopo.

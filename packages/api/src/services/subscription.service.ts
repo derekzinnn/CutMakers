@@ -9,6 +9,8 @@ import { logEvent } from './audit.service'
 export const PREMIUM_MONTHLY_PRICE = 39.9
 const PERIOD_DAYS = 30
 const RENEW_WINDOW_DAYS = 5 // renovação permitida a partir dos últimos 5 dias
+/** Tempo que uma cobrança PENDING segue valendo antes de ser considerada abandonada. */
+const PENDING_CHARGE_TTL_MIN = 30
 const DAY_MS = 24 * 60 * 60 * 1000
 
 // ─── DTO ───────────────────────────────────────────────────────────────────────
@@ -63,6 +65,31 @@ export class SubscriptionService {
           `Você já possui uma assinatura premium ativa (válida por mais ${Math.ceil(daysLeft)} dias)`,
         )
       }
+    }
+
+    // Cobranças PENDING abandonadas viram CANCELLED; uma recente bloqueia a criação
+    // de outra. Sem isto, cada POST criava uma linha nova E uma cobrança nova no
+    // gateway — chamar o endpoint em loop gerava cobranças ilimitadas, e cada
+    // emissão tem custo real.
+    const pendingCutoff = new Date(Date.now() - PENDING_CHARGE_TTL_MIN * 60 * 1000)
+    await prisma.subscription.updateMany({
+      where: {
+        editorProfileId: profile.id,
+        status: 'PENDING',
+        startedAt: { lt: pendingCutoff },
+      },
+      data: { status: 'CANCELLED' },
+    })
+
+    const openPending = await prisma.subscription.findFirst({
+      where: { editorProfileId: profile.id, status: 'PENDING' },
+      orderBy: { startedAt: 'desc' },
+      select: { id: true },
+    })
+    if (openPending) {
+      throw BadRequest(
+        `Você já tem uma cobrança de assinatura em aberto. Conclua o pagamento pelo PIX gerado ou aguarde ${PENDING_CHARGE_TTL_MIN} minutos para gerar outra.`,
+      )
     }
 
     // Registro inicial em PENDING — só vira ACTIVE após confirmação do pagamento

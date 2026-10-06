@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'crypto'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 import { logEvent } from './audit.service'
@@ -124,65 +125,24 @@ export class PaymentService {
 
     const amount = Number(order.budget)
     const platformFee = Number(order.platformFee)
-    const netAmount = amount - platformFee
-    const amountCents = Math.round(amount * 100)
+    // Subtração em Decimal: 199.99 - 20 em float dá 179.99000000000001, e este
+    // valor vai para a coluna Decimal e para o DTO do financeiro
+    const netAmount = new Prisma.Decimal(order.budget).minus(order.platformFee).toNumber()
 
-    let externalPaymentId: string | null = null
-    let paymentUrl: string | null = null
-    let pixCode: string | null = null
-    let pixQrCode: string | null = null
-    let expiresAt: string | null = null
+    // Mesma rotina de cobrança usada pelas assinaturas. Em dev (sem
+    // ABACATEPAY_API_KEY) ela devolve devMode: true e um id sintético.
+    const charge = await this.createPixCharge({
+      amount,
+      externalId: order.id,
+      productName: order.title,
+      customer: { name: order.creator.name, email: order.creator.email },
+      returnPath: `/orders/${order.id}`,
+    })
 
-    if (this.apiKey) {
-      const res = await fetch(`${ABACATEPAY_API_URL}/billing/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          frequency: 'ONE_TIME',
-          methods: ['PIX'],
-          products: [
-            {
-              externalId: order.id,
-              name: order.title.slice(0, 100),
-              quantity: 1,
-              price: amountCents,
-            },
-          ],
-          customer: {
-            name: order.creator.name,
-            email: order.creator.email,
-            cellphone: ABACATEPAY_FALLBACK_CELLPHONE,
-            taxId: ABACATEPAY_FALLBACK_TAX_ID,
-          },
-          returnUrl: `${this.frontendUrl}/orders/${order.id}`,
-          completionUrl: `${this.frontendUrl}/orders/${order.id}`,
-        }),
-      })
+    const { externalPaymentId, paymentUrl, pixCode, pixQrCode, expiresAt } = charge
 
-      if (!res.ok) {
-        const text = await res.text()
-        throw BadRequest(`Erro ao criar cobrança: ${text}`)
-      }
-
-      const json = (await res.json()) as {
-        data?: { id?: string; url?: string; pixCode?: string; pixQrCode?: string; expiresAt?: string }
-      }
-      externalPaymentId = json.data?.id ?? null
-      paymentUrl = json.data?.url ?? null
-      pixCode = json.data?.pixCode ?? null
-      pixQrCode = json.data?.pixQrCode ?? null
-      expiresAt = json.data?.expiresAt ?? null
-    } else {
-      // Dev mode: auto-confirm payment so the demo flow progresses
-      externalPaymentId = `dev_${order.id}`
-      paymentUrl = null
-      pixCode = null
-      pixQrCode = null
-      expiresAt = null
-
+    if (charge.devMode) {
+      // Dev mode: confirma na hora para o fluxo de demonstração seguir
       const [devTransaction] = await prisma.$transaction([
         prisma.transaction.create({
           data: {

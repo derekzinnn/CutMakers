@@ -7,6 +7,7 @@ import { revisionService, revisionToDTO } from './revision.service'
 import { disputeToDTO } from './dispute.service'
 import { agreementToDTO, AUTO_APPROVE_DAYS } from './agreement.service'
 import { logEvent } from './audit.service'
+import { platformFeeAsNumber } from '../lib/fees'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -40,8 +41,6 @@ export interface CreateDeliveryData {
   videoUrl: string
   message?: string
 }
-
-const PLATFORM_FEE_RATE = 0.1
 
 /** Intervalo mínimo entre varreduras de auto-aprovação num mesmo processo. */
 const AUTO_APPROVE_THROTTLE_MS = 5 * 60 * 1000
@@ -81,10 +80,21 @@ const VALID_TRANSITIONS: {
   { from: 'DELIVERED',          to: 'COMPLETED',          allowedRoles: ['creator', 'admin'] },
   { from: 'DELIVERED',          to: 'REVISION_REQUESTED', allowedRoles: ['creator', 'admin'] },
   { from: 'REVISION_REQUESTED', to: 'IN_PROGRESS',        allowedRoles: ['editor', 'admin'] },
-  { from: 'COMPLETED',          to: 'DISPUTED',           allowedRoles: ['admin'] },
-  { from: 'CANCELLED',          to: 'DISPUTED',           allowedRoles: ['admin'] },
+  // Saída de disputa pelas mãos do admin (o caminho normal é dispute.resolveDispute,
+  // que move o escrow junto; estas duas existem como escape manual)
   { from: 'DISPUTED',           to: 'COMPLETED',          allowedRoles: ['admin'] },
   { from: 'DISPUTED',           to: 'CANCELLED',          allowedRoles: ['admin'] },
+  // REMOVIDO: COMPLETED→DISPUTED e CANCELLED→DISPUTED.
+  // Elas deixavam o pedido em DISPUTED sem nenhuma linha Dispute — só openDispute
+  // cria a disputa, e ele recusa qualquer status fora de DELIVERED/REVISION_REQUESTED.
+  // O resultado era um pedido congelado exibindo o banner "Em disputa" para as duas
+  // partes, com as ações escondidas, e resolveDispute falhando com a mensagem
+  // enganosa "Disputa já foi resolvida".
+  //
+  // Disputa pós-conclusão é uma feature legítima, mas não é um PATCH de status: o
+  // escrow já foi liberado ao editor, então exige um fluxo de estorno próprio em
+  // dispute.service. Enquanto isso não existe, melhor não permitir a transição do
+  // que permitir um estado que o sistema não sabe resolver.
 ]
 
 // ─── Includes reutilizáveis ──────────────────────────────────────────────────
@@ -179,7 +189,7 @@ export class OrderService {
       }
     }
 
-    const platformFee = Math.round(data.budget * PLATFORM_FEE_RATE * 100) / 100
+    const platformFee = platformFeeAsNumber(data.budget)
 
     const order = await prisma.$transaction(async (tx) => {
       const created = await tx.order.create({

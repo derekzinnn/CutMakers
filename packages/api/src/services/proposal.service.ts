@@ -1,10 +1,10 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
-import { NotFound, Forbidden, BadRequest } from '../lib/errors'
+import { NotFound, Forbidden, BadRequest, Conflict } from '../lib/errors'
 import { agreementService } from './agreement.service'
+import { platformFeeOf, platformFeeAsNumber, netAmountAsNumber } from '../lib/fees'
 import { logEvent } from './audit.service'
 
-const PLATFORM_FEE_RATE = 0.1
 
 const proposalInclude = {
   user: { select: { id: true, name: true, avatarUrl: true } },
@@ -14,8 +14,8 @@ type ProposalWithUser = Prisma.OrderProposalGetPayload<{ include: typeof proposa
 
 export function proposalToDTO(p: ProposalWithUser) {
   const amount = Number(p.amount)
-  const platformFee = Math.round(amount * PLATFORM_FEE_RATE * 100) / 100
-  const netAmount = Math.round((amount - platformFee) * 100) / 100
+  const platformFee = platformFeeAsNumber(p.amount)
+  const netAmount = netAmountAsNumber(p.amount)
   return {
     id: p.id,
     orderId: p.orderId,
@@ -122,37 +122,56 @@ export class ProposalService {
     }
 
     const amount = Number(proposal.amount)
-    const platformFee = Math.round(amount * PLATFORM_FEE_RATE * 100) / 100
+    const platformFee = platformFeeAsNumber(proposal.amount)
 
-    const [updatedProposal] = await prisma.$transaction([
-      prisma.orderProposal.update({
-        where: { id: proposalId },
+    const updatedProposal = await prisma.$transaction(async (tx) => {
+      // Claim otimista duplo: a proposta precisa ainda estar PENDING e o pedido em
+      // NEGOTIATING no instante da ESCRITA, não só na leitura acima. Sem isso, dois
+      // cliques em "Aceitar" passavam os dois pela validação — notificações em dobro
+      // e contrato regenerado duas vezes (o regenerate apaga e recria o termo).
+      // Mesmo padrão que o aceite de proposta de solicitação já usava.
+      const claimProposal = await tx.orderProposal.updateMany({
+        where: { id: proposalId, status: 'PENDING' },
         data: { status: 'ACCEPTED' },
+      })
+      if (claimProposal.count === 0) throw Conflict('Esta proposta já foi respondida')
+
+      // budget/platformFee gravados em Decimal (proposal.amount já é Decimal) —
+      // o Number acima serve só para o texto das notificações e da auditoria
+      const claimOrder = await tx.order.updateMany({
+        where: { id: orderId, status: 'NEGOTIATING' },
+        data: {
+          status: 'AWAITING_PAYMENT',
+          budget: proposal.amount,
+          platformFee: platformFeeOf(proposal.amount),
+        },
+      })
+      if (claimOrder.count === 0) throw Conflict('O pedido não está mais em negociação')
+
+      await tx.notification.createMany({
+        data: [
+          {
+            userId: order.creatorId,
+            type: 'PROPOSAL_ACCEPTED',
+            title: 'Proposta aceita!',
+            body: `Proposta de R$ ${amount.toFixed(2)} aceita para "${order.title}". Realize o pagamento para iniciar o projeto.`,
+            relatedOrderId: orderId,
+          },
+          {
+            userId: order.editorId,
+            type: 'PROPOSAL_ACCEPTED',
+            title: 'Proposta aceita!',
+            body: `Proposta de R$ ${amount.toFixed(2)} aceita para "${order.title}". Aguardando pagamento do creator.`,
+            relatedOrderId: orderId,
+          },
+        ],
+      })
+
+      return tx.orderProposal.findUniqueOrThrow({
+        where: { id: proposalId },
         include: proposalInclude,
-      }),
-      prisma.order.update({
-        where: { id: orderId },
-        data: { status: 'AWAITING_PAYMENT', budget: amount, platformFee },
-      }),
-      prisma.notification.create({
-        data: {
-          userId: order.creatorId,
-          type: 'PROPOSAL_ACCEPTED',
-          title: 'Proposta aceita!',
-          body: `Proposta de R$ ${amount.toFixed(2)} aceita para "${order.title}". Realize o pagamento para iniciar o projeto.`,
-          relatedOrderId: orderId,
-        },
-      }),
-      prisma.notification.create({
-        data: {
-          userId: order.editorId,
-          type: 'PROPOSAL_ACCEPTED',
-          title: 'Proposta aceita!',
-          body: `Proposta de R$ ${amount.toFixed(2)} aceita para "${order.title}". Aguardando pagamento do creator.`,
-          relatedOrderId: orderId,
-        },
-      }),
-    ])
+      })
+    })
 
     // Gera (ou regenera, em caso de renegociação) o contrato com o valor final acordado.
     // Ambas as partes precisam aceitar antes do pagamento (gate no payment.service).
@@ -192,20 +211,30 @@ export class ProposalService {
     }
 
     const amount = Number(proposal.amount)
-    const updated = await prisma.orderProposal.update({
-      where: { id: proposalId },
-      data: { status: 'REJECTED' },
-      include: proposalInclude,
-    })
 
-    await prisma.notification.create({
-      data: {
-        userId: proposal.proposedBy,
-        type: 'PROPOSAL_REJECTED',
-        title: 'Proposta rejeitada',
-        body: `Sua proposta de R$ ${amount.toFixed(2)} foi rejeitada. Envie uma nova oferta para "${order.title}".`,
-        relatedOrderId: orderId,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      // Mesmo claim otimista do accept: evita duas rejeições do mesmo clique
+      // gerando duas notificações para o proponente.
+      const claim = await tx.orderProposal.updateMany({
+        where: { id: proposalId, status: 'PENDING' },
+        data: { status: 'REJECTED' },
+      })
+      if (claim.count === 0) throw Conflict('Esta proposta já foi respondida')
+
+      await tx.notification.create({
+        data: {
+          userId: proposal.proposedBy,
+          type: 'PROPOSAL_REJECTED',
+          title: 'Proposta rejeitada',
+          body: `Sua proposta de R$ ${amount.toFixed(2)} foi rejeitada. Envie uma nova oferta para "${order.title}".`,
+          relatedOrderId: orderId,
+        },
+      })
+
+      return tx.orderProposal.findUniqueOrThrow({
+        where: { id: proposalId },
+        include: proposalInclude,
+      })
     })
 
     return proposalToDTO(updated)

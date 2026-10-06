@@ -2,6 +2,7 @@ import { Prisma, RequestProposal, RequestProposalStatus } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest, Conflict } from '../lib/errors'
 import { logEvent } from './audit.service'
+import { platformFeeOf } from '../lib/fees'
 import { agreementService } from './agreement.service'
 
 // ─── Marketplace invertido ─────────────────────────────────────────────────────
@@ -10,7 +11,6 @@ import { agreementService } from './agreement.service'
 // fluxo segue pelo pipeline existente (contrato → pagamento → entrega).
 
 const PER_PAGE = 20
-const PLATFORM_FEE_RATE = new Prisma.Decimal('0.10')
 const DAY_MS = 24 * 60 * 60 * 1000
 const PREVIEW_LENGTH = 200
 
@@ -328,6 +328,22 @@ export class ProjectRequestService {
         if (!proposal || proposal.requestId !== requestId) throw NotFound('Proposta não encontrada')
         if (proposal.status !== 'PENDING') throw BadRequest('Esta proposta não está mais pendente')
 
+        // O editor é revalidado AQUI, não só quando enviou a proposta: entre o envio
+        // e o aceite ele pode ter sido banido. A proposta continua PENDING e visível
+        // no painel, então sem esta checagem o criador seria levado a fechar contrato
+        // e pagar por um editor que a plataforma já suspendeu.
+        const editor = await tx.user.findUnique({
+          where: { id: proposal.editorId },
+          select: { banned: true, role: true },
+        })
+        if (!editor) throw NotFound('Editor da proposta não encontrado')
+        if (editor.banned) {
+          throw Conflict('Este editor foi suspenso. Recuse a proposta e escolha outra.')
+        }
+        if (editor.role !== 'EDITOR' && editor.role !== 'BOTH') {
+          throw Conflict('Este usuário não é mais um editor. Recuse a proposta e escolha outra.')
+        }
+
         // Fecha a solicitação com guard otimista: se outro aceite ganhou a corrida, aborta
         const filled = await tx.projectRequest.updateMany({
           where: { id: requestId, status: 'OPEN' },
@@ -337,7 +353,7 @@ export class ProjectRequestService {
 
         // Dinheiro sempre em Decimal — nada de float
         const amount = proposal.amount
-        const platformFee = amount.mul(PLATFORM_FEE_RATE).toDecimalPlaces(2)
+        const platformFee = platformFeeOf(amount)
         const deadline = request.deadline ?? new Date(Date.now() + proposal.deliveryDays * DAY_MS)
 
         // Preço já acordado → pula NEGOTIATING e cai direto no gate de contrato/pagamento
