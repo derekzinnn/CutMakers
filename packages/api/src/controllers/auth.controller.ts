@@ -11,9 +11,9 @@ const authService = new AuthService()
 // sem isso "Derek@Gmail.com" criava uma segunda conta ao lado de "derek@gmail.com",
 // e quem digitasse a caixa errada no login levava "Credenciais inválidas" com a
 // senha certa. Normalizar no schema cobre registro e login pelo mesmo caminho.
-const emailField = z.string().trim().toLowerCase().email('Email inválido')
+export const emailField = z.string().trim().toLowerCase().email('Email inválido')
 
-const registerSchema = z.object({
+export const registerSchema = z.object({
   name: z.string().trim().min(2, 'Nome deve ter ao menos 2 caracteres'),
   email: emailField,
   password: z.string().min(8, 'Senha deve ter ao menos 8 caracteres'),
@@ -24,7 +24,7 @@ const registerSchema = z.object({
   }),
 })
 
-const loginSchema = z.object({
+export const loginSchema = z.object({
   email: emailField,
   password: z.string().min(1),
 })
