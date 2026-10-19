@@ -623,14 +623,71 @@ Ver `packages/api/.env.example`. Precisa:
        pipeline contrato→pagamento→entrega→aprovação intacto, auditoria)
    ⚠️ Requer `pnpm --filter @cutmakers/api db:push` antes de rodar (o dono executa); depois `trace:requests`
 
-⏳ Fase 13 — Próximos (pendem decisão/credenciais do dono)
-   [ ] Migration versionada das Fases 10–12 (hoje só existe o baseline 0_init; as mudanças posteriores
-       foram aplicadas via db push — produção com `migrate deploy` precisa de um 1_... gerado por migrate diff)
+✅ Fase 13.1 — Hardening de segurança e consistência (code review dos 15 achados)
+   [x] Webhook Abacatepay: assinatura HMAC era pulável omitindo o header (`webhookSecret && signature`)
+       — endpoint público, qualquer um marcava pedido como pago. Agora obrigatória, `timingSafeEqual`,
+       e fail-closed em produção sem secret
+   [x] Gate de arquivos restaurado (regressão de 34a4896, que deixou `filesHidden: false` hardcoded)
+       — fechado também na LISTAGEM, que expunha as mesmas URLs: `orderInclude` não carrega mais
+       `files` e o DTO de lista devolve só `filesCount` (menos um join por linha em todo dashboard)
+   [x] Banimento passa a encerrar sessões: `/auth/refresh` checa `banned` (no refresh e não no
+       authMiddleware de propósito — no middleware seria uma query por request)
+   [x] Escrow idempotente: replay de `billing.paid` revertia RELEASED→HELD. Claim otimista
+       (`updateMany where status PENDING`) numa transação única; reenvio responde 200 duplicate
+   [x] Corridas de leitura-decisão-escrita eliminadas com claim otimista (6 dos 15 achados eram esta
+       mesma classe): entrega, aprovação manual, auto-aprovação, aceite e recusa de proposta
+   [x] `@@unique([orderId, version])` em Delivery + retry no service (version = count+1 corria solto)
+   [x] Ação do admin notifica as DUAS partes (o ternário antigo caía sempre no creator)
+   [x] Auto-aprovação fora do caminho crítico do login: throttle de 5min por processo, teto de 100
+       por passada, fire-and-forget. Destino segue sendo cron chamando o mesmo método
+   [x] Email normalizado no Zod (unique do Postgres é case-sensitive) + `scripts/normalize-emails.ts`
+       (relata por padrão, `--apply` grava, recusa quando há colisão)
+   [x] Editor revalidado (banned + role) no aceite da proposta, dentro da transação
+   [x] Cobranças PENDING de assinatura limitadas (abandonada >30min → CANCELLED)
+   [x] COMPLETED→DISPUTED e CANCELLED→DISPUTED removidas: criavam pedido congelado sem linha Dispute
+   [x] `initiatePayment` reusa `createPixCharge` (~60 linhas duplicadas a menos)
+   [x] Taxa da plataforma: 4 declarações → `src/lib/fees.ts`. Decimal, e o rótulo do contrato deriva
+       da taxa (antes era "10%" escrito à mão no template — risco de contrato informar % errado)
+   [x] 29 índices (eram 6): Order, Notification, Transaction, Message, Conversation, Review, Revision,
+       Dispute, Subscription, OrderProposal, OrderFile. Cada um segue uma query real, comentada no schema
+
+✅ Fase 13.2 — Primeira suíte de testes (vitest)
+   [x] `pnpm --filter @cutmakers/api test` — 30 testes, ~550ms, zero dependência de banco
+   [x] fees: aritmética em valores que quebram em float, taxa+líquido fechando, rótulo do contrato
+       acompanhando a taxa (asserção indireta — comparar com '10%' passaria se voltasse a ser hardcoded)
+   [x] payment.webhook: header ausente, assinatura vazia, segredo errado, hex malformado, replay
+       cruzado, hex sem prefixo, fail-closed em produção. Testa o serviço REAL sem Postgres usando um
+       evento que não é `billing.paid` (a verificação roda e retorna antes de qualquer query)
+   [x] auth.schemas: normalização de email + regras do briefing que nunca tinham teste (aceite dos
+       Termos, senha mínima, ADMIN/BOTH recusados no cadastro público)
+   [x] Validados por mutação: reintroduzir o bypass do webhook quebra 2 testes; divergir o rótulo da
+       taxa quebra 7. `**/*.test.ts` fora do build (dist conferido)
+
+✅ Fase 13.3 — Migration versionada
+   [x] `prisma/migrations/20261019120000_fases_10_12_e_indices` — gerada por `migrate diff` entre o
+       schema da Fase 8 (fdc9655, de onde veio o baseline) e o atual
+   [x] Cadeia conferida: regenerar `0_init` do schema da Fase 8 dá arquivo byte-idêntico ao versionado,
+       então baseline + delta = schema atual. Corpo da migration conferido contra o diff regenerado
+   [x] 4 tabelas, 2 enums, 4 valores de NotificationType, 4 colunas (nullable ou com default),
+       29 índices, 4 unique. Nenhum DROP/TRUNCATE — sem perda de dados
+   [x] `scripts/check-delivery-versions.ts` (`deliveries:check` / `deliveries:fix`): o
+       `CREATE UNIQUE INDEX` de Delivery falha se houver versão duplicada. O reparo ficou FORA da
+       migration de propósito — é UPDATE de dados, não pertence a migration de produção
+
+⏳ Fase 14 — Próximos (pendem decisão/credenciais do dono)
+   [ ] **Banco de dev indisponível**: o projeto Supabase do `.env` responde "tenant not found" —
+       apagado ou pausado por inatividade. Bloqueia `db push`/`migrate deploy`, os scripts de
+       pré-voo e qualquer teste de integração
+   [ ] Testes de integração dos claims otimistas (precisam de Postgres de teste) — são as mudanças
+       de maior risco da Fase 13.1 e seguem sem verificação
+   [ ] Guardar `paymentUrl`/`pixCode` na Subscription, para o editor reabrir a cobrança em aberto
+       em vez de ser bloqueado por 30min (schema + UI)
+   [ ] Disputa pós-conclusão: precisa de fluxo de estorno próprio (escrow já liberado), não é PATCH de status
+   [ ] Cron de verdade para auto-aprovação e expiração de assinatura (hoje oportunista no login)
    [ ] Decidir se edição de solicitação deve travar campos (orçamento/descrição) após a 1ª proposta
    [ ] Login com Google funcional (requer GOOGLE_CLIENT_ID/SECRET do Google Cloud — decisão do dono)
    [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)
    [ ] Aprovação/verificação manual de editores pelo admin (badge verificado curado)
-   [ ] Testes automatizados (nenhum ainda em api/web)
    [ ] Mobile React Native (planejado — fase futura)
 ```
 

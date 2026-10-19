@@ -16,7 +16,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "trace:requests": "node scripts/trace-request-flow.mjs",
     "emails:check": "tsx scripts/normalize-emails.ts",
-    "emails:normalize": "tsx scripts/normalize-emails.ts --apply"
+    "emails:normalize": "tsx scripts/normalize-emails.ts --apply",
+    "deliveries:check": "tsx scripts/check-delivery-versions.ts",
+    "deliveries:fix": "tsx scripts/check-delivery-versions.ts --apply"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
