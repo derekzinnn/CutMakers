@@ -678,8 +678,10 @@ Ver `packages/api/.env.example`. Precisa:
    [ ] **Banco de dev indisponível**: o projeto Supabase do `.env` responde "tenant not found" —
        apagado ou pausado por inatividade. Bloqueia `db push`/`migrate deploy`, os scripts de
        pré-voo e qualquer teste de integração
-   [ ] Testes de integração dos claims otimistas (precisam de Postgres de teste) — são as mudanças
-       de maior risco da Fase 13.1 e seguem sem verificação
+   [ ] Testes de integração dos claims otimistas — são as mudanças de maior risco da Fase 13.1 e
+       seguem sem verificação. Harness decidido: schema isolado no MESMO Supabase via
+       `TEST_DATABASE_URL=...?schema=cutmakers_test` (documentado no .env.example), porta 5432.
+       A aplicação fica em `public` e o teste nunca a alcança; descarte com DROP SCHEMA CASCADE
    [ ] Guardar `paymentUrl`/`pixCode` na Subscription, para o editor reabrir a cobrança em aberto
        em vez de ser bloqueado por 30min (schema + UI)
    [ ] Disputa pós-conclusão: precisa de fluxo de estorno próprio (escrow já liberado), não é PATCH de status
