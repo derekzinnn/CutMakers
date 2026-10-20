@@ -1,13 +1,13 @@
 import { Router } from 'express'
 import { projectRequestController as ctrl } from '../controllers/project-request.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
-import { requireRole } from '../middlewares/role.middleware'
+import { requireRole, EDITOR_ROLES, CREATOR_ROLES } from '../middlewares/role.middleware'
 
 export const projectRequestRoutes: Router = Router()
 
 projectRequestRoutes.use(authMiddleware)
 
-const creator = requireRole('CREATOR', 'BOTH')
+const creator = requireRole(...CREATOR_ROLES)
 const editor = requireRole('EDITOR', 'BOTH', 'ADMIN')
 
 // ─── Rotas estáticas ANTES de /:id (senão o Express casa "mine" como id) ──────
@@ -25,9 +25,9 @@ projectRequestRoutes.patch('/:id', creator, ctrl.update)
 projectRequestRoutes.post('/:id/cancel', creator, ctrl.cancel)
 
 // Propostas — editor
-projectRequestRoutes.post('/:id/proposals', requireRole('EDITOR', 'BOTH'), ctrl.sendProposal)
-projectRequestRoutes.patch('/:id/proposals/mine', requireRole('EDITOR', 'BOTH'), ctrl.updateMyProposal)
-projectRequestRoutes.delete('/:id/proposals/mine', requireRole('EDITOR', 'BOTH'), ctrl.withdrawMyProposal)
+projectRequestRoutes.post('/:id/proposals', requireRole(...EDITOR_ROLES), ctrl.sendProposal)
+projectRequestRoutes.patch('/:id/proposals/mine', requireRole(...EDITOR_ROLES), ctrl.updateMyProposal)
+projectRequestRoutes.delete('/:id/proposals/mine', requireRole(...EDITOR_ROLES), ctrl.withdrawMyProposal)
 
 // Propostas — creator decide
 projectRequestRoutes.post('/:id/proposals/:proposalId/accept', creator, ctrl.acceptProposal)

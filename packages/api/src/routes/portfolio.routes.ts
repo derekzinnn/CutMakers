@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { PortfolioController } from '../controllers/portfolio.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
-import { requireRole } from '../middlewares/role.middleware'
+import { requireRole, EDITOR_ROLES } from '../middlewares/role.middleware'
 
 export const portfolioRoutes: Router = Router()
 const ctrl = new PortfolioController()
@@ -14,7 +14,7 @@ portfolioRoutes.get('/:id', ctrl.getById)
 portfolioRoutes.post(
   '/',
   authMiddleware,
-  requireRole('EDITOR', 'BOTH'),
+  requireRole(...EDITOR_ROLES),
   ctrl.create,
 )
 

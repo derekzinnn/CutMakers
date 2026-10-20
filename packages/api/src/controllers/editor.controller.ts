@@ -43,10 +43,10 @@ export class EditorController {
 
   // GET /api/editors/me
   getMyProfile = async (req: Request, res: Response) => {
-    const editor = await editorService.getEditorByUserId(req.user!.sub)
-    if (!editor) {
-      return res.status(404).json({ message: 'Perfil de editor não encontrado' })
-    }
+    // Cria sob demanda em vez de devolver 404. Quem chega aqui ja passou pelo
+    // requireRole(EDITOR_ROLES), entao tem direito a um perfil — inclusive o
+    // ADMIN, cuja conta tambem e de editor. Idempotente.
+    const editor = await editorService.ensureProfile(req.user!.sub)
     return res.json({ editor })
   }
 

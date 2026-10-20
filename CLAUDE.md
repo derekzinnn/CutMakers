@@ -116,8 +116,9 @@ Gráficos      --chart-1 .. --chart-5
 4. **NUNCA exibir seletor de role na tela de login** — backend identifica o role pelas credenciais
 5. **Admins só via seed**, nunca por endpoint público
 6. **Role `BOTH`** no login mostra modal de escolha de painel (Creator ou Editor)
-7. **Role `ADMIN`** redireciona para `/admin`. Não há switcher de view — para ver o sistema
-   como um usuário, use "Ver como" na aba Usuários (sessão SOMENTE LEITURA, 15min, auditada)
+7. **Role `ADMIN`** redireciona para `/admin`. O popover do avatar tem "Visualizar como
+   Creator/Editor", que NAVEGA para os dashboards reais — a conta admin também é conta de
+   editor e de criador (EDITOR_ROLES / CREATOR_ROLES), com portfólio e pedidos próprios
 
 ---
 
@@ -287,10 +288,6 @@ nasce um `Order` já com editor, em `AWAITING_PAYMENT`, que segue o pipeline nor
 - `GET /disputes` — disputas OPEN, mais antigas primeiro (createdAt asc), com order + partes + reason
 - `GET /financial-summary` — { totalTransacted, totalPlatformFees (RELEASED), totalHeldInEscrow (HELD), totalRefunded (REFUNDED) }
 - `GET /transactions` — lista paginada (50/pág): orderId, payerName, payeeName, amount, platformFee, status, createdAt
-- `POST /impersonate` — abre sessão "ver como" { userId }. Token com identidade do ALVO +
-  `imp.by` do admin, 15min, SEM refresh. **Somente leitura**: o authMiddleware encadeia um
-  guard que recusa tudo que não é GET. Não impersona ADMIN nem a si mesmo; auditado
-- `POST /impersonate/end` — registra o fim na auditoria
 - Resolução de disputa reusa `POST /api/orders/:id/dispute/resolve` (ADMIN); `GET /api/orders/:id` já aceita ADMIN
 
 **Login:** `user.banned === true` → 401 "Conta suspensa. Entre em contato com o suporte."
@@ -789,6 +786,35 @@ Ver `packages/api/.env.example`. Precisa:
    [x] 17 testes novos (52 de integração no total) + verificação por HTTP real: 4 GETs → 200
        (incluindo `/editors/me`, que dá 403 para o token do admin), 4 escritas → 403, e a
        troca do token de impersonação por um normal no /refresh → 401
+
+✅ Fase 17 — Conta admin com os 3 papéis + visualização unificada
+   [x] **A impersonação da Fase 16 foi REMOVIDA**: resolvia um problema que na verdade
+       eram outros dois (os zeros falsos e os mockups). Com ADMIN tendo acesso real aos
+       endpoints, e `GET /orders/:id` já aceitando ADMIN para mediar disputa, ela virou
+       redundante — e era a duplicação que o dono apontou
+   [x] `EDITOR_ROLES` / `CREATOR_ROLES` em role.middleware: constantes que incluem ADMIN,
+       aplicadas em 12 rotas (editor, portfólio, assinatura, solicitações, review, revisão,
+       disputa). Constantes em vez de espalhar 'ADMIN' — assim não dá para esquecer uma e
+       criar um 403 só num canto
+   [x] A conta admin É TAMBÉM conta de editor e de criador, pelo mesmo login. Não é
+       impersonação: ela age como ela mesma, com portfólio e pedidos próprios. Permite
+       demonstrar o produto inteiro numa venda com um login só
+   [x] `GET /editors/me` cria o EditorProfile sob demanda (`ensureProfile`) em vez de 404
+   [x] O popover do avatar ("Visualizar como Creator/Editor") passa a NAVEGAR para
+       `/dashboard/creator` e `/dashboard/editor` — as telas reais
+   [x] **167 linhas de mockup removidas**: `FeedSection`, `MyProjectsSection` e
+       `AccountSection` eram o que o popover renderizava antes. Dados inventados e um card
+       "Em construção", mas PARECIAM a visão do usuário — mesma armadilha dos zeros falsos
+   [x] Botão "Voltar ao admin" na sidebar quando `user.role === 'ADMIN'`: sem ele o admin
+       entrava pelo popover e só saía deslogando
+   [x] Verificado por HTTP: os 6 endpoints dos 3 papéis respondem 200 para o admin
+       (eram 403), e POST /portfolio devolve 400 de validação — ou seja, auth passou
+
+⚠️ Teste de integração FLAKY: `corridas.integration.test.ts` ("cinco entregas simultâneas"
+   e "o banco recusa versão duplicada") falhou numa rodada e passou na seguinte, e passa
+   sempre isolado. É contenção contra o Supabase REMOTO: a latência varia e o teste de 5
+   escritores concorrentes às vezes esgota o orçamento de retry. Não é regressão de código.
+   Resolver com Postgres local para testes, ou subir MAX_DELIVERY_ATTEMPTS.
 
 ⏳ Fase 14 — Próximos (pendem decisão/credenciais do dono)
    [ ] Testes de integração dos fluxos ainda não cobertos: disputas, assinaturas, revisões,

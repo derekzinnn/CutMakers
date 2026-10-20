@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client'
+import { NotFound } from '../lib/errors'
 import { prisma } from '../lib/prisma'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
@@ -111,6 +112,21 @@ export class EditorService {
       limit,
       totalPages: Math.ceil(total / limit),
     }
+  }
+
+  /**
+   * Garante que o usuario tem EditorProfile e devolve o perfil completo.
+   * Usado por GET /editors/me — inclusive para ADMIN, cuja conta tambem e de
+   * editor. Idempotente: se ja existe, so le.
+   */
+  async ensureProfile(userId: string) {
+    const existente = await this.getEditorByUserId(userId)
+    if (existente) return existente
+
+    await prisma.editorProfile.create({ data: { userId } })
+    const criado = await this.getEditorByUserId(userId)
+    if (!criado) throw NotFound('Nao foi possivel criar o perfil de editor')
+    return criado
   }
 
   /**

@@ -25,3 +25,21 @@ export function requireRole(...allowedRoles: Role[]) {
     next()
   }
 }
+
+/**
+ * Papeis que podem AGIR como editor / como criador.
+ *
+ * ADMIN entra nos dois de proposito: a conta administrativa tambem e uma conta
+ * de editor e de criador, acessada pelo mesmo login. Isso existe para que o
+ * dono consiga demonstrar o produto inteiro numa venda sem precisar de tres
+ * contas, e para o admin conseguir ver o sistema como os usuarios veem.
+ *
+ * Nao e impersonacao: o admin age como ELE MESMO, com os proprios pedidos e o
+ * proprio portfolio. As travas de dono continuam valendo (ele nao pode propor
+ * na propria solicitacao, por exemplo).
+ *
+ * Constantes em vez de espalhar 'ADMIN' por doze rotas: assim nao da para
+ * esquecer uma e criar um buraco de 403 so em um canto do sistema.
+ */
+export const EDITOR_ROLES = ['EDITOR', 'BOTH', 'ADMIN'] as const
+export const CREATOR_ROLES = ['CREATOR', 'BOTH', 'ADMIN'] as const

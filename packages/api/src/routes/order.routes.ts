@@ -6,7 +6,7 @@ import { revisionController } from '../controllers/revision.controller'
 import { disputeController } from '../controllers/dispute.controller'
 import { agreementController } from '../controllers/agreement.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
-import { requireRole } from '../middlewares/role.middleware'
+import { requireRole, CREATOR_ROLES } from '../middlewares/role.middleware'
 
 export const orderRoutes: Router = Router()
 const ctrl = new OrderController()
@@ -29,7 +29,7 @@ orderRoutes.post('/:id/deliveries', requireRole('EDITOR', 'BOTH', 'ADMIN'), ctrl
 orderRoutes.post('/:id/payment', requireRole('CREATOR', 'BOTH', 'ADMIN'), ctrl.initiatePayment)
 
 // Apenas creators (ou BOTH) avaliam pedidos COMPLETED
-orderRoutes.post('/:id/review', requireRole('CREATOR', 'BOTH'), reviewController.create)
+orderRoutes.post('/:id/review', requireRole(...CREATOR_ROLES), reviewController.create)
 
 // Creator adiciona arquivos a um pedido existente
 orderRoutes.post('/:id/files', requireRole('CREATOR', 'BOTH', 'ADMIN'), ctrl.addFiles)
@@ -42,10 +42,10 @@ orderRoutes.post('/:id/proposals/:proposalId/reject', proposalController.reject)
 
 // Revisões formais (creator solicita, ambas as partes visualizam)
 orderRoutes.get('/:id/revisions', revisionController.list)
-orderRoutes.post('/:id/revisions', requireRole('CREATOR', 'BOTH'), revisionController.create)
+orderRoutes.post('/:id/revisions', requireRole(...CREATOR_ROLES), revisionController.create)
 
 // Disputas (creator abre, apenas ADMIN resolve)
-orderRoutes.post('/:id/dispute', requireRole('CREATOR', 'BOTH'), disputeController.open)
+orderRoutes.post('/:id/dispute', requireRole(...CREATOR_ROLES), disputeController.open)
 orderRoutes.post('/:id/dispute/resolve', requireRole('ADMIN'), disputeController.resolve)
 
 // Contrato do pedido — aceite de cada parte (o service valida quem é parte)

@@ -4,12 +4,6 @@ import jwt, { Secret, SignOptions } from 'jsonwebtoken'
 interface TokenPayload {
   sub: string
   role: string
-  /**
-   * Presente SOMENTE em token de impersonacao administrativa.
-   * `by` = id do admin real por tras da sessao. O middleware usa isso para
-   * barrar escrita, e o /auth/refresh para recusar a troca por token normal.
-   */
-  imp?: { by: string }
 }
 
 export class AuthService {
@@ -38,20 +32,6 @@ export class AuthService {
     const refreshToken = jwt.sign(payload, refreshSecret, refreshOptions)
 
     return { token, refreshToken }
-  }
-
-  /**
-   * Token de impersonacao: identidade do ALVO, mas marcado com o admin real.
-   * Sem refresh token de proposito — a sessao expira e nao se renova.
-   */
-  generateImpersonationToken(
-    payload: TokenPayload,
-    adminId: string,
-    expiresIn: string,
-  ): string {
-    const secret: Secret = process.env.JWT_SECRET!
-    const options: SignOptions = { expiresIn: expiresIn as SignOptions['expiresIn'] }
-    return jwt.sign({ ...payload, imp: { by: adminId } }, secret, options)
   }
 
   verifyToken(token: string): TokenPayload {

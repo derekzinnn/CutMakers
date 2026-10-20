@@ -23,11 +23,6 @@ export type AuditAction =
   | 'REQUEST_CANCELLED'
   | 'REQUEST_PROPOSAL_SENT'
   | 'REQUEST_PROPOSAL_ACCEPTED'
-  // Impersonacao administrativa: quem viu o sistema como quem, e quando.
-  // Sessao somente leitura, mas rastreada — ver o que outra pessoa ve ja e
-  // acesso a dado privado e precisa de trilha.
-  | 'IMPERSONATION_STARTED'
-  | 'IMPERSONATION_ENDED'
 
 export type AuditEntityType =
   | 'Order'

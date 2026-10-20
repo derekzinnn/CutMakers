@@ -4,6 +4,7 @@ import {
   IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck,
   IconCoin, IconX, IconAlertCircle, IconChevronsLeft, IconChevronsRight,
   IconSend, IconFileText, IconGavel,
+  IconArrowLeft,
 } from '@tabler/icons-react'
 import type { AuthUser } from '@/hooks/use-auth'
 import { CMLogo, CMLockup } from '@/components/ui/CMLogo'
@@ -433,6 +434,28 @@ export function DashboardShell({
             )
           })}
         </nav>
+
+        {/* Admin navegando nos dashboards de criador/editor: sem isto ele entra
+            pelo popover e fica sem caminho de volta a nao ser deslogar. Tambem
+            serve de lembrete de que a conta e a mesma — os dados sao DELE. */}
+        {user.role === 'ADMIN' && (
+          <div className={`pb-2 ${collapsed ? 'px-2' : 'px-3'}`}>
+            <button
+              onClick={() => navigate('/admin')}
+              title="Voltar ao painel administrativo"
+              className={`flex w-full items-center gap-2 rounded-md py-2 text-xs font-medium transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
+              style={{
+                background: 'var(--brand-soft)',
+                border: '1px solid var(--brand-border)',
+                color: 'var(--brand)',
+                cursor: 'pointer',
+              }}
+            >
+              <IconArrowLeft size={14} stroke={2} />
+              {!collapsed && 'Voltar ao admin'}
+            </button>
+          </div>
+        )}
 
         {/* Footer: perfil (clicável) + logout */}
         <div className={`py-4 ${collapsed ? 'px-2' : 'px-3'}`} style={{ borderTop: '1px solid var(--border)' }}>

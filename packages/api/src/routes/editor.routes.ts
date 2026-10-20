@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { EditorController } from '../controllers/editor.controller'
 import { reviewController } from '../controllers/review.controller'
 import { authMiddleware } from '../middlewares/auth.middleware'
-import { requireRole } from '../middlewares/role.middleware'
+import { requireRole, EDITOR_ROLES } from '../middlewares/role.middleware'
 
 export const editorRoutes: Router = Router()
 const ctrl = new EditorController()
@@ -17,8 +17,8 @@ editorRoutes.get('/', ctrl.listEditors)
  * Rotas DO PRÓPRIO PERFIL — precisam vir antes de /:id,
  * senão o Express casa "me" como id.
  */
-editorRoutes.get('/me', authMiddleware, requireRole('EDITOR', 'BOTH'), ctrl.getMyProfile)
-editorRoutes.patch('/me', authMiddleware, requireRole('EDITOR', 'BOTH'), ctrl.updateMyProfile)
+editorRoutes.get('/me', authMiddleware, requireRole(...EDITOR_ROLES), ctrl.getMyProfile)
+editorRoutes.patch('/me', authMiddleware, requireRole(...EDITOR_ROLES), ctrl.updateMyProfile)
 
 /**
  * Perfil público — fica depois pra não conflitar com /me.

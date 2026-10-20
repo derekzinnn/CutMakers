@@ -1,5 +1,4 @@
 import { lazy, Suspense } from 'react'
-import { ImpersonationBanner } from '@/components/ImpersonationBanner'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 // ─── Code splitting ───────────────────────────────────────────────────────────
@@ -60,9 +59,6 @@ function RoleRoute({
 export default function App() {
   return (
     <BrowserRouter>
-      {/* Fora das Routes: a sessao de visualizacao vale em QUALQUER tela,
-          entao o aviso precisa aparecer em todas elas */}
-      <ImpersonationBanner />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Públicas */}

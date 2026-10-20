@@ -1,4 +1,3 @@
-import { startImpersonation } from '@/lib/impersonation'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -298,29 +297,6 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
   const [loading, setLoading] = useState(true)
   const [target, setTarget] = useState<AdminUser | null>(null)
   const [busy, setBusy] = useState(false)
-  const [verComoBusy, setVerComoBusy] = useState<string | null>(null)
-  const [verComoErro, setVerComoErro] = useState<string | null>(null)
-
-  /**
-   * Abre a sessao de visualizacao e leva direto ao painel que o usuario usa:
-   * editor -> /dashboard/editor, criador -> /dashboard/creator. Cair no /admin
-   * depois de clicar "Ver como" nao mostraria nada do que ele ve.
-   */
-  async function verComo(u: AdminUser) {
-    setVerComoErro(null)
-    setVerComoBusy(u.id)
-    try {
-      await startImpersonation(u.id)
-      const destino =
-        u.role === 'EDITOR' || u.role === 'BOTH' ? '/dashboard/editor' : '/dashboard/creator'
-      // reload completo: hooks e estado em memoria ainda carregam dados do admin
-      window.location.href = destino
-    } catch (err) {
-      const e = err as { response?: { data?: { message?: string } } }
-      setVerComoErro(e?.response?.data?.message ?? 'Nao foi possivel abrir a visualizacao')
-      setVerComoBusy(null)
-    }
-  }
 
   async function load() {
     setLoading(true)
@@ -365,15 +341,6 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
             className="w-56 bg-transparent text-xs text-white outline-none placeholder:text-white/40"
           />
         </div>
-        {verComoErro && (
-          <p
-            className="w-full rounded-md px-3 py-2 text-xs"
-            style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)' }}
-          >
-            {verComoErro}
-          </p>
-        )}
-
         <div className="flex flex-wrap gap-2">
           {ROLE_FILTERS.map((r) => {
             const active = role === r.value
@@ -437,26 +404,6 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                     style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
                   >
                     <IconEye size={14} stroke={1.5} />
-                  </button>
-                )}
-                {/* Ver como: abre a sessao de visualizacao somente leitura.
-                    Nao aparece para ADMIN — o backend tambem recusa. */}
-                {u.role !== 'ADMIN' && (
-                  <button
-                    onClick={() => void verComo(u)}
-                    disabled={verComoBusy === u.id}
-                    title={`Ver o sistema como ${u.name} (somente leitura)`}
-                    className="flex h-7 items-center gap-1 rounded-[6px] px-2 text-[11px] font-medium"
-                    style={{
-                      background: 'var(--warning-soft)',
-                      border: '1px solid var(--warning-border)',
-                      color: 'var(--warning)',
-                      cursor: verComoBusy === u.id ? 'wait' : 'pointer',
-                      opacity: verComoBusy === u.id ? 0.6 : 1,
-                    }}
-                  >
-                    <IconEye size={12} stroke={1.8} />
-                    {verComoBusy === u.id ? '...' : 'Ver como'}
                   </button>
                 )}
                 {u.role !== 'ADMIN' && (
@@ -1057,161 +1004,16 @@ function AuditSection() {
 
 // ─── Seções Creator / Editor (placeholder por enquanto) ──────────────────────
 
-function FeedSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
-  const title = role === 'CREATOR' ? 'Feed de Projetos' : 'Feed de Projetos'
-  const subtitle =
-    role === 'CREATOR'
-      ? 'Encontre o editor perfeito para o seu projeto'
-      : 'Pedidos disponíveis publicados por criadores'
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-heading text-xl font-bold text-white">{title}</h2>
-          <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>{subtitle}</p>
-        </div>
-        {role === 'CREATOR' && (
-          <button className="btn-primary" style={{ width: 'auto', padding: '0 20px' }}>
-            + Novo Projeto
-          </button>
-        )}
-      </div>
-
-      {/* Filtros por categoria */}
-      <div className="flex flex-wrap gap-2">
-        {['Todos', 'Reels', 'YouTube', 'TikTok', 'Podcast', 'Corporativo', 'Wedding'].map((cat) => (
-          <button
-            key={cat}
-            className="rounded-full px-3 py-1 text-xs transition-colors"
-            style={{
-              background: cat === 'Todos' ? 'var(--brand-soft)' : 'var(--surface-subtle)',
-              color: cat === 'Todos' ? 'var(--brand)' : 'var(--foreground)',
-              border: `1px solid ${cat === 'Todos' ? 'var(--brand-border)' : 'var(--border)'}`,
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      <div
-        className="rounded-card p-6"
-        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-      >
-        <EmptyState
-          message={
-            role === 'CREATOR'
-              ? 'Editores disponíveis aparecerão aqui'
-              : 'Projetos abertos aparecerão aqui'
-          }
-        />
-      </div>
-    </div>
-  )
-}
-
-function MyProjectsSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
-  if (role === 'CREATOR') {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="font-heading text-xl font-bold text-white">Meus Projetos</h2>
-          <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            Acompanhe o status dos seus pedidos de edição
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {['Todos', 'Pendentes', 'Em andamento', 'Em revisão', 'Concluídos'].map((f) => (
-            <button
-              key={f}
-              className="rounded-full px-3 py-1 text-xs"
-              style={{
-                background: f === 'Todos' ? 'var(--brand-soft)' : 'var(--surface-subtle)',
-                color: f === 'Todos' ? 'var(--brand)' : 'var(--foreground)',
-                border: `1px solid ${f === 'Todos' ? 'var(--brand-border)' : 'var(--border)'}`,
-              }}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        <div
-          className="rounded-card p-6"
-          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-        >
-          <EmptyState message="Seus pedidos aparecerão aqui" />
-        </div>
-      </div>
-    )
-  }
-
-  // EDITOR
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-heading text-xl font-bold text-white">Meus Projetos</h2>
-          <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            Pedidos aceitos, portfólio e métricas
-          </p>
-        </div>
-        <button className="btn-primary" style={{ width: 'auto', padding: '0 20px' }}>
-          + Adicionar ao Portfólio
-        </button>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Pedidos Ativos', value: '0', icon: IconClock },
-          { label: 'Concluídos', value: '0', icon: IconCheck },
-          { label: 'Avaliação Média', value: '—', icon: IconTrendingUp },
-        ].map((s) => (
-          <StatsCard key={s.label} label={s.label} value={s.value} delta="" Icon={s.icon} />
-        ))}
-      </div>
-
-      <div
-        className="rounded-card p-6"
-        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-      >
-        <SectionHeader title="Pedidos Recebidos" />
-        <EmptyState message="Pedidos de criadores aparecerão aqui" />
-      </div>
-
-      <div
-        className="rounded-card p-6"
-        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-      >
-        <SectionHeader title="Meu Portfólio" />
-        <EmptyState message="Adicione projetos ao seu portfólio" />
-      </div>
-    </div>
-  )
-}
-
-function AccountSection() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-heading text-xl font-bold text-white">Conta</h2>
-        <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          Configurações da sua conta e perfil
-        </p>
-      </div>
-
-      <div
-        className="rounded-card p-6"
-        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-      >
-        <SectionHeader title="Em construção" />
-        <EmptyState message="Configurações de conta em breve" />
-      </div>
-    </div>
-  )
-}
+// REMOVIDO: FeedSection, MyProjectsSection e AccountSection.
+//
+// Eram mockups renderizados quando o admin escolhia "Visualizar como
+// Creator/Editor" no popover: dados inventados e um card "Em construcao".
+// Nao mostravam editor disponivel nenhum nem pedido real, mas PARECIAM a
+// visao do usuario — mesma armadilha dos zeros falsos no dashboard do editor.
+//
+// O popover agora navega para /dashboard/creator e /dashboard/editor, que sao
+// as telas de verdade. A conta admin tambem e conta de editor e de criador
+// (EDITOR_ROLES / CREATOR_ROLES no backend), entao elas carregam dados reais.
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
@@ -1240,10 +1042,23 @@ export function AdminPage() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
 
+  /**
+   * Leva aos dashboards REAIS, em vez de trocar para secoes simuladas.
+   *
+   * Antes isto so setava viewMode e renderizava FeedSection/MyProjectsSection/
+   * AccountSection — mockups com dados inventados e "Em construcao". Nao
+   * mostravam editor disponivel nenhum nem pedido real, mas pareciam a visao
+   * do usuario.
+   *
+   * A conta admin TAMBEM e conta de editor e de criador (EDITOR_ROLES /
+   * CREATOR_ROLES no backend), entao estas telas carregam dados de verdade:
+   * todos os editores disponiveis no modo criador, o quadro de solicitacoes no
+   * modo editor, portfolio proprio e assinatura. E o que permite demonstrar o
+   * produto inteiro com um login so.
+   */
   function enterViewMode(mode: 'CREATOR' | 'EDITOR') {
-    setViewMode(mode)
-    setUserSection('feed')
     setProfileMenuOpen(false)
+    navigate(mode === 'CREATOR' ? '/dashboard/creator' : '/dashboard/editor')
   }
 
   const storedUser = localStorage.getItem('user')
@@ -1560,13 +1375,6 @@ export function AdminPage() {
               {section === 'transactions' && <FinanceiroSection />}
               {section === 'subscriptions' && <SubscriptionsSection />}
               {section === 'audit' && <AuditSection />}
-            </>
-          )}
-          {viewMode !== 'ADMIN' && (
-            <>
-              {userSection === 'feed' && <FeedSection role={viewMode} />}
-              {userSection === 'projects' && <MyProjectsSection role={viewMode} />}
-              {userSection === 'account' && <AccountSection />}
             </>
           )}
         </main>
