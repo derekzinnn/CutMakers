@@ -37,9 +37,17 @@ export async function getOrCreateConversationByOrder(orderId: string): Promise<C
   return data.conversation
 }
 
-export async function listConversations(): Promise<ConversationDTO[]> {
-  const { data } = await api.get<{ conversations: ConversationDTO[] }>('/conversations')
-  return data.conversations
+export interface ConversationsPage {
+  conversations: ConversationDTO[]
+  total: number
+  page: number
+  totalPages: number
+}
+
+/** Paginada: a lista cresce uma conversa por pedido. */
+export async function listConversations(page = 1): Promise<ConversationsPage> {
+  const { data } = await api.get<ConversationsPage>('/conversations', { params: { page } })
+  return data
 }
 
 export async function getMessages(conversationId: string, page = 1): Promise<MessageDTO[]> {

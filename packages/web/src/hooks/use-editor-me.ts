@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
 import { api } from '@/lib/api'
+import { useCached } from './use-cached'
 
 export interface EditorMe {
   id: string
@@ -30,30 +30,10 @@ export interface EditorMe {
 }
 
 export function useEditorMe() {
-  const [editor, setEditor] = useState<EditorMe | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { dado, carregando, erro, recarregar } = useCached<EditorMe>(
+    'editor-me',
+    async () => (await api.get<{ editor: EditorMe }>('/editors/me')).data.editor,
+  )
 
-  const refetch = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const { data } = await api.get<{ editor: EditorMe }>('/editors/me')
-      setEditor(data.editor)
-    } catch (err) {
-      const e = err as { response?: { data?: { message?: string }; status?: number } }
-      // 404 = ainda não tem perfil, será criado ao salvar
-      if (e?.response?.status !== 404) {
-        setError(e?.response?.data?.message ?? 'Erro ao carregar perfil')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    refetch()
-  }, [refetch])
-
-  return { editor, loading, error, refetch }
+  return { editor: dado, loading: carregando, error: erro, refetch: recarregar }
 }

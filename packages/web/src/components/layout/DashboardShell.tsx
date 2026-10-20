@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { limparCache } from '@/lib/cache'
 import { useState, useEffect, useRef } from 'react'
 import {
   IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck,
@@ -311,6 +312,9 @@ export function DashboardShell({
 
   function logout() {
     localStorage.clear()
+    // Sem isto o cache em memoria sobrevive ao logout e o proximo usuario a
+    // logar nesta aba veria dados do anterior ate o TTL expirar
+    limparCache()
     navigate('/login')
   }
 

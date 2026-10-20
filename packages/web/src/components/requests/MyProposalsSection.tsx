@@ -1,3 +1,4 @@
+import { SkeletonList } from '@/components/ui/Skeleton'
 import { useCallback, useEffect, useState } from 'react'
 import { IconSend, IconExternalLink } from '@tabler/icons-react'
 import {
@@ -7,7 +8,15 @@ import {
   type MyProposal,
 } from '@/lib/requests'
 import { OpportunityDetailModal } from './OpportunitiesSection'
-import { Empty, GhostButton, Loading, Pager, Pill, PrimaryButton, fmtBRL, fmtDate } from './shared'
+import {
+  Empty,
+  GhostButton,
+  Pager,
+  Pill,
+  PrimaryButton,
+  fmtBRL,
+  fmtDate,
+} from './shared'
 
 // ─── Minhas propostas (editor) ────────────────────────────────────────────────
 
@@ -37,7 +46,7 @@ export function MyProposalsSection({
 
   useEffect(() => { load() }, [load])
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <SkeletonList rows={5} />
 
   if (!data || data.proposals.length === 0) {
     return (

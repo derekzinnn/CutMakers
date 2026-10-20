@@ -1,32 +1,31 @@
-import { useCallback, useEffect, useState } from 'react'
 import { listOrders, type OrderDTO, type ListOrdersParams } from '@/lib/orders'
+import { useCached } from './use-cached'
+
+/**
+ * A chave inclui os filtros: trocar o status NÃO descarta o cache do anterior,
+ * então alternar entre chips de filtro fica instantâneo depois da primeira vez.
+ */
+function chaveDe({ role, status, page, limit }: ListOrdersParams) {
+  return ['orders', role ?? 'all', status ?? 'all', page ?? 1, limit ?? 20].join(':')
+}
 
 export function useOrders(params: ListOrdersParams = {}) {
-  const [orders, setOrders] = useState<OrderDTO[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
   const { role, status, page, limit } = params
 
-  const fetch = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await listOrders({ role, status, page, limit })
-      setOrders(data.orders)
-      setTotal(data.total)
-    } catch (e) {
-      const err = e as { response?: { data?: { message?: string } } }
-      setError(err?.response?.data?.message ?? 'Erro ao carregar pedidos')
-    } finally {
-      setLoading(false)
-    }
-  }, [role, status, page, limit])
+  const { dado, carregando, revalidando, erro, recarregar } = useCached<{
+    orders: OrderDTO[]
+    total: number
+  }>(chaveDe({ role, status, page, limit }), async () => {
+    const d = await listOrders({ role, status, page, limit })
+    return { orders: d.orders, total: d.total }
+  })
 
-  useEffect(() => {
-    fetch()
-  }, [fetch])
-
-  return { orders, total, loading, error, refetch: fetch }
+  return {
+    orders: dado?.orders ?? [],
+    total: dado?.total ?? 0,
+    loading: carregando,
+    revalidating: revalidando,
+    error: erro,
+    refetch: recarregar,
+  }
 }

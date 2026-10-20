@@ -21,8 +21,9 @@ export const conversationController = {
 
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const conversations = await conversationService.listForUser(req.user!.sub)
-      res.json({ conversations })
+      const page = Number(req.query.page) || 1
+      const resultado = await conversationService.listForUser(req.user!.sub, page)
+      res.json(resultado)
     } catch (err) {
       next(err)
     }

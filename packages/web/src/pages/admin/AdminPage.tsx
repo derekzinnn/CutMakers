@@ -1,3 +1,5 @@
+import { useCached } from '@/hooks/use-cached'
+import { SkeletonTable } from '@/components/ui/Skeleton'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -93,13 +95,8 @@ function useDebounced<T>(value: T, ms = 350): T {
   return debounced
 }
 
-function Spinner() {
-  return (
-    <div className="flex items-center justify-center py-16">
-      <IconLoader2 size={24} className="animate-spin" style={{ color: 'var(--brand)' }} />
-    </div>
-  )
-}
+// Spinner removido: todas as telas passaram a usar skeleton com a FORMA do
+// conteudo, entao a rodinha generica nao e mais usada em lugar nenhum.
 
 function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (p: number) => void }) {
   if (totalPages <= 1) return null
@@ -293,26 +290,23 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
   const search = useDebounced(rawSearch)
   const [role, setRole] = useState<UserRole | 'ALL'>('ALL')
   const [page, setPage] = useState(1)
-  const [data, setData] = useState<{ users: AdminUser[]; totalPages: number } | null>(null)
-  const [loading, setLoading] = useState(true)
   const [target, setTarget] = useState<AdminUser | null>(null)
   const [busy, setBusy] = useState(false)
 
-  async function load() {
-    setLoading(true)
-    try {
-      const res = await listUsers({
-        search: search || undefined,
-        role: role === 'ALL' ? undefined : role,
-        page,
-      })
-      setData({ users: res.users, totalPages: res.totalPages })
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Chave inclui os filtros: voltar para uma combinacao ja vista e instantaneo,
+  // e trocar de aba e voltar nao refaz a busca dentro do TTL.
+  const { dado: data, carregando: loading, recarregar: load } = useCached<{
+    users: AdminUser[]
+    totalPages: number
+  }>(`admin-users:${search}:${role}:${page}`, async () => {
+    const res = await listUsers({
+      search: search || undefined,
+      role: role === 'ALL' ? undefined : role,
+      page,
+    })
+    return { users: res.users, totalPages: res.totalPages }
+  })
 
-  useEffect(() => { load() }, [search, role, page])
   useEffect(() => { setPage(1) }, [search, role])
 
   async function confirmBanToggle() {
@@ -374,7 +368,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
       </div>
 
       {loading ? (
-        <Spinner />
+        <SkeletonTable rows={6} cols={6} gridClass="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_1.2fr] items-center gap-4 px-4 py-3" />
       ) : !data || data.users.length === 0 ? (
         <EmptyState message="Nenhum usuário encontrado" />
       ) : (
@@ -474,26 +468,21 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
 function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   const [status, setStatus] = useState<OrderStatus | 'ALL'>('ALL')
   const [page, setPage] = useState(1)
-  const [data, setData] = useState<{ orders: AdminOrder[]; totalPages: number } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [disputes, setDisputes] = useState<AdminDispute[]>([])
   const [resolveTarget, setResolveTarget] = useState<AdminDispute | null>(null)
 
-  async function load() {
-    setLoading(true)
-    try {
-      const [res, disp] = await Promise.all([
-        listAdminOrders({ status: status === 'ALL' ? undefined : status, page }),
-        listAdminDisputes(),
-      ])
-      setData({ orders: res.orders, totalPages: res.totalPages })
-      setDisputes(disp)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { load() }, [status, page])
+  const { dado: pagina, carregando: loading, recarregar: load } = useCached<{
+    orders: AdminOrder[]
+    totalPages: number
+    disputes: AdminDispute[]
+  }>(`admin-orders:${status}:${page}`, async () => {
+    const [res, disp] = await Promise.all([
+      listAdminOrders({ status: status === 'ALL' ? undefined : status, page }),
+      listAdminDisputes(),
+    ])
+    return { orders: res.orders, totalPages: res.totalPages, disputes: disp }
+  })
+  const data = pagina
+  const disputes = pagina?.disputes ?? []
   useEffect(() => { setPage(1) }, [status])
 
   const disputeByOrderId = new Map(disputes.map((d) => [d.order.id, d]))
@@ -546,7 +535,7 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
       </div>
 
       {loading ? (
-        <Spinner />
+        <SkeletonTable rows={6} cols={7} gridClass="grid grid-cols-[0.7fr_1.2fr_1.2fr_1fr_1.2fr_1fr_1fr] items-center gap-4 px-4 py-3" />
       ) : !data || data.orders.length === 0 ? (
         <EmptyState message="Nenhum pedido encontrado" />
       ) : (
@@ -694,25 +683,18 @@ function ResolveDisputeModal({
 }
 
 function FinanceiroSection() {
-  const [summary, setSummary] = useState<FinancialSummary | null>(null)
   const [page, setPage] = useState(1)
-  const [data, setData] = useState<{ transactions: AdminTransaction[]; totalPages: number } | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let alive = true
-    getFinancialSummary().then((s) => { if (alive) setSummary(s) })
-    return () => { alive = false }
-  }, [])
-
-  useEffect(() => {
-    let alive = true
-    setLoading(true)
-    listAdminTransactions({ page })
-      .then((res) => { if (alive) setData({ transactions: res.transactions, totalPages: res.totalPages }) })
-      .finally(() => { if (alive) setLoading(false) })
-    return () => { alive = false }
-  }, [page])
+  const { dado: summary } = useCached<FinancialSummary>(
+    'admin-financial-summary',
+    () => getFinancialSummary(),
+  )
+  const { dado: data, carregando: loading } = useCached<{
+    transactions: AdminTransaction[]
+    totalPages: number
+  }>(`admin-transactions:${page}`, async () => {
+    const res = await listAdminTransactions({ page })
+    return { transactions: res.transactions, totalPages: res.totalPages }
+  })
 
   const cards: { label: string; value: number; Icon: React.ElementType; color: string }[] = [
     { label: 'Total transacionado', value: summary?.totalTransacted ?? 0, Icon: IconTrendingUp, color: 'var(--success)' },
@@ -754,7 +736,7 @@ function FinanceiroSection() {
         </div>
 
         {loading ? (
-          <Spinner />
+          <SkeletonTable rows={6} cols={7} gridClass="grid grid-cols-[0.8fr_1.2fr_1.2fr_1fr_1fr_1.3fr_1fr] items-center gap-4 px-4 py-3" />
         ) : !data || data.transactions.length === 0 ? (
           <EmptyState message="Nenhuma transação registrada ainda" />
         ) : (
@@ -871,23 +853,19 @@ function AuditSection() {
   const actorSearch = useDebounced(rawSearch)
   const [action, setAction] = useState<string>('ALL')
   const [page, setPage] = useState(1)
-  const [data, setData] = useState<{ logs: AuditLogEntry[]; totalPages: number } | null>(null)
-  const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  useEffect(() => {
-    let alive = true
-    setLoading(true)
-    listAuditLog({
+  const { dado: data, carregando: loading } = useCached<{
+    logs: AuditLogEntry[]
+    totalPages: number
+  }>(`admin-audit:${action}:${actorSearch}:${page}`, async () => {
+    const res = await listAuditLog({
       action: action === 'ALL' ? undefined : action,
       actorSearch: actorSearch || undefined,
       page,
     })
-      .then((res) => { if (alive) setData({ logs: res.logs, totalPages: res.totalPages }) })
-      .catch(() => {})
-      .finally(() => { if (alive) setLoading(false) })
-    return () => { alive = false }
-  }, [action, actorSearch, page])
+    return { logs: res.logs, totalPages: res.totalPages }
+  })
 
   useEffect(() => { setPage(1) }, [action, actorSearch])
 
@@ -927,7 +905,7 @@ function AuditSection() {
       </div>
 
       {loading ? (
-        <Spinner />
+        <SkeletonTable rows={6} cols={5} gridClass="grid grid-cols-[1.1fr_1.4fr_1.5fr_1fr_0.5fr] items-center gap-4 px-4 py-3" />
       ) : !data || data.logs.length === 0 ? (
         <EmptyState message="Nenhum evento registrado ainda" />
       ) : (

@@ -1,3 +1,4 @@
+import { SkeletonList } from '@/components/ui/Skeleton'
 import { useCallback, useEffect, useState } from 'react'
 import {
   IconArrowLeft,
@@ -36,7 +37,6 @@ import {
   Empty,
   ErrorBox,
   GhostButton,
-  Loading,
   Pager,
   Pill,
   PrimaryButton,
@@ -111,7 +111,7 @@ function RequestList({ onSelect, onNew }: { onSelect: (id: string) => void; onNe
     </PrimaryButton>
   )
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <SkeletonList rows={5} />
 
   return (
     <div className="space-y-5">
@@ -240,7 +240,7 @@ function RequestDetail({
     </button>
   )
 
-  if (loading && !request) return <Loading />
+  if (loading && !request) return <SkeletonList rows={4} />
   if (loadError || !request) {
     return (
       <div className="space-y-4">

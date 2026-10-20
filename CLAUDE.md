@@ -816,6 +816,43 @@ Ver `packages/api/.env.example`. Precisa:
    escritores concorrentes às vezes esgota o orçamento de retry. Não é regressão de código.
    Resolver com Postgres local para testes, ou subir MAX_DELIVERY_ATTEMPTS.
 
+✅ Fase 18 — Cache, skeletons e paginação
+   **Cache** (`src/lib/cache.ts` + `hooks/use-cached.ts`)
+   [x] Stale-while-revalidate: havendo dado em cache ele volta NA HORA, sem spinner, e a
+       revalidação acontece atrás. É o que elimina o pisca a cada navegação
+   [x] **Desduplicação por chave**: dois componentes montando juntos pediam `/editors/me`
+       e `/notifications` DUAS vezes (dava para ver na aba de rede). Agora compartilham
+       uma request
+   [x] TTL de 30s (5min para categorias). `use-categories` tinha um cache caseiro
+       PERMANENTE que nunca invalidava — criar categoria pelo portfólio não aparecia até F5
+   [x] Invalidação CENTRALIZADA no interceptor do axios: toda escrita bem-sucedida derruba
+       as chaves relacionadas. Fica num lugar só, e não nos 24 pontos de mutação — esquecer
+       um significa a tela mostrar dado velho depois da ação, o usuário achar que não
+       funcionou e repetir. Isso é pior que esperar spinner
+   [x] Logout limpa o cache: dado de um usuário não pode vazar para o próximo na mesma aba
+   [x] Migrados: use-categories, use-orders, use-editor-me + as 4 seções do admin
+       (usuários, ordens, financeiro, auditoria), com a chave incluindo os filtros
+   [x] Verificado no browser: `/admin/users` faz 1 request em Usuários→Ordens→Usuários
+       (eram 2), e `/categories` faz 1 por carga de página mesmo remontando componentes
+
+   **Skeletons** (`components/ui/Skeleton.tsx`)
+   [x] `Skeleton`, `SkeletonTable`, `SkeletonStats`, `SkeletonCards`, `SkeletonList`
+   [x] Skeleton tem a FORMA do conteúdo: o `SkeletonTable` recebe o mesmo `gridClass` da
+       tabela real, então a página não salta quando os dados chegam. Larguras irregulares
+       de propósito — barras idênticas parecem componente quebrado
+   [x] Substituíram TODOS os spinners: 4 tabelas do admin, dashboards de editor e criador,
+       oportunidades, solicitações e propostas
+   [x] `Spinner` (admin) e `Loading` (requests/shared) removidos — viraram código morto
+
+   **Paginação**
+   [x] Auditoria completa: a maior parte das listas já tinha. As soltas eram 2
+   [x] `GET /conversations` paginada (20/pág) — crescia uma conversa por pedido e vinha
+       inteira, com a última mensagem e as duas partes em cada item
+   [x] Controle na barra lateral do chat, só aparece com mais de uma página. Paginar não
+       sequestra a conversa que a pessoa está lendo
+   [x] As demais `findMany` sem `take` são operação interna (validação, transação, job),
+       não tabela — não precisam
+
 ⏳ Fase 14 — Próximos (pendem decisão/credenciais do dono)
    [ ] Testes de integração dos fluxos ainda não cobertos: disputas, assinaturas, revisões,
        marketplace invertido (aceite de proposta de solicitação), e o enforcement de ban no refresh
@@ -844,7 +881,13 @@ Ver `packages/api/.env.example`. Precisa:
 - Transactions para operações compostas (ex: User + EditorCategory)
 
 ### Frontend
-- `api` (axios) em `src/lib/api.ts` já tem interceptor de refresh token
+- `api` (axios) em `src/lib/api.ts`: interceptor de refresh token + **invalidação de cache**
+  (toda escrita derruba as chaves relacionadas — ver INVALIDACOES)
+- **Busca de dados: use `useCached`** (`hooks/use-cached.ts`), nunca `useState` + `useEffect`
+  com `api.get`. Dá cache, desduplicação e stale-while-revalidate de graça. A chave deve
+  incluir os filtros (`admin-users:${search}:${role}:${page}`)
+- **Carregando = skeleton, nunca spinner** (`components/ui/Skeleton.tsx`). Use o da forma
+  certa; `SkeletonTable` recebe o mesmo `gridClass` da tabela real
 - Hooks customizados em `src/hooks/` para data fetching (`use-categories`, `use-editor-me`)
 - Modal genérico em `src/components/ui/Modal.tsx`
 - Layout reutilizável em `src/components/layout/DashboardShell.tsx`

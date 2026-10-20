@@ -23,6 +23,9 @@ type MessageWithRelations = Prisma.MessageGetPayload<{ include: typeof messageIn
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
+/** Teto da barra lateral de conversas. */
+const CONVERSATIONS_PER_PAGE = 20
+
 export class ConversationService {
   async getOrCreateByOrder(orderId: string, userId: string) {
     const order = await prisma.order.findUnique({
@@ -51,15 +54,37 @@ export class ConversationService {
     return this.toDTO(created)
   }
 
-  async listForUser(userId: string) {
-    const conversations = await prisma.conversation.findMany({
-      where: {
-        OR: [{ creatorId: userId }, { editorId: userId }],
-      },
-      include: conversationInclude,
-      orderBy: { createdAt: 'desc' },
-    })
-    return conversations.map(this.toDTO)
+  /**
+   * Conversas do usuario, paginadas.
+   *
+   * Antes vinha a lista INTEIRA sem limite: cresce uma conversa por pedido, e
+   * cada item ja traz a ultima mensagem e os dados das duas partes. Um usuario
+   * ativo acabaria baixando centenas de linhas para preencher uma barra lateral.
+   */
+  async listForUser(userId: string, page = 1) {
+    const paginaAtual = Math.max(page, 1)
+    const where: Prisma.ConversationWhereInput = {
+      OR: [{ creatorId: userId }, { editorId: userId }],
+    }
+
+    const [conversations, total] = await Promise.all([
+      prisma.conversation.findMany({
+        where,
+        include: conversationInclude,
+        orderBy: { createdAt: 'desc' },
+        skip: (paginaAtual - 1) * CONVERSATIONS_PER_PAGE,
+        take: CONVERSATIONS_PER_PAGE,
+      }),
+      prisma.conversation.count({ where }),
+    ])
+
+    return {
+      conversations: conversations.map(this.toDTO),
+      total,
+      page: paginaAtual,
+      limit: CONVERSATIONS_PER_PAGE,
+      totalPages: Math.ceil(total / CONVERSATIONS_PER_PAGE),
+    }
   }
 
   async getMessages(conversationId: string, userId: string, page = 1, limit = 50) {

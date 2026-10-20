@@ -65,20 +65,30 @@ export function MessagesTab() {
   const [loading, setLoading] = useState(true)
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    listConversations()
-      .then((data) => {
-        setConversations(data)
-        if (data.length > 0) {
-          const firstOther = user?.id === data[0].creator.id ? data[0].editor : data[0].creator
+    setLoading(true)
+    listConversations(page)
+      .then((res) => {
+        setConversations(res.conversations)
+        setTotalPages(res.totalPages)
+        // So auto-seleciona na primeira pagina: paginar nao deve sequestrar a
+        // conversa que a pessoa estava lendo
+        if (page === 1 && res.conversations.length > 0 && !selectedConvId) {
+          const first = res.conversations[0]
+          const firstOther = user?.id === first.creator.id ? first.editor : first.creator
           setSelectedPersonId(firstOther.id)
-          setSelectedConvId(data[0].id)
+          setSelectedConvId(first.id)
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [user])
+    // selectedConvId de proposito fora das deps: incluir refaria a busca a cada
+    // troca de conversa
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, page])
 
   function getOther(conv: ConversationDTO) {
     return user?.id === conv.creator.id ? conv.editor : conv.creator
@@ -223,6 +233,48 @@ export function MessagesTab() {
             </button>
           )
         })}
+
+        {/* Paginacao da barra lateral: a lista cresce uma conversa por pedido,
+            entao sem teto ela viraria uma rolagem infinita de centenas de itens.
+            So aparece quando ha mais de uma pagina. */}
+        {totalPages > 1 && (
+          <div
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 8, padding: '10px 12px', borderTop: '1px solid var(--border)',
+            }}
+          >
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              style={{
+                padding: '4px 10px', borderRadius: 6, fontSize: 11,
+                background: 'var(--surface-subtle)', border: '1px solid var(--border)',
+                color: page <= 1 ? 'var(--muted-foreground)' : 'var(--foreground)',
+                cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                opacity: page <= 1 ? 0.5 : 1,
+              }}
+            >
+              Anterior
+            </button>
+            <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+              {page} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              style={{
+                padding: '4px 10px', borderRadius: 6, fontSize: 11,
+                background: 'var(--surface-subtle)', border: '1px solid var(--border)',
+                color: page >= totalPages ? 'var(--muted-foreground)' : 'var(--foreground)',
+                cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+                opacity: page >= totalPages ? 0.5 : 1,
+              }}
+            >
+              Próxima
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Right: Chat area ── */}

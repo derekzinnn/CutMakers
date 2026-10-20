@@ -1,42 +1,24 @@
-import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
+import { TTL_LONGO } from '@/lib/cache'
+import { useCached } from './use-cached'
 
 export interface Category {
   id: string
   name: string
 }
 
-let cache: Category[] | null = null
-
+/**
+ * Antes isto tinha um cache caseiro PERMANENTE (`let cache` no módulo), que
+ * nunca invalidava: criar uma categoria pelo portfólio ("Outros" com nome
+ * livre) não a fazia aparecer até dar F5. Agora é TTL de 5min e o
+ * `invalidar('categories')` do portfólio derruba na hora.
+ */
 export function useCategories() {
-  const [categories, setCategories] = useState<Category[]>(cache ?? [])
-  const [loading, setLoading] = useState(!cache)
-  const [error, setError] = useState<string | null>(null)
+  const { dado, carregando, erro } = useCached<Category[]>(
+    'categories',
+    async () => (await api.get<{ categories: Category[] }>('/categories')).data.categories,
+    { ttl: TTL_LONGO },
+  )
 
-  useEffect(() => {
-    if (cache) return
-    let cancel = false
-    setLoading(true)
-
-    api
-      .get<{ categories: Category[] }>('/categories')
-      .then(({ data }) => {
-        if (cancel) return
-        cache = data.categories
-        setCategories(data.categories)
-      })
-      .catch((err) => {
-        if (cancel) return
-        setError(err?.response?.data?.message ?? 'Erro ao carregar categorias')
-      })
-      .finally(() => {
-        if (!cancel) setLoading(false)
-      })
-
-    return () => {
-      cancel = true
-    }
-  }, [])
-
-  return { categories, loading, error }
+  return { categories: dado ?? [], loading: carregando, error: erro }
 }

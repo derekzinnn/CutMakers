@@ -1,3 +1,4 @@
+import { SkeletonStats, SkeletonCards } from '@/components/ui/Skeleton'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -196,11 +197,12 @@ export function EditorDashboard() {
         }
       >
         {loading ? (
-          <div
-            className="flex items-center justify-center py-20 text-sm"
-            style={{ color: 'var(--muted-foreground)' }}
-          >
-            Carregando...
+          /* Skeleton com a forma da tela: 4 cards de stat no topo e a grade de
+             portfolio abaixo. O "Carregando..." centralizado nao dizia nada e
+             fazia a pagina saltar quando os dados chegavam. */
+          <div className="space-y-6">
+            <SkeletonStats count={4} />
+            <SkeletonCards count={3} />
           </div>
         ) : editorError ? (
           /* Sem isto, a falha de /editors/me caia no render normal e a tela

@@ -63,13 +63,8 @@ export function Stars({ rating }: { rating: number }) {
   )
 }
 
-export function Loading() {
-  return (
-    <div className="flex justify-center py-16">
-      <IconLoader2 size={26} className="animate-spin" style={{ color: 'var(--brand)' }} />
-    </div>
-  )
-}
+// Loading (rodinha) removido: todas as telas passaram a usar skeleton com a
+// forma do conteudo. Ver components/ui/Skeleton.tsx.
 
 export function Empty({
   icon,

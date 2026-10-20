@@ -1,3 +1,4 @@
+import { SkeletonCards } from '@/components/ui/Skeleton'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
@@ -406,9 +407,9 @@ export function CreatorDashboard() {
 
           {/* Grid */}
           {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', color: 'var(--muted-foreground)', fontSize: 13 }}>
-              Carregando editores...
-            </div>
+            /* Mesma grade de cards do resultado real: a tela nao salta quando
+               os editores chegam */
+            <SkeletonCards count={6} />
           ) : editors.length === 0 ? (
             <div
               style={{

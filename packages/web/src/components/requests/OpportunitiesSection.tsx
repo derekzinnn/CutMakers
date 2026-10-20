@@ -1,3 +1,4 @@
+import { SkeletonCards, SkeletonList } from '@/components/ui/Skeleton'
 import { useCallback, useEffect, useState } from 'react'
 import {
   IconSearch,
@@ -29,7 +30,6 @@ import {
   Empty,
   ErrorBox,
   GhostButton,
-  Loading,
   Pager,
   Pill,
   PrimaryButton,
@@ -124,7 +124,7 @@ export function OpportunitiesSection({ initialRequestId }: { initialRequestId?: 
       </div>
 
       {loading && !data ? (
-        <Loading />
+        <SkeletonCards count={6} withMedia={false} />
       ) : !data || data.requests.length === 0 ? (
         <Empty
           icon={<IconBriefcase size={26} stroke={1.5} color="var(--brand)" />}
@@ -284,7 +284,7 @@ export function OpportunityDetailModal({
         }
       >
         {loading && !request ? (
-          <Loading />
+          <SkeletonList rows={4} />
         ) : error && !request ? (
           <ErrorBox message={error} />
         ) : request ? (
