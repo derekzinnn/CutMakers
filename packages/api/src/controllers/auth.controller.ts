@@ -110,6 +110,16 @@ export class AuthController {
 
     try {
       const payload = authService.verifyRefreshToken(refreshToken)
+
+      // Defesa explicita contra escalacao: trocar um token de impersonacao
+      // (curto, somente leitura) por um token normal de escrita anularia todas
+      // as travas. Hoje isso ja falharia porque o token de impersonacao e
+      // assinado com JWT_SECRET e aqui se valida JWT_REFRESH_SECRET — mas
+      // depender dessa coincidencia e fragil: basta alguem unificar os segredos.
+      if (payload.imp) {
+        return res.status(401).json({ message: 'Sessao de visualizacao nao pode ser renovada' })
+      }
+
       const user = await prisma.user.findUnique({
         where: { id: payload.sub },
         select: { id: true, name: true, email: true, role: true, banned: true },

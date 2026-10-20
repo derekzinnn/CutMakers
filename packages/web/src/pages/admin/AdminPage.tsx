@@ -1,3 +1,4 @@
+import { startImpersonation } from '@/lib/impersonation'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -297,6 +298,29 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
   const [loading, setLoading] = useState(true)
   const [target, setTarget] = useState<AdminUser | null>(null)
   const [busy, setBusy] = useState(false)
+  const [verComoBusy, setVerComoBusy] = useState<string | null>(null)
+  const [verComoErro, setVerComoErro] = useState<string | null>(null)
+
+  /**
+   * Abre a sessao de visualizacao e leva direto ao painel que o usuario usa:
+   * editor -> /dashboard/editor, criador -> /dashboard/creator. Cair no /admin
+   * depois de clicar "Ver como" nao mostraria nada do que ele ve.
+   */
+  async function verComo(u: AdminUser) {
+    setVerComoErro(null)
+    setVerComoBusy(u.id)
+    try {
+      await startImpersonation(u.id)
+      const destino =
+        u.role === 'EDITOR' || u.role === 'BOTH' ? '/dashboard/editor' : '/dashboard/creator'
+      // reload completo: hooks e estado em memoria ainda carregam dados do admin
+      window.location.href = destino
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setVerComoErro(e?.response?.data?.message ?? 'Nao foi possivel abrir a visualizacao')
+      setVerComoBusy(null)
+    }
+  }
 
   async function load() {
     setLoading(true)
@@ -341,6 +365,15 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
             className="w-56 bg-transparent text-xs text-white outline-none placeholder:text-white/40"
           />
         </div>
+        {verComoErro && (
+          <p
+            className="w-full rounded-md px-3 py-2 text-xs"
+            style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)' }}
+          >
+            {verComoErro}
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-2">
           {ROLE_FILTERS.map((r) => {
             const active = role === r.value
@@ -404,6 +437,26 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                     style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
                   >
                     <IconEye size={14} stroke={1.5} />
+                  </button>
+                )}
+                {/* Ver como: abre a sessao de visualizacao somente leitura.
+                    Nao aparece para ADMIN — o backend tambem recusa. */}
+                {u.role !== 'ADMIN' && (
+                  <button
+                    onClick={() => void verComo(u)}
+                    disabled={verComoBusy === u.id}
+                    title={`Ver o sistema como ${u.name} (somente leitura)`}
+                    className="flex h-7 items-center gap-1 rounded-[6px] px-2 text-[11px] font-medium"
+                    style={{
+                      background: 'var(--warning-soft)',
+                      border: '1px solid var(--warning-border)',
+                      color: 'var(--warning)',
+                      cursor: verComoBusy === u.id ? 'wait' : 'pointer',
+                      opacity: verComoBusy === u.id ? 0.6 : 1,
+                    }}
+                  >
+                    <IconEye size={12} stroke={1.8} />
+                    {verComoBusy === u.id ? '...' : 'Ver como'}
                   </button>
                 )}
                 {u.role !== 'ADMIN' && (

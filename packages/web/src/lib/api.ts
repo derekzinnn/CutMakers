@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { restoreAdminSession } from './impersonation'
 
 export const api = axios.create({
   baseURL: '/api',
@@ -16,6 +17,17 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
+
+    // Sessao de visualizacao ("ver como"): dura 15min e NAO tem refresh token.
+    // Ao expirar, devolve o admin para a propria conta em vez de deixa-lo vendo
+    // erros sem explicacao — ou pior, cair no localStorage.clear() abaixo, que
+    // apagaria o backup da sessao dele e exigiria login de novo.
+    if (error.response?.status === 401 && localStorage.getItem('impersonating')) {
+      restoreAdminSession()
+      window.location.href = '/admin?sessao=expirada'
+      return Promise.reject(error)
+    }
+
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true
       const refreshToken = localStorage.getItem('refreshToken')

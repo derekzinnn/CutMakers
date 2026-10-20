@@ -116,7 +116,8 @@ Gráficos      --chart-1 .. --chart-5
 4. **NUNCA exibir seletor de role na tela de login** — backend identifica o role pelas credenciais
 5. **Admins só via seed**, nunca por endpoint público
 6. **Role `BOTH`** no login mostra modal de escolha de painel (Creator ou Editor)
-7. **Role `ADMIN`** redireciona para `/admin` — painel com sidebar tem switcher Admin/Creator/Editor
+7. **Role `ADMIN`** redireciona para `/admin`. Não há switcher de view — para ver o sistema
+   como um usuário, use "Ver como" na aba Usuários (sessão SOMENTE LEITURA, 15min, auditada)
 
 ---
 
@@ -286,6 +287,10 @@ nasce um `Order` já com editor, em `AWAITING_PAYMENT`, que segue o pipeline nor
 - `GET /disputes` — disputas OPEN, mais antigas primeiro (createdAt asc), com order + partes + reason
 - `GET /financial-summary` — { totalTransacted, totalPlatformFees (RELEASED), totalHeldInEscrow (HELD), totalRefunded (REFUNDED) }
 - `GET /transactions` — lista paginada (50/pág): orderId, payerName, payeeName, amount, platformFee, status, createdAt
+- `POST /impersonate` — abre sessão "ver como" { userId }. Token com identidade do ALVO +
+  `imp.by` do admin, 15min, SEM refresh. **Somente leitura**: o authMiddleware encadeia um
+  guard que recusa tudo que não é GET. Não impersona ADMIN nem a si mesmo; auditado
+- `POST /impersonate/end` — registra o fim na auditoria
 - Resolução de disputa reusa `POST /api/orders/:id/dispute/resolve` (ADMIN); `GET /api/orders/:id` já aceita ADMIN
 
 **Login:** `user.banned === true` → 401 "Conta suspensa. Entre em contato com o suporte."
@@ -336,7 +341,7 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Schema Prisma completo (20 modelos)
    [x] Auth: register, login, refresh, JWT middleware
    [x] Seed do admin + categorias
-   [x] Frontend: Login, Register, AdminPage (com switcher de view)
+   [x] Frontend: Login, Register, AdminPage
 
 ✅ Fase 2 — Core Editor
    [x] CRUD EditorProfile + middleware requireRole
@@ -507,7 +512,7 @@ Ver `packages/api/.env.example`. Precisa:
        — Ordens: filtro de status, linha DISPUTED destacada em laranja + modal "Resolver disputa"
          (resumo, motivo, Liberar para editor / Reembolsar criador via resolveDispute); clique → /orders/:id
        — Financeiro: 4 cards de resumo + tabela de transações (50/pág)
-       — Pagination/Spinner/EmptyState reutilizados; Modal existente reusado; view switcher Admin/Creator/Editor intacto
+       — Pagination/Spinner/EmptyState reutilizados; Modal existente reusado
    [x] `tsc --noEmit` limpo em api + web, sem `any`
    ⚠️ Requer `pnpm --filter @cutmakers/api db:push` (novo campo User.banned)
 
@@ -753,6 +758,37 @@ Ver `packages/api/.env.example`. Precisa:
    [x] 8 testes de integração novos (35 no total): teto grátis e premium, grandfathering de
        quem passou do limite, remover libera espaço, premium não atropela nota melhor,
        desempata dentro da faixa, editor novo sem avaliação
+
+✅ Fase 16 — Visão de admin: "ver como" + fim dos números falsos
+   [x] **Zeros falsos corrigidos**: `EditorDashboard` descartava o `error` do `useEditorMe`,
+       então qualquer falha de `/editors/me` caía no render normal e a tela mostrava
+       "0 itens · 0 trabalhos · avaliação —" como se fossem dados REAIS. Um admin abrindo
+       a rota (o RoleRoute libera ADMIN, o backend exige EDITOR/BOTH) concluía que o editor
+       não tem nada. Agora é estado de erro explícito com "Tentar de novo"
+   [x] **Não existia switcher nenhum**, apesar de o CLAUDE.md afirmar duas vezes que sim
+       ("painel com sidebar tem switcher Admin/Creator/Editor"). Documentação falsa, corrigida
+   [x] Impersonação (`POST /api/admin/impersonate`): token com a identidade do ALVO, marcado
+       com `imp.by` = id do admin real. TTL 15min, SEM refresh token
+   [x] **Somente leitura, por decisão**: `impersonation.middleware` recusa tudo que não é GET.
+       O produto tem contrato com aceite eletrônico e escrow — escrever como outra pessoa
+       permitiria aceitar um termo em nome dela (forjar consentimento) ou mandar mensagem no
+       chat que vira prova na disputa que o próprio admin vai julgar. Para AGIR o admin usa
+       /api/admin, onde ele aparece como ator na auditoria
+   [x] Guard encadeado DENTRO do `authMiddleware`, não em `app.use()`: em app.use ele roda
+       antes do auth (que é por rota) e `req.user` nem existe — passaria sempre. No
+       authMiddleware é o ponto único por onde toda request autenticada passa
+   [x] `/auth/refresh` recusa token impersonado. Hoje já falharia pela separação de segredos
+       (JWT_SECRET vs JWT_REFRESH_SECRET), mas depender da coincidência é frágil
+   [x] Travas: só ADMIN inicia, não impersona outro ADMIN, nem a si mesmo. Conta SUSPENSA
+       pode ser vista — é justamente quando o admin precisa olhar
+   [x] Auditoria: `IMPERSONATION_STARTED` / `ENDED` com ator = admin e metadata do alvo
+   [x] Frontend: botão "Ver como" na tabela de usuários (vai direto ao painel que o usuário
+       usa), banner fixo âmbar "Vendo como X · somente leitura · Voltar ao admin", e o
+       interceptor devolve o admin à própria conta quando a sessão de 15min expira — sem isso
+       ele cairia no `localStorage.clear()`, perdendo o backup da própria sessão
+   [x] 17 testes novos (52 de integração no total) + verificação por HTTP real: 4 GETs → 200
+       (incluindo `/editors/me`, que dá 403 para o token do admin), 4 escritas → 403, e a
+       troca do token de impersonação por um normal no /refresh → 401
 
 ⏳ Fase 14 — Próximos (pendem decisão/credenciais do dono)
    [ ] Testes de integração dos fluxos ainda não cobertos: disputas, assinaturas, revisões,

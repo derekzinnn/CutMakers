@@ -19,6 +19,7 @@ import {
   IconMessage2,
   IconLoader2,
   IconRosetteDiscountCheck,
+  IconAlertTriangle,
 } from '@tabler/icons-react'
 import {
   getMySubscription,
@@ -66,7 +67,7 @@ const NAV: NavItem[] = [
 
 export function EditorDashboard() {
   const { user } = useAuth()
-  const { editor, loading, refetch } = useEditorMe()
+  const { editor, loading, error: editorError, refetch } = useEditorMe()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -200,6 +201,37 @@ export function EditorDashboard() {
             style={{ color: 'var(--muted-foreground)' }}
           >
             Carregando...
+          </div>
+        ) : editorError ? (
+          /* Sem isto, a falha de /editors/me caia no render normal e a tela
+             mostrava "0 itens, 0 trabalhos, avaliacao —" como se fossem dados
+             REAIS. Um admin abrindo esta rota (o RoleRoute libera ADMIN, mas o
+             backend exige EDITOR/BOTH) concluia que o editor nao tem nada.
+             Numero falso e pior que erro visivel. */
+          <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-full"
+              style={{ background: 'var(--destructive-soft)' }}
+            >
+              <IconAlertTriangle size={22} stroke={1.5} color="var(--destructive)" />
+            </div>
+            <h3 className="font-heading text-lg font-bold text-white">
+              Nao foi possivel carregar seu perfil de editor
+            </h3>
+            <p className="max-w-md text-sm" style={{ color: 'var(--muted-foreground)' }}>
+              {editorError}
+            </p>
+            <p className="max-w-md text-xs" style={{ color: 'var(--muted-foreground)' }}>
+              Os numeros desta tela dependem desse perfil, entao nada e exibido ate carregar —
+              mostrar zeros aqui passaria por dado real.
+            </p>
+            <button
+              onClick={() => void refetch()}
+              className="mt-1 rounded-md px-4 py-2 text-sm font-semibold transition-all"
+              style={{ background: 'var(--brand)', color: 'var(--brand-foreground)', border: 'none', cursor: 'pointer' }}
+            >
+              Tentar de novo
+            </button>
           </div>
         ) : (
           <>
