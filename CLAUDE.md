@@ -27,7 +27,7 @@ Marketplace que conecta **criadores de conteúdo** (influenciadores) a **editore
 | Upload | Cloudinary (signed direct upload do frontend, sem proxy) |
 | Pagamentos (futuro) | Abacatepay (escrow) |
 | Ícones | Tabler Icons (outline only) |
-| Fontes | Syne (headings 700/800) + DM Sans (body 300/400/500) |
+| Fontes | Noto Sans Variable (headings) + Nunito Sans Variable (body) — preset shadcn |
 
 ---
 
@@ -68,34 +68,45 @@ cutmakers/
 
 ---
 
-## 🎨 Design system (SEGUIR RIGOROSAMENTE)
+## 🎨 Design system (preset shadcn `bfDpIkWg4`)
 
-### Cores
+> Substituiu o design system navy/orange original em 20/10/2026. As cores antigas
+> (#0D1B2A, #162436, #1E3045, #F4631E) e as fontes Syne/DM Sans **não existem mais**
+> no código — 1431 valores inline foram migrados para tokens.
+
+### Como consumir
+**Sempre por token**, nunca hex cru: `style={{ background: 'var(--card)' }}` ou a
+classe Tailwind equivalente (`bg-card`, `text-muted-foreground`, `border-border`).
+Os tokens estão em `src/index.css` e ligados ao Tailwind em `tailwind.config.ts`.
+
+### Tokens
 ```
---navy:       #0D1B2A    fundo principal
---navy-mid:   #162436    sidebars, painéis
---navy-light: #1E3045    cards elevados, hover
---orange:     #F4631E    CTAs, highlights
---orange-hover: #E0551A
+Superfície    --background  --card  --popover  --surface  --surface-raised  --surface-subtle
+Texto         --foreground  --muted-foreground  --card-foreground
+Linha         --border  --input  --ring
+Marca         --brand  --brand-hover  --brand-foreground  --brand-soft  --brand-border
+Neutro shadcn --primary  --secondary  --accent  --muted  (+ -foreground de cada)
+Status        --success  --warning  --info  --destructive  (+ -soft e -border)
+Gráficos      --chart-1 .. --chart-5
 ```
 
-Texto:
-- branco puro: títulos importantes
-- `rgba(255,255,255,0.8)` body principal
-- `rgba(255,255,255,0.4)` secundário
-- bordas: `rgba(255,255,255,0.08)`
+- **Fontes:** Nunito Sans Variable (corpo, `font-sans`) + Noto Sans Variable (títulos, `font-heading`)
+- **Radius:** derivado de `--radius` (0.625rem): `rounded-sm/md/lg/xl`. Não usar px fixo
+- **Tema:** dark por padrão (`<html class="dark">`). O `:root` claro existe e é consistente
 
-### Componentes
-- Border-radius: 8px (inputs/buttons), 12px (cards), 16px (modais)
-- Sem gradientes decorativos
-- Botão primário: fundo `#F4631E`, fonte Syne semibold
-- Inputs: fundo `rgba(255,255,255,0.05)`, focus border `rgba(244,99,30,0.5)`
-
-### Layouts de auth (login/cadastro)
-- Split 40/60: esquerda institucional (`#162436`), direita formulário (`#0D1B2A`)
-- Círculos SVG decorativos sutis no painel esquerdo
-
----
+### Decisões que valem conhecer
+- **`--brand` vem do `--chart-3` do preset**, que é laranja. O preset não nomeia cor de
+  acento (`--primary` no dark é slate quase branco), e a UI depende de acento em ~190
+  pontos (nav ativa, ícones, badges). Mapear tudo para `--primary` achataria a hierarquia
+- **`.btn-primary` usa `--brand`, não `--primary`**, para não destoar dos CTAs do app
+- **Status não foram achatados no neutro**: um badge "pago" e um "reembolsado" precisam
+  ser distinguíveis. Viraram tokens próprios
+- **`AVATAR_PALETTE` fica em hex cru de propósito**: é paleta CATEGÓRICA de identidade de
+  usuário e precisa de matizes distintos. Os `--chart-*` do preset são todos laranja/âmbar
+- **Tailwind v3 + preset v4:** o preset usa `@import "shadcn/tailwind.css"` e `@theme`, que
+  são v4. O import foi removido e as variáveis ligadas à mão no config. Os valores são os
+  mesmos. Como os tokens são oklch cru, **modificador de opacidade não funciona**
+  (`bg-input/40` quebra o build) — use um token `-soft`/`-subtle`
 
 ## 🔐 Regras importantes do briefing
 
@@ -754,4 +765,6 @@ Ver `packages/api/.env.example`. Precisa:
 - ❌ Subir vídeos pelo servidor (sempre signed upload direto ao Cloudinary)
 - ❌ Retornar `passwordHash` em qualquer DTO
 - ❌ Commitar `.env` (já está no `.gitignore`)
-- ❌ Quebrar a paleta de cores ou trocar as fontes
+- ❌ Usar hex cru em vez dos tokens do tema (`var(--card)`, `bg-brand`, etc.)
+- ❌ Reintroduzir as cores antigas (#0D1B2A, #162436, #F4631E) ou Syne/DM Sans
+- ❌ Modificador de opacidade em token oklch (`bg-input/40`) — quebra o build no Tailwind v3

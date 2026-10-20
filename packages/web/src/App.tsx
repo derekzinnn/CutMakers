@@ -18,11 +18,11 @@ function PageLoader() {
   return (
     <div
       className="flex min-h-screen items-center justify-center"
-      style={{ background: '#0D1B2A' }}
+      style={{ background: 'var(--background)' }}
     >
       <div
         className="h-8 w-8 animate-spin rounded-full"
-        style={{ border: '3px solid rgba(244,99,30,0.2)', borderTopColor: '#F4631E' }}
+        style={{ border: '3px solid var(--brand-border)', borderTopColor: 'var(--brand)' }}
       />
     </div>
   )

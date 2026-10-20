@@ -53,14 +53,14 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0D1B2A' }}>
+    <div className="flex min-h-screen" style={{ background: 'var(--background)' }}>
       {/* Painel esquerdo */}
       <div
         className="hidden w-[40%] flex-col justify-between p-10 lg:flex"
-        style={{ background: '#162436', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ background: 'var(--card)', borderRight: '1px solid var(--border)' }}
       >
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: '#F4631E' }} />
+          <span className="h-2 w-2 rounded-full" style={{ background: 'var(--brand)' }} />
           <span className="text-[22px] font-extrabold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
             CutMakers
           </span>
@@ -68,9 +68,9 @@ export function RegisterPage() {
 
         <div>
           <h1 className="text-[30px] font-bold leading-tight text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Comece sua jornada na <span style={{ color: '#F4631E' }}>edição profissional</span>
+            Comece sua jornada na <span style={{ color: 'var(--brand)' }}>edição profissional</span>
           </h1>
-          <p className="mt-4 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="mt-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
             Seja você um criador buscando o editor perfeito ou um editor em busca de novos clientes.
           </p>
         </div>
@@ -85,7 +85,7 @@ export function RegisterPage() {
               <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
                 {stat.value}
               </p>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
                 {stat.label}
               </p>
             </div>
@@ -99,7 +99,7 @@ export function RegisterPage() {
           <h2 className="mb-1 text-2xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
             Criar conta
           </h2>
-          <p className="mb-8 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="mb-8 text-sm" style={{ color: 'var(--muted-foreground)' }}>
             Escolha como você vai usar a plataforma
           </p>
 
@@ -115,22 +115,22 @@ export function RegisterPage() {
                 onClick={() => setRole(value)}
                 className="flex flex-col items-center gap-2 rounded-card p-4 text-left transition-all"
                 style={{
-                  background: role === value ? 'rgba(244,99,30,0.1)' : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${role === value ? 'rgba(244,99,30,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                  background: role === value ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+                  border: `1px solid ${role === value ? 'var(--brand-border)' : 'var(--border)'}`,
                 }}
               >
                 <Icon
                   size={24}
                   stroke={1.5}
-                  color={role === value ? '#F4631E' : 'rgba(255,255,255,0.4)'}
+                  color={role === value ? 'var(--brand)' : 'var(--muted-foreground)'}
                 />
                 <span
                   className="text-sm font-semibold"
-                  style={{ color: role === value ? '#F4631E' : 'rgba(255,255,255,0.8)', fontFamily: "'Syne', sans-serif" }}
+                  style={{ color: role === value ? 'var(--brand)' : 'var(--foreground)', fontFamily: "'Syne', sans-serif" }}
                 >
                   {label}
                 </span>
-                <span className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <span className="text-center text-xs" style={{ color: 'var(--muted-foreground)' }}>
                   {desc}
                 </span>
               </button>
@@ -139,7 +139,7 @@ export function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted-foreground)' }}>
                 <IconUser size={16} stroke={1.5} />
               </span>
               <input
@@ -154,7 +154,7 @@ export function RegisterPage() {
             </div>
 
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted-foreground)' }}>
                 <IconMail size={16} stroke={1.5} />
               </span>
               <input
@@ -168,7 +168,7 @@ export function RegisterPage() {
             </div>
 
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted-foreground)' }}>
                 <IconLock size={16} stroke={1.5} />
               </span>
               <input
@@ -185,21 +185,21 @@ export function RegisterPage() {
             {/* Aceite dos Termos de Uso */}
             <label
               className="flex cursor-pointer items-start gap-2.5 rounded-[8px] px-3 py-2.5"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
             >
               <input
                 type="checkbox"
                 checked={acceptTerms}
                 onChange={(e) => setAcceptTerms(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#F4631E]"
+                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[var(--brand)]"
               />
-              <span className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <span className="text-xs leading-relaxed" style={{ color: 'var(--foreground)' }}>
                 Li e aceito os{' '}
                 <button
                   type="button"
                   onClick={() => setTermsOpen(true)}
                   className="font-medium hover:underline"
-                  style={{ color: '#F4631E', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                  style={{ color: 'var(--brand)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                 >
                   Termos de Uso
                 </button>{' '}
@@ -211,7 +211,7 @@ export function RegisterPage() {
             {error && (
               <p
                 className="rounded-[8px] px-3 py-2 text-xs text-red-400"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+                style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)' }}
               >
                 {error}
               </p>
@@ -227,9 +227,9 @@ export function RegisterPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="mt-6 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>
             Já tem conta?{' '}
-            <Link to="/login" style={{ color: '#F4631E' }} className="hover:underline">
+            <Link to="/login" style={{ color: 'var(--brand)' }} className="hover:underline">
               Entrar
             </Link>
           </p>
@@ -247,7 +247,7 @@ export function RegisterPage() {
           <button
             onClick={() => { setAcceptTerms(true); setTermsOpen(false) }}
             className="rounded-[8px] px-5 py-2 text-sm font-semibold"
-            style={{ background: '#F4631E', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
           >
             Li e aceito
           </button>
@@ -255,7 +255,7 @@ export function RegisterPage() {
       >
         <pre
           className="whitespace-pre-wrap text-xs leading-relaxed"
-          style={{ color: 'rgba(255,255,255,0.7)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}
+          style={{ color: 'var(--foreground)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}
         >
           {PLATFORM_TERMS}
         </pre>

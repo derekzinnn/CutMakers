@@ -90,7 +90,7 @@ export function ProposalFormModal({
       }
     >
       <form id="proposal-form" onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
           Orçamento indicado pelo criador: <strong className="text-white">{budgetLabel(budgetMin, budgetMax)}</strong>
         </p>
 
@@ -124,15 +124,15 @@ export function ProposalFormModal({
         {/* Preview ao vivo — mesmo padrão do ProposalForm da negociação */}
         <div
           className="space-y-1 rounded-[8px] px-3 py-2.5 text-xs"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
         >
           <div className="flex justify-between">
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Taxa da plataforma (10%)</span>
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>{validAmount ? fmtBRL(fee) : '—'}</span>
+            <span style={{ color: 'var(--muted-foreground)' }}>Taxa da plataforma (10%)</span>
+            <span style={{ color: 'var(--muted-foreground)' }}>{validAmount ? fmtBRL(fee) : '—'}</span>
           </div>
           <div className="flex justify-between font-medium">
-            <span style={{ color: 'rgba(255,255,255,0.7)' }}>Você recebe</span>
-            <span style={{ color: '#22C55E' }}>{validAmount ? fmtBRL(net) : '—'}</span>
+            <span style={{ color: 'var(--foreground)' }}>Você recebe</span>
+            <span style={{ color: 'var(--success)' }}>{validAmount ? fmtBRL(net) : '—'}</span>
           </div>
         </div>
 

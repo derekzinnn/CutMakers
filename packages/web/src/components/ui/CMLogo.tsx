@@ -7,8 +7,8 @@ interface CMLogoProps {
 
 export function CMLogo({ size = 40, variant = 'orange' }: CMLogoProps) {
   const bg =
-    variant === 'orange' ? '#F4631E' : variant === 'navy' ? '#162436' : 'transparent'
-  const fg = variant === 'navy' ? '#F4631E' : '#FFFFFF'
+    variant === 'orange' ? 'var(--brand)' : variant === 'navy' ? 'var(--card)' : 'transparent'
+  const fg = variant === 'navy' ? 'var(--brand)' : 'var(--foreground)'
 
   return (
     <svg
@@ -34,7 +34,7 @@ export function CMLogo({ size = 40, variant = 'orange' }: CMLogoProps) {
 export function CMLockup({
   size = 36,
   wordSize,
-  color = '#FFFFFF',
+  color = 'var(--foreground)',
   variant = 'orange',
   gap = 10,
 }: CMLogoProps & { wordSize?: number; color?: string; gap?: number }) {

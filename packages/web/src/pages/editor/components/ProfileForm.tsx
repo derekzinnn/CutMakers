@@ -91,7 +91,7 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
       <div className="flex items-center gap-4">
         <div
           className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-2xl font-bold text-white"
-          style={{ background: '#F4631E' }}
+          style={{ background: 'var(--brand)' }}
         >
           {avatarUrl ? (
             <img src={avatarUrl} alt="avatar" className="h-full w-full object-cover" />
@@ -106,8 +106,8 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
             disabled={uploading}
             className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-sm transition-colors"
             style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--surface-subtle)',
+              border: '1px solid var(--border)',
               color: 'white',
               cursor: uploading ? 'wait' : 'pointer',
             }}
@@ -120,7 +120,7 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
               type="button"
               onClick={() => setAvatarUrl(null)}
               className="ml-2 text-xs"
-              style={{ color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ color: 'var(--muted-foreground)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               Remover
             </button>
@@ -131,7 +131,7 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
 
       {/* Nome */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--foreground)' }}>
           Nome
         </label>
         <input
@@ -146,7 +146,7 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
 
       {/* Bio */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--foreground)' }}>
           Bio
         </label>
         <textarea
@@ -158,14 +158,14 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
           className="input-field"
           style={{ height: 'auto', padding: '12px 14px', resize: 'vertical', minHeight: 100 }}
         />
-        <p className="mt-1 text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+        <p className="mt-1 text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
           {bio.length}/500
         </p>
       </div>
 
       {/* Categorias */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--foreground)' }}>
           Categorias que você atende
         </label>
         <div className="flex flex-wrap gap-2">
@@ -178,9 +178,9 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
                 onClick={() => toggleCategory(c.id)}
                 className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
                 style={{
-                  background: active ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.05)',
-                  color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                  border: `1px solid ${active ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  background: active ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+                  color: active ? 'var(--brand)' : 'var(--foreground)',
+                  border: `1px solid ${active ? 'var(--brand-border)' : 'var(--border)'}`,
                   cursor: 'pointer',
                 }}
               >
@@ -195,9 +195,9 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
         <p
           className="rounded-[8px] px-3 py-2 text-xs"
           style={{
-            background: 'rgba(239,68,68,0.08)',
-            border: '1px solid rgba(239,68,68,0.2)',
-            color: '#FCA5A5',
+            background: 'var(--destructive-soft)',
+            border: '1px solid var(--destructive-border)',
+            color: 'var(--destructive)',
           }}
         >
           {error}
@@ -208,8 +208,8 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
         <p
           className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-xs"
           style={{
-            background: 'rgba(34,197,94,0.08)',
-            border: '1px solid rgba(34,197,94,0.2)',
+            background: 'var(--success-soft)',
+            border: '1px solid var(--success-border)',
             color: '#86EFAC',
           }}
         >
@@ -223,7 +223,7 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
           disabled={saving}
           className="rounded-[8px] px-5 py-2.5 text-sm font-semibold transition-all"
           style={{
-            background: '#F4631E',
+            background: 'var(--brand)',
             color: 'white',
             border: 'none',
             cursor: saving ? 'not-allowed' : 'pointer',

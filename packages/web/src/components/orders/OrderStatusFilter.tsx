@@ -43,9 +43,9 @@ export function OrderStatusFilter({ orders, active, onChange }: Props) {
         onClick={() => onChange(value)}
         className="rounded-full px-3 py-1 text-xs transition-colors"
         style={{
-          background: isActive ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.05)',
-          color: isActive ? '#F4631E' : 'rgba(255,255,255,0.6)',
-          border: `1px solid ${isActive ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+          background: isActive ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+          color: isActive ? 'var(--brand)' : 'var(--foreground)',
+          border: `1px solid ${isActive ? 'var(--brand-border)' : 'var(--border)'}`,
           cursor: 'pointer',
           fontFamily: "'DM Sans', sans-serif",
         }}

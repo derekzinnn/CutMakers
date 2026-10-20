@@ -188,16 +188,16 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
 }
 
 export const STATUS_COLORS: Record<OrderStatus, string> = {
-  NEGOTIATING: '#F4631E',
+  NEGOTIATING: 'var(--brand)',
   AWAITING_PAYMENT: '#EAB308',
-  PENDING: '#F4631E',
+  PENDING: 'var(--brand)',
   ACCEPTED: '#3B82F6',
   IN_PROGRESS: '#3B82F6',
   DELIVERED: '#A855F7',
   REVISION_REQUESTED: '#EAB308',
-  COMPLETED: '#22C55E',
-  CANCELLED: '#EF4444',
-  DISPUTED: '#EF4444',
+  COMPLETED: 'var(--success)',
+  CANCELLED: 'var(--destructive)',
+  DISPUTED: 'var(--destructive)',
 }
 
 export const TRANSACTION_LABELS: Record<TransactionStatus, string> = {

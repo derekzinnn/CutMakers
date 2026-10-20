@@ -68,12 +68,12 @@ export function LoginPage() {
 
   return (
     <>
-      <div className="flex min-h-screen" style={{ background: '#0D1B2A' }}>
+      <div className="flex min-h-screen" style={{ background: 'var(--background)' }}>
 
         {/* ─── PAINEL ESQUERDO 40% — institucional ──────────────────────────── */}
         <div
           className="relative hidden w-[40%] flex-col justify-between overflow-hidden p-10 lg:flex"
-          style={{ background: '#162436', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--card)', borderRight: '1px solid var(--border)' }}
         >
           {/* Círculos decorativos (SVG sutil) */}
           <svg
@@ -84,15 +84,15 @@ export function LoginPage() {
             viewBox="0 0 700 700"
             fill="none"
           >
-            <circle cx="350" cy="350" r="349" stroke="rgba(255,255,255,0.04)" />
-            <circle cx="350" cy="350" r="280" stroke="rgba(255,255,255,0.03)" />
-            <circle cx="350" cy="350" r="210" stroke="rgba(255,255,255,0.02)" />
-            <circle cx="350" cy="350" r="140" stroke="rgba(244,99,30,0.05)" />
+            <circle cx="350" cy="350" r="349" stroke="var(--surface-subtle)" />
+            <circle cx="350" cy="350" r="280" stroke="var(--surface-subtle)" />
+            <circle cx="350" cy="350" r="210" stroke="var(--surface-subtle)" />
+            <circle cx="350" cy="350" r="140" stroke="var(--brand-soft)" />
           </svg>
 
           {/* Logo */}
           <div className="relative z-10 flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: '#F4631E' }} />
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--brand)' }} />
             <span
               className="text-[22px] font-extrabold text-white"
               style={{ fontFamily: "'Syne', sans-serif" }}
@@ -105,7 +105,7 @@ export function LoginPage() {
           <div className="relative z-10 max-w-md">
             <p
               className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em]"
-              style={{ color: '#F4631E' }}
+              style={{ color: 'var(--brand)' }}
             >
               Plataforma de Creators
             </p>
@@ -114,12 +114,12 @@ export function LoginPage() {
               style={{ fontFamily: "'Syne', sans-serif" }}
             >
               O match perfeito entre{' '}
-              <span style={{ color: '#F4631E' }}>criador</span> e{' '}
-              <span style={{ color: '#F4631E' }}>editor</span>
+              <span style={{ color: 'var(--brand)' }}>criador</span> e{' '}
+              <span style={{ color: 'var(--brand)' }}>editor</span>
             </h1>
             <p
               className="mt-5 max-w-sm text-[15px] leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.5)' }}
+              style={{ color: 'var(--muted-foreground)' }}
             >
               Conectamos influenciadores a editores freelancers profissionais de forma rápida e segura.
             </p>
@@ -139,7 +139,7 @@ export function LoginPage() {
                 >
                   {stat.value}
                 </p>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                   {stat.label}
                 </p>
               </div>
@@ -154,18 +154,18 @@ export function LoginPage() {
             to="/"
             className="absolute left-6 top-6 flex items-center gap-1.5 rounded-[8px] px-3 py-2 text-sm transition-colors lg:left-8 lg:top-8"
             style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.6)',
+              background: 'var(--surface-subtle)',
+              border: '1px solid var(--border)',
+              color: 'var(--foreground)',
               textDecoration: 'none',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.07)'
-              e.currentTarget.style.color = 'rgba(255,255,255,0.9)'
+              e.currentTarget.style.background = 'var(--border)'
+              e.currentTarget.style.color = 'var(--foreground)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-              e.currentTarget.style.color = 'rgba(255,255,255,0.6)'
+              e.currentTarget.style.background = 'var(--surface-subtle)'
+              e.currentTarget.style.color = 'var(--foreground)'
             }}
           >
             <IconArrowLeft size={16} stroke={1.5} />
@@ -174,7 +174,7 @@ export function LoginPage() {
 
           {/* Logo mobile */}
           <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <span className="h-2 w-2 rounded-full" style={{ background: '#F4631E' }} />
+            <span className="h-2 w-2 rounded-full" style={{ background: 'var(--brand)' }} />
             <span
               className="text-xl font-extrabold text-white"
               style={{ fontFamily: "'Syne', sans-serif" }}
@@ -190,7 +190,7 @@ export function LoginPage() {
             >
               Entrar na conta
             </h2>
-            <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
               Acesse com seu e-mail e senha
             </p>
 
@@ -200,14 +200,14 @@ export function LoginPage() {
               <div>
                 <label
                   className="mb-1.5 block text-xs font-medium"
-                  style={{ color: 'rgba(255,255,255,0.7)' }}
+                  style={{ color: 'var(--foreground)' }}
                 >
                   E-mail
                 </label>
                 <div className="relative">
                   <span
                     className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: 'rgba(255,255,255,0.4)' }}
+                    style={{ color: 'var(--muted-foreground)' }}
                   >
                     <IconMail size={16} stroke={1.5} />
                   </span>
@@ -226,14 +226,14 @@ export function LoginPage() {
               <div>
                 <label
                   className="mb-1.5 block text-xs font-medium"
-                  style={{ color: 'rgba(255,255,255,0.7)' }}
+                  style={{ color: 'var(--foreground)' }}
                 >
                   Senha
                 </label>
                 <div className="relative">
                   <span
                     className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: 'rgba(255,255,255,0.4)' }}
+                    style={{ color: 'var(--muted-foreground)' }}
                   >
                     <IconLock size={16} stroke={1.5} />
                   </span>
@@ -251,13 +251,13 @@ export function LoginPage() {
                     aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                     className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 transition-colors"
                     style={{
-                      color: 'rgba(255,255,255,0.4)',
+                      color: 'var(--muted-foreground)',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--foreground)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted-foreground)' }}
                   >
                     {showPassword ? <IconEyeOff size={16} stroke={1.5} /> : <IconEye size={16} stroke={1.5} />}
                   </button>
@@ -266,7 +266,7 @@ export function LoginPage() {
                   <a
                     href="#"
                     className="text-xs transition-colors"
-                    style={{ color: '#F4631E' }}
+                    style={{ color: 'var(--brand)' }}
                     onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline' }}
                     onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none' }}
                   >
@@ -280,9 +280,9 @@ export function LoginPage() {
                 <p
                   className="rounded-[8px] px-3 py-2 text-xs"
                   style={{
-                    background: 'rgba(239,68,68,0.08)',
-                    border: '1px solid rgba(239,68,68,0.2)',
-                    color: '#FCA5A5',
+                    background: 'var(--destructive-soft)',
+                    border: '1px solid var(--destructive-border)',
+                    color: 'var(--destructive)',
                   }}
                 >
                   {error}
@@ -298,11 +298,11 @@ export function LoginPage() {
 
             {/* Divider */}
             <div className="my-6 flex items-center gap-3">
-              <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
-              <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <div className="h-px flex-1" style={{ background: 'var(--border)' }} />
+              <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
                 OU
               </span>
-              <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+              <div className="h-px flex-1" style={{ background: 'var(--border)' }} />
             </div>
 
             {/* Google (OAuth em fase futura — requer credenciais do Google Cloud) */}
@@ -312,9 +312,9 @@ export function LoginPage() {
               title="Login com Google em breve"
               className="flex w-full items-center justify-center gap-2 rounded-[8px] py-2.5 text-sm font-medium"
               style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                color: 'rgba(255,255,255,0.4)',
+                background: 'var(--surface-subtle)',
+                border: '1px solid var(--border)',
+                color: 'var(--muted-foreground)',
                 fontFamily: "'DM Sans', sans-serif",
                 cursor: 'not-allowed',
                 height: '42px',
@@ -324,16 +324,16 @@ export function LoginPage() {
               Continuar com Google
               <span
                 className="rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase"
-                style={{ background: 'rgba(244,99,30,0.12)', color: '#F4631E' }}
+                style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}
               >
                 Em breve
               </span>
             </button>
 
             {/* Cadastrar */}
-            <p className="mt-6 text-center text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <p className="mt-6 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>
               Não tem conta?{' '}
-              <Link to="/register" style={{ color: '#F4631E', fontWeight: 500 }} className="hover:underline">
+              <Link to="/register" style={{ color: 'var(--brand)', fontWeight: 500 }} className="hover:underline">
                 Criar conta grátis
               </Link>
             </p>

@@ -116,7 +116,7 @@ function RequestList({ onSelect, onNew }: { onSelect: (id: string) => void; onNe
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
           Publique um projeto e deixe os editores enviarem propostas. Você escolhe a melhor.
         </p>
         {newButton}
@@ -124,7 +124,7 @@ function RequestList({ onSelect, onNew }: { onSelect: (id: string) => void; onNe
 
       {!data || data.requests.length === 0 ? (
         <Empty
-          icon={<IconFileDescription size={26} stroke={1.5} color="#F4631E" />}
+          icon={<IconFileDescription size={26} stroke={1.5} color="var(--brand)" />}
           title="Nenhuma solicitação ainda"
           text="Descreva o que precisa, defina uma faixa de orçamento e receba propostas de editores verificados."
           action={newButton}
@@ -139,24 +139,24 @@ function RequestList({ onSelect, onNew }: { onSelect: (id: string) => void; onNe
                   key={r.id}
                   onClick={() => onSelect(r.id)}
                   className="rounded-[12px] p-5 text-left transition-colors"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(244,99,30,0.35)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--brand-border)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
                 >
                   <div className="mb-2 flex items-center gap-2">
-                    <Pill label={r.category.name} color="#94A3B8" />
+                    <Pill label={r.category.name} color="var(--muted-foreground)" />
                     <Pill label={REQUEST_STATUS_LABELS[r.status]} color={REQUEST_STATUS_COLORS[r.status]} />
                     {r.pendingProposalCount > 0 && r.status === 'OPEN' && (
                       <span
                         className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold"
-                        style={{ background: '#F4631E', color: 'white' }}
+                        style={{ background: 'var(--brand)', color: 'white' }}
                       >
                         {r.pendingProposalCount} nova{r.pendingProposalCount > 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
                   <h3 className="truncate font-heading text-base font-semibold text-white">{r.title}</h3>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
                     <span>{budgetLabel(r.budgetMin, r.budgetMax)}</span>
                     <span className="inline-flex items-center gap-1">
                       <IconUsers size={12} stroke={1.5} />
@@ -234,7 +234,7 @@ function RequestDetail({
     <button
       onClick={onBack}
       className="flex items-center gap-1.5 rounded-[8px] px-3 py-2 text-sm"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+      style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
     >
       <IconArrowLeft size={14} stroke={1.5} /> Voltar
     </button>
@@ -260,7 +260,7 @@ function RequestDetail({
         {backButton}
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
-            <Pill label={request.category.name} color="#94A3B8" />
+            <Pill label={request.category.name} color="var(--muted-foreground)" />
             <Pill label={REQUEST_STATUS_LABELS[request.status]} color={REQUEST_STATUS_COLORS[request.status]} />
             {dl && <span className="text-xs" style={{ color: dl.color }}>{dl.text}</span>}
           </div>
@@ -281,9 +281,9 @@ function RequestDetail({
 
       {/* Resumo */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
-        <div className="rounded-[12px] p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="rounded-[12px] p-5" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
           <h3 className="mb-2 font-heading text-sm font-semibold text-white">Descrição</h3>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{request.description}</p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{request.description}</p>
           {request.referenceLinks.length > 0 && (
             <div className="mt-4 space-y-1.5">
               {request.referenceLinks.map((link) => (
@@ -293,7 +293,7 @@ function RequestDetail({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 truncate text-xs hover:underline"
-                  style={{ color: '#F4631E' }}
+                  style={{ color: 'var(--brand)' }}
                 >
                   <IconLink size={12} stroke={1.5} /> {link}
                 </a>
@@ -301,7 +301,7 @@ function RequestDetail({
             </div>
           )}
         </div>
-        <div className="space-y-2 rounded-[12px] p-5 text-sm" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="space-y-2 rounded-[12px] p-5 text-sm" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
           <SummaryRow label="Orçamento" value={budgetLabel(request.budgetMin, request.budgetMax)} />
           <SummaryRow label="Prazo" value={request.deadline ? new Date(request.deadline).toLocaleDateString('pt-BR') : 'A combinar'} />
           <SummaryRow label="Revisões inclusas" value={String(request.revisionsIncluded)} />
@@ -313,15 +313,15 @@ function RequestDetail({
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-heading text-base font-semibold text-white">Propostas recebidas</h3>
-          <div className="flex gap-1 rounded-[8px] p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex gap-1 rounded-[8px] p-1" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
             {(['amount', 'rating'] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
                 className="rounded-[6px] px-3 py-1 text-xs"
                 style={{
-                  background: sort === s ? 'rgba(244,99,30,0.15)' : 'transparent',
-                  color: sort === s ? '#F4631E' : 'rgba(255,255,255,0.5)',
+                  background: sort === s ? 'var(--brand-soft)' : 'transparent',
+                  color: sort === s ? 'var(--brand)' : 'var(--muted-foreground)',
                   border: 'none',
                   cursor: 'pointer',
                 }}
@@ -336,7 +336,7 @@ function RequestDetail({
 
         {request.proposals.length === 0 ? (
           <Empty
-            icon={<IconClock size={24} stroke={1.5} color="#F4631E" />}
+            icon={<IconClock size={24} stroke={1.5} color="var(--brand)" />}
             title="Aguardando propostas"
             text={isOpen ? 'Editores da categoria já podem ver sua solicitação. Você será notificado a cada nova proposta.' : 'Nenhuma proposta foi recebida.'}
           />
@@ -390,7 +390,7 @@ function RequestDetail({
           </>
         }
       >
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <p className="text-sm" style={{ color: 'var(--foreground)' }}>
           A solicitação sai do quadro de oportunidades e todas as propostas pendentes
           {request.proposals.filter((p) => p.status === 'PENDING').length > 0
             ? ` (${request.proposals.filter((p) => p.status === 'PENDING').length})`
@@ -426,7 +426,7 @@ function RequestDetail({
       >
         {acceptTarget && (
           <div className="space-y-3">
-            <div className="space-y-1.5 rounded-[8px] px-4 py-3" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="space-y-1.5 rounded-[8px] px-4 py-3" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)' }}>
               <SummaryRow label="Você paga" value={fmtBRL(acceptTarget.amount)} strong />
               <SummaryRow
                 label="Plataforma retém (10%)"
@@ -437,7 +437,7 @@ function RequestDetail({
                 value={fmtBRL(acceptTarget.amount - Math.round(acceptTarget.amount * PLATFORM_FEE_RATE * 100) / 100)}
               />
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
               O pedido é criado já com o preço acordado. Em seguida, você e o editor aceitam o
               contrato e o pagamento fica retido em escrow até a aprovação da entrega. As demais
               propostas pendentes serão encerradas automaticamente.
@@ -471,7 +471,7 @@ function RequestDetail({
           </>
         }
       >
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <p className="text-sm" style={{ color: 'var(--foreground)' }}>
           O editor será avisado. Sua solicitação continua aberta para outras propostas.
         </p>
       </Modal>
@@ -482,7 +482,7 @@ function RequestDetail({
 function SummaryRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{label}</span>
+      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{label}</span>
       <span className={strong ? 'font-heading text-sm font-bold text-white' : 'text-sm text-white'}>{value}</span>
     </div>
   )
@@ -508,8 +508,8 @@ function ProposalCard({
     <div
       className="rounded-[12px] p-5"
       style={{
-        background: proposal.status === 'ACCEPTED' ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.04)',
-        border: `1px solid ${proposal.status === 'ACCEPTED' ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.08)'}`,
+        background: proposal.status === 'ACCEPTED' ? 'var(--success-soft)' : 'var(--surface-subtle)',
+        border: `1px solid ${proposal.status === 'ACCEPTED' ? 'var(--success-border)' : 'var(--border)'}`,
         opacity: proposal.status === 'REJECTED' ? 0.6 : 1,
       }}
     >
@@ -519,7 +519,7 @@ function ProposalCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-heading text-sm font-semibold text-white">{editor.name}</span>
             {editor.isPremium && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: 'rgba(244,99,30,0.15)', color: '#F4631E' }}>
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}>
                 <IconRosetteDiscountCheckFilled size={11} /> PREMIUM
               </span>
             )}
@@ -527,13 +527,13 @@ function ProposalCard({
               <Pill label={PROPOSAL_STATUS_LABELS[proposal.status]} color={PROPOSAL_STATUS_COLORS[proposal.status]} />
             )}
           </div>
-          <div className="mt-1 flex items-center gap-3 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <div className="mt-1 flex items-center gap-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
             <Stars rating={editor.avgRating} />
             <span>{editor.totalJobs} trabalho{editor.totalJobs !== 1 ? 's' : ''}</span>
             <button
               onClick={onOpenEditor}
               className="hover:underline"
-              style={{ background: 'none', border: 'none', color: '#F4631E', cursor: 'pointer', padding: 0, fontSize: 12 }}
+              style={{ background: 'none', border: 'none', color: 'var(--brand)', cursor: 'pointer', padding: 0, fontSize: 12 }}
             >
               Ver perfil
             </button>
@@ -541,13 +541,13 @@ function ProposalCard({
         </div>
         <div className="text-right">
           <p className="font-heading text-lg font-bold text-white">{fmtBRL(proposal.amount)}</p>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
             entrega em {proposal.deliveryDays} dia{proposal.deliveryDays !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
 
-      <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{proposal.message}</p>
+      <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{proposal.message}</p>
 
       {canDecide && (
         <div className="mt-4 flex gap-2">

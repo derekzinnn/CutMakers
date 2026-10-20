@@ -130,13 +130,13 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
         onClick={() => setOpen((v) => !v)}
         className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors"
         style={{
-          background: open ? 'rgba(244,99,30,0.12)' : 'rgba(255,255,255,0.05)',
-          border: `1px solid ${open ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+          background: open ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+          border: `1px solid ${open ? 'var(--brand-border)' : 'var(--border)'}`,
           cursor: 'pointer',
           position: 'relative',
         }}
       >
-        <IconBell size={16} stroke={1.5} style={{ color: open ? '#F4631E' : 'rgba(255,255,255,0.6)' }} />
+        <IconBell size={16} stroke={1.5} style={{ color: open ? 'var(--brand)' : 'var(--foreground)' }} />
         {unreadCount > 0 && (
           <span
             style={{
@@ -146,7 +146,7 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
               minWidth: 16,
               height: 16,
               borderRadius: 8,
-              background: '#F4631E',
+              background: 'var(--brand)',
               color: 'white',
               fontSize: 9,
               fontWeight: 700,
@@ -169,8 +169,8 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
             top: 'calc(100% + 8px)',
             right: 0,
             width: 340,
-            background: '#162436',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
             borderRadius: 12,
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             zIndex: 100,
@@ -184,18 +184,18 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '12px 16px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid var(--border)',
             }}
           >
             <span style={{ fontSize: 13, fontWeight: 700, color: 'white', fontFamily: "'Syne', sans-serif" }}>
-              Notificações {unreadCount > 0 && <span style={{ color: '#F4631E' }}>({unreadCount})</span>}
+              Notificações {unreadCount > 0 && <span style={{ color: 'var(--brand)' }}>({unreadCount})</span>}
             </span>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
                 style={{
                   fontSize: 11,
-                  color: '#F4631E',
+                  color: 'var(--brand)',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
@@ -215,7 +215,7 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
                 style={{
                   padding: '32px 16px',
                   textAlign: 'center',
-                  color: 'rgba(255,255,255,0.3)',
+                  color: 'var(--muted-foreground)',
                   fontSize: 13,
                 }}
               >
@@ -235,40 +235,40 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
                       gap: 10,
                       padding: '12px 16px',
                       width: '100%',
-                      background: isUnread ? 'rgba(244,99,30,0.05)' : 'transparent',
-                      borderLeft: isUnread ? '2px solid #F4631E' : '2px solid transparent',
+                      background: isUnread ? 'var(--brand-soft)' : 'transparent',
+                      borderLeft: isUnread ? '2px solid var(--brand)' : '2px solid transparent',
                       border: 'none',
-                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      borderBottom: '1px solid var(--surface-subtle)',
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'background 0.15s',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = isUnread ? 'rgba(244,99,30,0.05)' : 'transparent' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-subtle)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isUnread ? 'var(--brand-soft)' : 'transparent' }}
                   >
                     <div
                       style={{
                         width: 30,
                         height: 30,
                         borderRadius: '50%',
-                        background: isUnread ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.06)',
+                        background: isUnread ? 'var(--brand-soft)' : 'var(--border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
                       }}
                     >
-                      <Icon size={14} stroke={1.5} color={isUnread ? '#F4631E' : 'rgba(255,255,255,0.4)'} />
+                      <Icon size={14} stroke={1.5} color={isUnread ? 'var(--brand)' : 'var(--muted-foreground)'} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 12, fontWeight: isUnread ? 600 : 400, color: isUnread ? 'white' : 'rgba(255,255,255,0.7)', margin: '0 0 2px', lineHeight: 1.3 }}>
+                      <p style={{ fontSize: 12, fontWeight: isUnread ? 600 : 400, color: isUnread ? 'white' : 'var(--foreground)', margin: '0 0 2px', lineHeight: 1.3 }}>
                         {notif.title}
                       </p>
-                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {notif.body}
                       </p>
                     </div>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', flexShrink: 0, marginTop: 2 }}>
+                    <span style={{ fontSize: 10, color: 'var(--muted-foreground)', flexShrink: 0, marginTop: 2 }}>
                       {relativeDate(notif.createdAt)}
                     </span>
                   </button>
@@ -318,13 +318,13 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0D1B2A' }}>
+    <div className="flex min-h-screen" style={{ background: 'var(--background)' }}>
       {/* ── Sidebar ── */}
       <aside
         className={`flex ${collapsed ? 'w-[68px]' : 'w-64'} shrink-0 flex-col`}
         style={{
-          background: '#162436',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--card)',
+          borderRight: '1px solid var(--border)',
           height: '100vh',
           position: 'sticky',
           top: 0,
@@ -334,19 +334,19 @@ export function DashboardShell({
         {/* Logo + badge + toggle */}
         <div
           className={`flex items-center gap-2 py-4 ${collapsed ? 'justify-center px-2' : 'px-5'}`}
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
           {collapsed ? (
             <CMLogo size={30} variant="orange" />
           ) : (
             <>
-              <CMLockup size={30} wordSize={16} color="#FFFFFF" variant="orange" gap={8} />
+              <CMLockup size={30} wordSize={16} color="var(--foreground)" variant="orange" gap={8} />
               {badgeLabel && (
                 <span
                   className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
                   style={{
-                    background: 'rgba(244,99,30,0.15)',
-                    color: '#F4631E',
+                    background: 'var(--brand-soft)',
+                    color: 'var(--brand)',
                     fontFamily: "'Syne', sans-serif",
                   }}
                 >
@@ -364,14 +364,14 @@ export function DashboardShell({
           aria-label={collapsed ? 'Expandir menu' : 'Reduzir menu'}
           className={`mx-3 mt-3 flex items-center gap-3 rounded-[8px] px-3 py-2 text-xs transition-colors ${collapsed ? 'justify-center' : ''}`}
           style={{
-            color: 'rgba(255,255,255,0.35)',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            color: 'var(--muted-foreground)',
+            background: 'var(--surface-subtle)',
+            border: '1px solid var(--border)',
             cursor: 'pointer',
             fontFamily: "'DM Sans', sans-serif",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--foreground)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted-foreground)' }}
         >
           {collapsed ? <IconChevronsRight size={15} stroke={1.5} /> : <IconChevronsLeft size={15} stroke={1.5} />}
           {!collapsed && 'Reduzir menu'}
@@ -400,8 +400,8 @@ export function DashboardShell({
                 title={collapsed ? label : undefined}
                 className={`mb-1 flex w-full items-center gap-3 rounded-[8px] py-2.5 text-sm transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
                 style={{
-                  background: active ? '#F4631E' : 'transparent',
-                  color: active ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
+                  background: active ? 'var(--brand)' : 'transparent',
+                  color: active ? 'var(--foreground)' : 'var(--foreground)',
                   border: '1px solid transparent',
                   fontFamily: "'DM Sans', sans-serif",
                   fontWeight: active ? 600 : 400,
@@ -415,7 +415,7 @@ export function DashboardShell({
                 {badge && !collapsed && (
                   <span
                     className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-                    style={{ background: 'rgba(244,99,30,0.2)', color: '#F4631E' }}
+                    style={{ background: 'var(--brand-border)', color: 'var(--brand)' }}
                   >
                     {badge}
                   </span>
@@ -425,7 +425,7 @@ export function DashboardShell({
                     style={{
                       position: 'absolute', top: 4, right: 4,
                       width: 7, height: 7, borderRadius: '50%',
-                      background: '#F4631E',
+                      background: 'var(--brand)',
                     }}
                   />
                 )}
@@ -435,7 +435,7 @@ export function DashboardShell({
         </nav>
 
         {/* Footer: perfil (clicável) + logout */}
-        <div className={`py-4 ${collapsed ? 'px-2' : 'px-3'}`} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className={`py-4 ${collapsed ? 'px-2' : 'px-3'}`} style={{ borderTop: '1px solid var(--border)' }}>
           <button
             onClick={onProfileClick}
             title="Meu perfil"
@@ -449,8 +449,8 @@ export function DashboardShell({
             }}
             onMouseEnter={(e) => {
               if (onProfileClick) {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+                e.currentTarget.style.background = 'var(--surface-subtle)'
+                e.currentTarget.style.borderColor = 'var(--border)'
               }
             }}
             onMouseLeave={(e) => {
@@ -460,7 +460,7 @@ export function DashboardShell({
           >
             <div
               className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-xs font-bold text-white"
-              style={{ background: '#F4631E' }}
+              style={{ background: 'var(--brand)' }}
             >
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
@@ -471,7 +471,7 @@ export function DashboardShell({
             {!collapsed && (
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-white">{user.name}</p>
-                <p className="truncate text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <p className="truncate text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
                   {onProfileClick ? 'Ver perfil' : user.email}
                 </p>
               </div>
@@ -482,18 +482,18 @@ export function DashboardShell({
             title="Sair"
             className={`flex w-full items-center gap-3 rounded-[8px] py-2.5 text-sm transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
             style={{
-              color: 'rgba(255,255,255,0.4)',
+              color: 'var(--muted-foreground)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               fontFamily: "'DM Sans', sans-serif",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#EF4444'
-              e.currentTarget.style.background = 'rgba(239,68,68,0.08)'
+              e.currentTarget.style.color = 'var(--destructive)'
+              e.currentTarget.style.background = 'var(--destructive-soft)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'rgba(255,255,255,0.4)'
+              e.currentTarget.style.color = 'var(--muted-foreground)'
               e.currentTarget.style.background = 'none'
             }}
           >
@@ -509,12 +509,12 @@ export function DashboardShell({
 
         <header
           className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
           <div>
             <h1 className="font-heading text-lg font-bold text-white">{pageTitle}</h1>
             {pageSubtitle && (
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                 {pageSubtitle}
               </p>
             )}

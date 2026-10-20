@@ -21,17 +21,17 @@ import { CMLockup } from '@/components/ui/CMLogo'
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
 const C = {
-  navy:     '#0D1B2A',
-  navyMid:  '#162436',
-  navyLight:'#1E3045',
+  navy:     'var(--background)',
+  navyMid:  'var(--card)',
+  navyLight:'var(--surface-raised)',
   navyLift: '#243954',
-  orange:   '#F4631E',
-  border:   'rgba(255,255,255,0.08)',
+  orange:   'var(--brand)',
+  border:   'var(--border)',
   borderSt: 'rgba(255,255,255,0.14)',
   text80:   'rgba(255,255,255,0.80)',
   text60:   'rgba(255,255,255,0.60)',
   text40:   'rgba(255,255,255,0.40)',
-  orangeSoft: 'rgba(244,99,30,0.12)',
+  orangeSoft: 'var(--brand-soft)',
   syne: "'Syne', sans-serif",
   dm:   "'DM Sans', sans-serif",
 }
@@ -50,10 +50,10 @@ function Thumb({
   aspect?: string
 }) {
   const tones = [
-    ['#1E3045', '#0D1B2A'],
-    ['#243954', '#162436'],
-    ['#2A4A7A', '#1E3045'],
-    ['#162436', '#0D1B2A'],
+    ['var(--surface-raised)', 'var(--background)'],
+    ['#243954', 'var(--card)'],
+    ['#2A4A7A', 'var(--surface-raised)'],
+    ['var(--card)', 'var(--background)'],
   ]
   const [c1, c2] = tones[tone % tones.length]
   return (
@@ -73,7 +73,7 @@ function Thumb({
           position: 'absolute',
           inset: 0,
           backgroundImage:
-            'repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 14px, transparent 14px 28px)',
+            'repeating-linear-gradient(45deg, var(--surface-subtle) 0 14px, transparent 14px 28px)',
         }}
       />
       <div
@@ -104,7 +104,7 @@ function Thumb({
           fontSize: 10,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.55)',
+          color: 'var(--muted-foreground)',
         }}
       >
         {label}
@@ -134,7 +134,7 @@ function Thumb({
 
 function Avatar({ size = 40, name = 'AB', tone = 0 }: { size?: number; name?: string; tone?: number }) {
   const tones = [
-    ['#F4631E', '#FFB591'],
+    ['var(--brand)', '#FFB591'],
     ['#3A6EE8', '#9CC0FF'],
     ['#16A37F', '#7FD9C2'],
     ['#B65EE8', '#E0B7F2'],
@@ -340,7 +340,7 @@ function Hero({ onRegister }: { onRegister: () => void }) {
               fontSize: 15,
               padding: '12px 22px',
               borderRadius: 8,
-              background: 'rgba(255,255,255,0.06)',
+              background: 'var(--border)',
               color: '#fff',
               border: `1px solid ${C.border}`,
               cursor: 'pointer',
@@ -667,7 +667,7 @@ function HowItWorks() {
             fontSize: 14,
             padding: '10px 18px',
             borderRadius: 8,
-            background: 'rgba(255,255,255,0.06)',
+            background: 'var(--border)',
             color: '#fff',
             border: `1px solid ${C.border}`,
             cursor: 'pointer',
@@ -805,7 +805,7 @@ function Categories() {
               cursor: 'pointer',
               transition: 'border-color .15s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(244,99,30,0.4)')}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--brand-border)')}
             onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.border)}
           >
             <div
@@ -813,7 +813,7 @@ function Categories() {
                 width: 48,
                 height: 48,
                 borderRadius: 10,
-                background: 'rgba(255,255,255,0.04)',
+                background: 'var(--surface-subtle)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -897,7 +897,7 @@ function FeaturedEditors({ onRegister }: { onRegister: () => void }) {
             fontSize: 14,
             padding: '10px 18px',
             borderRadius: 8,
-            background: 'rgba(255,255,255,0.06)',
+            background: 'var(--border)',
             color: '#fff',
             border: `1px solid ${C.border}`,
             cursor: 'pointer',
@@ -926,7 +926,7 @@ function FeaturedEditors({ onRegister }: { onRegister: () => void }) {
             }}
             onMouseEnter={(ev) => {
               ev.currentTarget.style.transform = 'translateY(-2px)'
-              ev.currentTarget.style.borderColor = 'rgba(244,99,30,0.3)'
+              ev.currentTarget.style.borderColor = 'var(--brand-border)'
             }}
             onMouseLeave={(ev) => {
               ev.currentTarget.style.transform = 'none'
@@ -1025,7 +1025,7 @@ function StatsBar() {
               style={{
                 fontFamily: C.dm,
                 fontSize: 14,
-                color: 'rgba(255,255,255,0.85)',
+                color: 'var(--foreground)',
                 marginTop: 8,
                 fontWeight: 500,
               }}

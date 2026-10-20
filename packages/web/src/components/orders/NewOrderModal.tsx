@@ -26,7 +26,10 @@ interface PendingFile {
   error?: string
 }
 
-const AVATAR_PALETTE = ['#F4631E', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
+// Paleta CATEGORICA de identidade (avatar por usuario): precisa de matizes
+// DISTINTOS entre si, entao fica fora dos tokens do tema. Os chart-* do
+// preset sao todos laranja/ambar — usa-los deixaria todo avatar igual.
+const AVATAR_PALETTE = ['var(--brand)', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
 function nameHash(name: string) {
   let h = 0
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff
@@ -163,7 +166,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '20px 28px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--border)',
         }}>
           {/* Editor mini-card */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -180,7 +183,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
               </div>
             )}
             <div>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 1px', fontFamily: "'DM Sans', sans-serif" }}>
+              <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 1px', fontFamily: "'DM Sans', sans-serif" }}>
                 Proposta para
               </p>
               <p style={{ fontSize: 13, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
@@ -199,12 +202,12 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '5px 12px', borderRadius: 20,
-                    background: active ? 'rgba(244,99,30,0.15)' : done ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${active ? 'rgba(244,99,30,0.4)' : done ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                    background: active ? 'var(--brand-soft)' : done ? 'var(--success-soft)' : 'var(--surface-subtle)',
+                    border: `1px solid ${active ? 'var(--brand-border)' : done ? 'var(--success-border)' : 'var(--border)'}`,
                   }}>
                     <div style={{
                       width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                      background: active ? '#F4631E' : done ? '#22C55E' : 'rgba(255,255,255,0.1)',
+                      background: active ? 'var(--brand)' : done ? 'var(--success)' : 'var(--input)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 10, fontWeight: 700, color: 'white',
                     }}>
@@ -212,14 +215,14 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                     </div>
                     <span style={{
                       fontSize: 11, fontWeight: active ? 600 : 400,
-                      color: active ? '#F4631E' : done ? '#22C55E' : 'rgba(255,255,255,0.4)',
+                      color: active ? 'var(--brand)' : done ? 'var(--success)' : 'var(--muted-foreground)',
                       fontFamily: "'DM Sans', sans-serif",
                     }}>
                       {s.label}
                     </span>
                   </div>
                   {i < STEPS.length - 1 && (
-                    <div style={{ width: 24, height: 1, background: 'rgba(255,255,255,0.08)', margin: '0 2px' }} />
+                    <div style={{ width: 24, height: 1, background: 'var(--border)', margin: '0 2px' }} />
                   )}
                 </div>
               )
@@ -237,14 +240,14 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "'Syne', sans-serif" }}>
                   Qual é o projeto?
                 </h2>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: 0 }}>
                   Dê um nome e descreva o que você precisa em detalhes.
                 </p>
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: 6 }}>
-                  Título do projeto <span style={{ color: '#F4631E' }}>*</span>
+                <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--foreground)', display: 'block', marginBottom: 6 }}>
+                  Título do projeto <span style={{ color: 'var(--brand)' }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -255,20 +258,20 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                   autoFocus
                   style={{
                     width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 14, color: 'white',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'var(--surface-subtle)', border: '1px solid var(--input)',
                     outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
-                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                  onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
+                  onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
                 />
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 4, textAlign: 'right' }}>
+                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 4, textAlign: 'right' }}>
                   {title.length}/100
                 </p>
               </div>
 
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: 6 }}>
-                  Briefing completo <span style={{ color: '#F4631E' }}>*</span>
+                <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--foreground)', display: 'block', marginBottom: 6 }}>
+                  Briefing completo <span style={{ color: 'var(--brand)' }}>*</span>
                 </label>
                 <textarea
                   value={description}
@@ -278,14 +281,14 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                   rows={7}
                   style={{
                     width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 13, color: 'white',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'var(--surface-subtle)', border: '1px solid var(--input)',
                     outline: 'none', resize: 'vertical', minHeight: 140, fontFamily: "'DM Sans', sans-serif",
                     lineHeight: 1.6, boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
-                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                  onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
+                  onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
                 />
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 4, textAlign: 'right' }}>
+                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 4, textAlign: 'right' }}>
                   {description.length}/5000
                 </p>
               </div>
@@ -299,27 +302,27 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "'Syne', sans-serif" }}>
                   Valores e prazo
                 </h2>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: 0 }}>
                   Esses valores são sua proposta inicial — o editor pode negociar.
                 </p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--foreground)', display: 'block', marginBottom: 6 }}>
                     <IconCategory size={13} stroke={1.5} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-                    Categoria <span style={{ color: '#F4631E' }}>*</span>
+                    Categoria <span style={{ color: 'var(--brand)' }}>*</span>
                   </label>
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     style={{
                       width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 13, color: 'white',
-                      background: '#1E3045', border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'var(--surface-raised)', border: '1px solid var(--input)',
                       outline: 'none', fontFamily: "'DM Sans', sans-serif', cursor: 'pointer", boxSizing: 'border-box',
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
-                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
+                    onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
                   >
                     <option value="">Selecione a categoria...</option>
                     {categories.map((c) => (
@@ -329,9 +332,9 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--foreground)', display: 'block', marginBottom: 6 }}>
                     <IconCurrencyReal size={13} stroke={1.5} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-                    Orçamento proposto (R$) <span style={{ color: '#F4631E' }}>*</span>
+                    Orçamento proposto (R$) <span style={{ color: 'var(--brand)' }}>*</span>
                   </label>
                   <input
                     type="number"
@@ -342,30 +345,30 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                     placeholder="0,00"
                     style={{
                       width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 14, color: 'white',
-                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'var(--surface-subtle)', border: '1px solid var(--input)',
                       outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box',
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
-                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
+                    onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--foreground)', display: 'block', marginBottom: 6 }}>
                     <IconCalendar size={13} stroke={1.5} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-                    Prazo desejado <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>(opcional)</span>
+                    Prazo desejado <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>(opcional)</span>
                   </label>
                   <input
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
                     style={{
-                      width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 13, color: deadline ? 'white' : 'rgba(255,255,255,0.35)',
-                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                      width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 13, color: deadline ? 'white' : 'var(--muted-foreground)',
+                      background: 'var(--surface-subtle)', border: '1px solid var(--input)',
                       outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box', colorScheme: 'dark',
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
-                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
+                    onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
                   />
                 </div>
               </div>
@@ -374,21 +377,21 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
               {budgetNum > 0 && (
                 <div style={{
                   borderRadius: 10, padding: '16px 20px',
-                  background: 'rgba(244,99,30,0.06)', border: '1px solid rgba(244,99,30,0.18)',
+                  background: 'var(--brand-soft)', border: '1px solid var(--brand-soft)',
                   display: 'grid', gridTemplateColumns: '1fr 1px 1fr 1px 1fr', gap: 12, alignItems: 'center',
                 }}>
                   {[
                     { label: 'Valor total', value: `R$ ${budgetNum.toFixed(2)}`, color: 'white' },
                     null,
-                    { label: 'Taxa plataforma (10%)', value: `R$ ${fee.toFixed(2)}`, color: 'rgba(255,255,255,0.5)' },
+                    { label: 'Taxa plataforma (10%)', value: `R$ ${fee.toFixed(2)}`, color: 'var(--muted-foreground)' },
                     null,
-                    { label: 'Editor recebe', value: `R$ ${net.toFixed(2)}`, color: '#22C55E' },
+                    { label: 'Editor recebe', value: `R$ ${net.toFixed(2)}`, color: 'var(--success)' },
                   ].map((item, i) =>
                     item === null ? (
-                      <div key={i} style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', margin: '0 auto' }} />
+                      <div key={i} style={{ width: 1, height: 32, background: 'var(--border)', margin: '0 auto' }} />
                     ) : (
                       <div key={i} style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '0 0 4px' }}>{item.label}</p>
+                        <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 4px' }}>{item.label}</p>
                         <p style={{ fontSize: 16, fontWeight: 700, color: item.color, margin: 0, fontFamily: "'Syne', sans-serif" }}>{item.value}</p>
                       </div>
                     ),
@@ -405,7 +408,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "'Syne', sans-serif" }}>
                   Arquivos de referência
                 </h2>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: 0 }}>
                   Vídeo bruto, briefing, imagens de inspiração. Opcional — você pode enviar depois.
                 </p>
               </div>
@@ -415,29 +418,29 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   gap: 8, padding: '28px 16px', borderRadius: 10, cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.12)',
+                  background: 'var(--surface-subtle)', border: '1px dashed var(--input)',
                   transition: 'all 0.15s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(244,99,30,0.05)'
-                  e.currentTarget.style.borderColor = 'rgba(244,99,30,0.3)'
+                  e.currentTarget.style.background = 'var(--brand-soft)'
+                  e.currentTarget.style.borderColor = 'var(--brand-border)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
+                  e.currentTarget.style.background = 'var(--surface-subtle)'
+                  e.currentTarget.style.borderColor = 'var(--input)'
                 }}
               >
                 <div style={{
-                  width: 44, height: 44, borderRadius: '50%', background: 'rgba(244,99,30,0.1)',
+                  width: 44, height: 44, borderRadius: '50%', background: 'var(--brand-soft)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <IconUpload size={20} stroke={1.5} color="#F4631E" />
+                  <IconUpload size={20} stroke={1.5} color="var(--brand)" />
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '0 0 2px', fontWeight: 500 }}>
+                  <p style={{ fontSize: 13, color: 'var(--foreground)', margin: '0 0 2px', fontWeight: 500 }}>
                     Clique ou arraste arquivos aqui
                   </p>
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                  <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0 }}>
                     Vídeos, imagens, PDFs — até 10 arquivos
                   </p>
                 </div>
@@ -453,15 +456,15 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                   {files.map((f) => (
                     <li key={f.file.name + f.file.lastModified} style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8,
-                      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+                      background: 'var(--surface-subtle)', border: '1px solid var(--border)',
                     }}>
-                      <IconFile size={14} stroke={1.5} color="rgba(255,255,255,0.4)" />
+                      <IconFile size={14} stroke={1.5} color="var(--muted-foreground)" />
                       <span style={{ flex: 1, fontSize: 12, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {f.file.name}
                       </span>
                       <span style={{
                         fontSize: 11, flexShrink: 0,
-                        color: f.error ? '#EF4444' : f.uploaded ? '#22C55E' : 'rgba(255,255,255,0.4)',
+                        color: f.error ? 'var(--destructive)' : f.uploaded ? 'var(--success)' : 'var(--muted-foreground)',
                         display: 'flex', alignItems: 'center', gap: 4,
                       }}>
                         {f.error
@@ -472,8 +475,8 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                       </span>
                       <button type="button" onClick={() => setFiles((p) => p.filter((x) => x.file !== f.file))}
                         style={{
-                          width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.06)',
-                          border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer',
+                          width: 20, height: 20, borderRadius: '50%', background: 'var(--border)',
+                          border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                         <IconX size={10} stroke={2} />
@@ -486,9 +489,9 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
               {/* Summary */}
               <div style={{
                 borderRadius: 10, padding: '16px 20px', marginTop: 4,
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                background: 'var(--surface-subtle)', border: '1px solid var(--border)',
               }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'Syne', sans-serif" }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'Syne', sans-serif" }}>
                   Resumo da proposta
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -500,7 +503,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                     { label: 'Arquivos', value: `${files.filter((f) => f.uploaded).length} arquivo(s)` },
                   ].map((row) => (
                     <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{row.label}</span>
+                      <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{row.label}</span>
                       <span style={{ fontSize: 12, color: 'white', fontWeight: 500, textAlign: 'right', maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {row.value}
                       </span>
@@ -514,7 +517,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
           {error && (
             <div style={{
               padding: '10px 14px', borderRadius: 8, fontSize: 12,
-              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#FCA5A5',
+              background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)',
             }}>
               {error}
             </div>
@@ -524,7 +527,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
         {/* ── Footer navigation ── */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 28px', borderTop: '1px solid rgba(255,255,255,0.06)',
+          padding: '16px 28px', borderTop: '1px solid var(--border)',
           background: 'rgba(0,0,0,0.1)',
         }}>
           <button
@@ -533,8 +536,8 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px',
               borderRadius: 8, fontSize: 13, cursor: 'pointer',
-              background: 'transparent', color: 'rgba(255,255,255,0.5)',
-              border: '1px solid rgba(255,255,255,0.08)', fontFamily: "'DM Sans', sans-serif",
+              background: 'transparent', color: 'var(--muted-foreground)',
+              border: '1px solid var(--border)', fontFamily: "'DM Sans', sans-serif",
             }}
           >
             {step > 1 && <IconArrowLeft size={14} stroke={1.5} />}
@@ -548,7 +551,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '9px 22px',
                 borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                background: '#F4631E', color: 'white', border: 'none',
+                background: 'var(--brand)', color: 'white', border: 'none',
                 fontFamily: "'Syne', sans-serif",
               }}
             >
@@ -564,7 +567,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 display: 'flex', alignItems: 'center', gap: 8, padding: '9px 22px',
                 borderRadius: 8, fontSize: 13, fontWeight: 600,
                 cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1,
-                background: '#F4631E', color: 'white', border: 'none',
+                background: 'var(--brand)', color: 'white', border: 'none',
                 fontFamily: "'Syne', sans-serif",
               }}
             >

@@ -57,7 +57,7 @@ interface EditorFullDTO {
 
 const AVATAR_PALETTE = [
   '#3B82F6', '#10B981', '#8B5CF6', '#EC4899',
-  '#14B8A6', '#F59E0B', '#EF4444', '#06B6D4', '#F4631E',
+  '#14B8A6', '#F59E0B', 'var(--destructive)', '#06B6D4', 'var(--brand)',
 ]
 
 function getAvatarColor(name: string): string {
@@ -212,9 +212,9 @@ export function EditorPublicProfile() {
     return (
       <div
         style={{
-          minHeight: '100vh', background: '#0D1B2A',
+          minHeight: '100vh', background: 'var(--background)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'rgba(255,255,255,0.4)', fontSize: 14,
+          color: 'var(--muted-foreground)', fontSize: 14,
           fontFamily: "'DM Sans', sans-serif",
         }}
       >
@@ -227,7 +227,7 @@ export function EditorPublicProfile() {
     return (
       <div
         style={{
-          minHeight: '100vh', background: '#0D1B2A',
+          minHeight: '100vh', background: 'var(--background)',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', gap: 16,
         }}
@@ -257,14 +257,14 @@ export function EditorPublicProfile() {
   const packages = derivePackages(filteredPortfolio)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0D1B2A', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: 'var(--background)', fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* ── Top navbar ── */}
       <nav
         style={{
           position: 'sticky', top: 0, zIndex: 50,
           background: 'rgba(13,27,42,0.92)', backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', gap: 16,
           padding: '0 24px', height: 56,
         }}
@@ -276,7 +276,7 @@ export function EditorPublicProfile() {
 
         <div style={{ flex: 1 }} />
 
-        <CMLockup size={28} wordSize={14} color="#FFFFFF" variant="orange" gap={8} />
+        <CMLockup size={28} wordSize={14} color="var(--foreground)" variant="orange" gap={8} />
 
         <div style={{ flex: 1 }} />
 
@@ -284,12 +284,12 @@ export function EditorPublicProfile() {
           <button
             style={{
               width: 34, height: 34, borderRadius: 8,
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--surface-subtle)',
+              border: '1px solid var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             }}
           >
-            <IconBell size={15} stroke={1.5} style={{ color: 'rgba(255,255,255,0.6)' }} />
+            <IconBell size={15} stroke={1.5} style={{ color: 'var(--foreground)' }} />
           </button>
           {user && (
             <div
@@ -312,12 +312,12 @@ export function EditorPublicProfile() {
         style={{
           padding: '10px 32px',
           display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: 12, color: 'rgba(255,255,255,0.4)',
+          fontSize: 12, color: 'var(--muted-foreground)',
         }}
       >
         <button
           onClick={() => navigate('/dashboard/creator')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: "'DM Sans', sans-serif', padding: 0" }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', fontSize: 12, fontFamily: "'DM Sans', sans-serif', padding: 0" }}
         >
           Buscar editores
         </button>
@@ -328,17 +328,17 @@ export function EditorPublicProfile() {
           </>
         )}
         <IconChevronRight size={12} stroke={1.5} />
-        <span style={{ color: 'rgba(255,255,255,0.7)' }}>{editor.name}</span>
+        <span style={{ color: 'var(--foreground)' }}>{editor.name}</span>
       </div>
 
       {/* ── Hero banner ── */}
       <div
         style={{
-          background: '#162436',
+          background: 'var(--card)',
           backgroundImage:
-            'repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 20px)',
+            'repeating-linear-gradient(135deg, var(--surface-subtle) 0px, var(--surface-subtle) 1px, transparent 1px, transparent 20px)',
           padding: '32px 32px 36px',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          borderBottom: '1px solid var(--border)',
         }}
       >
         <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', gap: 28, flexWrap: 'wrap' }}>
@@ -350,11 +350,11 @@ export function EditorPublicProfile() {
               <div
                 style={{
                   width: 88, height: 88, borderRadius: '50%',
-                  background: '#F4631E',
+                  background: 'var(--brand)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 28, fontWeight: 800, color: '#fff',
                   fontFamily: "'Syne', sans-serif", overflow: 'hidden',
-                  border: '3px solid rgba(255,255,255,0.15)',
+                  border: '3px solid var(--input)',
                 }}
               >
                 {editor.avatarUrl ? (
@@ -368,7 +368,7 @@ export function EditorPublicProfile() {
                 style={{
                   position: 'absolute', bottom: 2, right: 2,
                   width: 22, height: 22, borderRadius: '50%',
-                  background: '#F4631E', border: '2px solid #162436',
+                  background: 'var(--brand)', border: '2px solid var(--card)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
@@ -410,8 +410,8 @@ export function EditorPublicProfile() {
                       autoFocus
                       maxLength={80}
                       style={{
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid rgba(244,99,30,0.5)',
+                        background: 'var(--border)',
+                        border: '1px solid var(--brand-border)',
                         borderRadius: 8, padding: '6px 12px',
                         fontSize: 22, fontWeight: 800, color: '#fff',
                         fontFamily: "'Syne', sans-serif",
@@ -435,10 +435,10 @@ export function EditorPublicProfile() {
                       <span
                         style={{
                           display: 'flex', alignItems: 'center', gap: 4,
-                          background: 'rgba(244,99,30,0.18)', color: '#F4631E',
+                          background: 'var(--brand-soft)', color: 'var(--brand)',
                           fontSize: 11, fontWeight: 700, padding: '3px 9px',
                           borderRadius: 20, fontFamily: "'Syne', sans-serif",
-                          border: '1px solid rgba(244,99,30,0.25)',
+                          border: '1px solid var(--brand-border)',
                         }}
                       >
                         <IconRosetteDiscountCheckFilled size={12} />
@@ -452,16 +452,16 @@ export function EditorPublicProfile() {
               {/* Rating row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <IconStarFilled size={13} color="#F4631E" />
+                  <IconStarFilled size={13} color="var(--brand)" />
                   <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, color: '#fff' }}>
                     {profile.avgRating ? profile.avgRating.toFixed(1) : '—'}
                   </span>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
                     · {reviewsTotal} {reviewsTotal === 1 ? 'avaliação' : 'avaliações'}
                   </span>
                 </div>
-                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>·</span>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Online agora</span>
+                <span style={{ color: 'var(--muted-foreground)', fontSize: 12 }}>·</span>
+                <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>Online agora</span>
               </div>
 
               {/* Category + tool tags */}
@@ -479,9 +479,9 @@ export function EditorPublicProfile() {
                           style={{
                             padding: '4px 10px', borderRadius: 6, fontSize: 12,
                             fontFamily: "'DM Sans', sans-serif",
-                            background: active ? 'rgba(244,99,30,0.2)' : 'rgba(255,255,255,0.07)',
-                            color: active ? '#F4631E' : 'rgba(255,255,255,0.75)',
-                            border: `1px solid ${active ? 'rgba(244,99,30,0.35)' : 'rgba(255,255,255,0.09)'}`,
+                            background: active ? 'var(--brand-border)' : 'var(--border)',
+                            color: active ? 'var(--brand)' : 'var(--foreground)',
+                            border: `1px solid ${active ? 'var(--brand-border)' : 'var(--border)'}`,
                             cursor: 'pointer',
                           }}
                         >
@@ -514,7 +514,7 @@ export function EditorPublicProfile() {
           >
             {minPrice != null && (
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 3px' }}>
+                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 3px' }}>
                   A partir de
                 </p>
                 <p style={{ fontFamily: "'Syne', sans-serif", fontWeight: 900, fontSize: 36, color: '#fff', lineHeight: 1, margin: 0 }}>
@@ -528,10 +528,10 @@ export function EditorPublicProfile() {
                 title="Mensagens disponíveis em breve"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  background: 'rgba(255,255,255,0.07)',
+                  background: 'var(--border)',
                   border: '1px solid rgba(255,255,255,0.14)',
                   borderRadius: 8, padding: '10px 18px',
-                  fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)',
+                  fontSize: 13, fontWeight: 600, color: 'var(--muted-foreground)',
                   cursor: 'not-allowed', fontFamily: "'DM Sans', sans-serif",
                 }}
               >
@@ -543,13 +543,13 @@ export function EditorPublicProfile() {
                   onClick={() => setOrderModalOpen(true)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
-                    background: '#F4631E', color: '#fff', border: 'none',
+                    background: 'var(--brand)', color: '#fff', border: 'none',
                     borderRadius: 8, padding: '10px 20px',
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
                     fontFamily: "'Syne', sans-serif",
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#E0551A')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '#F4631E')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-hover)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--brand)')}
                 >
                   Contratar
                   <IconChevronRight size={15} stroke={2} />
@@ -584,26 +584,26 @@ export function EditorPublicProfile() {
                     maxLength={500}
                     rows={4}
                     style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(244,99,30,0.4)',
+                      background: 'var(--surface-subtle)',
+                      border: '1px solid var(--brand-border)',
                       borderRadius: 8, padding: '10px 12px',
-                      fontSize: 14, color: 'rgba(255,255,255,0.85)',
+                      fontSize: 14, color: 'var(--foreground)',
                       fontFamily: "'DM Sans', sans-serif",
                       lineHeight: 1.6, outline: 'none', resize: 'vertical', minHeight: 80,
                       width: '100%', boxSizing: 'border-box',
                     }}
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{editBio.length}/500</span>
+                    <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{editBio.length}/500</span>
                     <SaveCancelButtons saving={saving} onSave={saveField} onCancel={() => setEditingField(null)} />
                   </div>
                 </div>
               ) : editor.bio ? (
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, margin: 0 }}>
+                <p style={{ fontSize: 14, color: 'var(--foreground)', lineHeight: 1.7, margin: 0 }}>
                   {editor.bio}
                 </p>
               ) : (
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', margin: 0 }}>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', fontStyle: 'italic', margin: 0 }}>
                   Nenhuma bio adicionada. Clique no lápis para descrever seu trabalho.
                 </p>
               )}
@@ -660,11 +660,11 @@ export function EditorPublicProfile() {
               <h2 style={{ ...sectionTitle, margin: 0 }}>Avaliações</h2>
               {reviewsTotal > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <IconStarFilled size={14} color="#F4631E" />
+                  <IconStarFilled size={14} color="var(--brand)" />
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "'Syne', sans-serif" }}>
                     {profile.avgRating.toFixed(1)}
                   </span>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
                     · {reviewsTotal} {reviewsTotal === 1 ? 'avaliação' : 'avaliações'}
                   </span>
                 </div>
@@ -672,12 +672,12 @@ export function EditorPublicProfile() {
             </div>
 
             {reviewsLoading && reviews.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>
+              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--muted-foreground)', fontSize: 13 }}>
                 Carregando avaliações...
               </div>
             ) : reviews.length === 0 ? (
-              <div style={{ padding: '28px 16px', textAlign: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px dashed rgba(255,255,255,0.08)' }}>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+              <div style={{ padding: '28px 16px', textAlign: 'center', background: 'var(--surface-subtle)', borderRadius: 10, border: '1px dashed var(--border)' }}>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: 0 }}>
                   Avaliações aparecem após a conclusão de pedidos.
                 </p>
               </div>
@@ -692,10 +692,10 @@ export function EditorPublicProfile() {
                     onClick={() => loadReviews(reviewsPage + 1)}
                     disabled={reviewsLoading}
                     style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'var(--surface-subtle)',
+                      border: '1px solid var(--input)',
                       borderRadius: 8, padding: '9px 0', width: '100%',
-                      fontSize: 13, color: 'rgba(255,255,255,0.6)',
+                      fontSize: 13, color: 'var(--foreground)',
                       cursor: reviewsLoading ? 'not-allowed' : 'pointer',
                       fontFamily: "'DM Sans', sans-serif",
                     }}
@@ -716,8 +716,8 @@ export function EditorPublicProfile() {
             <div style={sideCard}>
               <h3 style={sideTitle}>Contratação</h3>
               {activeCategory !== 'all' && (
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '-6px 0 10px' }}>
-                  Valores para <span style={{ color: '#F4631E', fontWeight: 600 }}>{activeCategory}</span>
+                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '-6px 0 10px' }}>
+                  Valores para <span style={{ color: 'var(--brand)', fontWeight: 600 }}>{activeCategory}</span>
                 </p>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
@@ -727,15 +727,15 @@ export function EditorPublicProfile() {
                     style={{
                       borderRadius: 9,
                       padding: '10px 12px',
-                      background: pkg.highlighted ? 'rgba(244,99,30,0.14)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${pkg.highlighted ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                      background: pkg.highlighted ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+                      border: `1px solid ${pkg.highlighted ? 'var(--brand-border)' : 'var(--border)'}`,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
                       <span
                         style={{
                           fontFamily: "'Syne', sans-serif", fontWeight: 700,
-                          fontSize: 13, color: pkg.highlighted ? '#F4631E' : '#fff',
+                          fontSize: 13, color: pkg.highlighted ? 'var(--brand)' : '#fff',
                         }}
                       >
                         {pkg.name}
@@ -743,8 +743,8 @@ export function EditorPublicProfile() {
                           style={{
                             marginLeft: 6, fontSize: 9, fontWeight: 600,
                             padding: '2px 6px', borderRadius: 10,
-                            background: 'rgba(255,255,255,0.07)',
-                            color: 'rgba(255,255,255,0.5)',
+                            background: 'var(--border)',
+                            color: 'var(--muted-foreground)',
                             fontFamily: "'DM Sans', sans-serif",
                             verticalAlign: 'middle',
                           }}
@@ -755,18 +755,18 @@ export function EditorPublicProfile() {
                       <span
                         style={{
                           fontFamily: "'Syne', sans-serif", fontWeight: 800,
-                          fontSize: 13, color: pkg.highlighted ? '#F4631E' : '#fff',
+                          fontSize: 13, color: pkg.highlighted ? 'var(--brand)' : '#fff',
                         }}
                       >
                         R$ {formatPrice(pkg.price)}
                       </span>
                     </div>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '0 0 5px', lineHeight: 1.4 }}>
+                    <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 5px', lineHeight: 1.4 }}>
                       {pkg.description}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <IconClock size={11} stroke={1.5} style={{ color: 'rgba(255,255,255,0.35)' }} />
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Prazo a combinar</span>
+                      <IconClock size={11} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
+                      <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Prazo a combinar</span>
                     </div>
                   </div>
                 ))}
@@ -776,14 +776,14 @@ export function EditorPublicProfile() {
                 <button
                   onClick={() => setOrderModalOpen(true)}
                   style={{
-                    width: '100%', background: '#F4631E', color: '#fff',
+                    width: '100%', background: 'var(--brand)', color: '#fff',
                     border: 'none', borderRadius: 9, padding: '11px 0',
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
                     fontFamily: "'Syne', sans-serif",
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#E0551A')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '#F4631E')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-hover)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--brand)')}
                 >
                   Contratar {packages[1] ? packages[1].name : packages[0].name}
                   <IconChevronRight size={14} stroke={2.5} />
@@ -825,7 +825,7 @@ function StatCard({ value, label }: { value: string; label: string }) {
   return (
     <div
       style={{
-        background: '#162436', border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--card)', border: '1px solid var(--border)',
         borderRadius: 10, padding: '14px 16px', textAlign: 'center',
       }}
     >
@@ -837,7 +837,7 @@ function StatCard({ value, label }: { value: string; label: string }) {
       >
         {value}
       </p>
-      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.3 }}>
+      <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.3 }}>
         {label}
       </p>
     </div>
@@ -860,8 +860,8 @@ function FilterTab({
         padding: '5px 12px', borderRadius: 20, fontSize: 12,
         fontWeight: active ? 700 : 400, cursor: 'pointer', border: 'none',
         fontFamily: "'DM Sans', sans-serif",
-        background: active ? '#F4631E' : 'rgba(255,255,255,0.07)',
-        color: active ? '#fff' : 'rgba(255,255,255,0.55)',
+        background: active ? 'var(--brand)' : 'var(--border)',
+        color: active ? '#fff' : 'var(--muted-foreground)',
         transition: 'all 0.15s',
       }}
     >
@@ -875,14 +875,14 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
     <div
       style={{
         borderRadius: 10, overflow: 'hidden',
-        background: '#1E3045',
-        backgroundImage: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 18px)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--surface-raised)',
+        backgroundImage: 'repeating-linear-gradient(135deg, var(--surface-subtle) 0px, var(--surface-subtle) 1px, transparent 1px, transparent 18px)',
+        border: '1px solid var(--border)',
         position: 'relative', aspectRatio: '4/3',
         transition: 'border-color 0.15s',
       }}
-      onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(244,99,30,0.3)')}
-      onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)')}
+      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--brand-border)')}
+      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
     >
       {item.thumbnailUrl && (
         <>
@@ -914,19 +914,19 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
         <div
           style={{
             width: 32, height: 32, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.15)',
-            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'var(--input)',
+            border: '1px solid var(--muted-foreground)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
-          <IconPlayerPlay size={13} stroke={1.5} style={{ color: 'rgba(255,255,255,0.8)', marginLeft: 1 }} />
+          <IconPlayerPlay size={13} stroke={1.5} style={{ color: 'var(--foreground)', marginLeft: 1 }} />
         </div>
       </div>
       {/* Category badge */}
       <div
         style={{
           position: 'absolute', top: 7, right: 7,
-          background: 'rgba(255,255,255,0.9)', color: '#0D1B2A',
+          background: 'var(--foreground)', color: 'var(--background)',
           fontSize: 9, fontWeight: 700, padding: '2px 7px',
           borderRadius: 20, fontFamily: "'DM Sans', sans-serif",
           backdropFilter: 'blur(4px)',
@@ -942,11 +942,11 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
           padding: '16px 8px 7px',
         }}
       >
-        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', margin: 0, fontWeight: 600, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontSize: 10, color: 'var(--foreground)', margin: 0, fontWeight: 600, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {item.title.toUpperCase()}
         </p>
         {item.description && (
-          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontSize: 9, color: 'var(--muted-foreground)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {item.description}
           </p>
         )}
@@ -997,11 +997,11 @@ function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: b
               {review.reviewer.name}
             </span>
             {review.orderCategory && (
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+              <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
                 {review.orderCategory}
               </span>
             )}
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+            <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
               · {relativeDate(review.createdAt)}
             </span>
           </div>
@@ -1010,8 +1010,8 @@ function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: b
           <div style={{ display: 'flex', gap: 2, marginBottom: review.comment ? 8 : 0 }}>
             {[1, 2, 3, 4, 5].map(s => (
               s <= review.rating
-                ? <IconStarFilled key={s} size={13} color="#F4631E" />
-                : <IconStar key={s} size={13} stroke={1.5} style={{ color: 'rgba(255,255,255,0.15)' }} />
+                ? <IconStarFilled key={s} size={13} color="var(--brand)" />
+                : <IconStar key={s} size={13} stroke={1.5} style={{ color: 'var(--input)' }} />
             ))}
           </div>
 
@@ -1025,7 +1025,7 @@ function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: b
       </div>
 
       {showDivider && (
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginTop: 20 }} />
+        <div style={{ height: 1, background: 'var(--border)', marginTop: 20 }} />
       )}
     </div>
   )
@@ -1040,13 +1040,13 @@ function PencilBtn({ onClick }: { onClick: () => void }) {
       title="Editar"
       style={{
         width: 26, height: 26, borderRadius: 6,
-        background: 'rgba(244,99,30,0.12)',
-        border: '1px solid rgba(244,99,30,0.22)',
+        background: 'var(--brand-soft)',
+        border: '1px solid var(--brand-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', flexShrink: 0,
       }}
     >
-      <IconPencil size={13} stroke={1.8} color="#F4631E" />
+      <IconPencil size={13} stroke={1.8} color="var(--brand)" />
     </button>
   )
 }
@@ -1068,9 +1068,9 @@ function SaveCancelButtons({
         style={{
           display: 'flex', alignItems: 'center', gap: 4,
           padding: '5px 11px', borderRadius: 6, fontSize: 12,
-          background: 'rgba(255,255,255,0.07)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          color: 'rgba(255,255,255,0.7)', cursor: 'pointer',
+          background: 'var(--border)',
+          border: '1px solid var(--input)',
+          color: 'var(--foreground)', cursor: 'pointer',
           fontFamily: "'DM Sans', sans-serif",
         }}
       >
@@ -1082,7 +1082,7 @@ function SaveCancelButtons({
         disabled={saving}
         style={{
           padding: '5px 12px', borderRadius: 6, fontSize: 12,
-          background: '#F4631E', border: 'none',
+          background: 'var(--brand)', border: 'none',
           color: '#fff', cursor: saving ? 'not-allowed' : 'pointer',
           fontFamily: "'Syne', sans-serif", fontWeight: 700,
           opacity: saving ? 0.7 : 1,
@@ -1097,24 +1097,24 @@ function SaveCancelButtons({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const ghostBtn: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.06)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'var(--border)',
+  border: '1px solid var(--input)',
   borderRadius: 8, padding: '8px 14px',
-  fontSize: 13, color: 'rgba(255,255,255,0.75)',
+  fontSize: 13, color: 'var(--foreground)',
   cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
 }
 
 const tagStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.07)',
-  color: 'rgba(255,255,255,0.75)',
-  border: '1px solid rgba(255,255,255,0.09)',
+  background: 'var(--border)',
+  color: 'var(--foreground)',
+  border: '1px solid var(--border)',
   borderRadius: 6, padding: '4px 10px',
   fontSize: 12, fontFamily: "'DM Sans', sans-serif",
 }
 
 const sectionCard: React.CSSProperties = {
-  background: '#162436',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: 'var(--card)',
+  border: '1px solid var(--border)',
   borderRadius: 12, padding: 20,
 }
 
@@ -1124,8 +1124,8 @@ const sectionTitle: React.CSSProperties = {
 }
 
 const sideCard: React.CSSProperties = {
-  background: '#162436',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: 'var(--card)',
+  border: '1px solid var(--border)',
   borderRadius: 12, padding: 16,
 }
 

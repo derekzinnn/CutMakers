@@ -1,59 +1,188 @@
+/* Fontes do preset: Nunito Sans (corpo) + Noto Sans (títulos) */
+@import "@fontsource-variable/nunito-sans";
+@import "@fontsource-variable/noto-sans";
+@import "tw-animate-css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --navy: #0d1b2a;
-  --navy-mid: #162436;
-  --navy-light: #1e3045;
-  --orange: #f4631e;
-  --orange-hover: #e0551a;
-  --white-80: rgba(255, 255, 255, 0.8);
-  --white-40: rgba(255, 255, 255, 0.4);
-  --white-10: rgba(255, 255, 255, 0.08);
-  --white-06: rgba(255, 255, 255, 0.05);
+/*
+ * Tokens do preset shadcn bfDpIkWg4.
+ *
+ * O preset foi gerado para Tailwind v4 (onde o `@import "shadcn/tailwind.css"`
+ * e o `@theme` ligam estas variáveis às utilities automaticamente). Este projeto
+ * está no v3.4, então o import v4 foi removido e as variáveis são ligadas
+ * explicitamente em tailwind.config.ts — os VALORES do preset são idênticos.
+ *
+ * A aplicação roda em dark por padrão (<html class="dark">): é um produto de UI
+ * escura, e o dark do preset (oklch 0.148) mantém esse caráter. O bloco :root
+ * fica como fallback e para telas claras futuras.
+ */
+@layer base {
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.148 0.004 228.8);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.148 0.004 228.8);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.148 0.004 228.8);
+    --primary: oklch(0.218 0.008 223.9);
+    --primary-foreground: oklch(0.987 0.002 197.1);
+    --secondary: oklch(0.963 0.002 197.1);
+    --secondary-foreground: oklch(0.218 0.008 223.9);
+    --muted: oklch(0.963 0.002 197.1);
+    --muted-foreground: oklch(0.56 0.021 213.5);
+    --accent: oklch(0.963 0.002 197.1);
+    --accent-foreground: oklch(0.218 0.008 223.9);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.987 0.002 197.1);
+    --border: oklch(0.925 0.005 214.3);
+    --input: oklch(0.925 0.005 214.3);
+    --ring: oklch(0.723 0.014 214.4);
+    --chart-1: oklch(0.879 0.169 91.605);
+    --chart-2: oklch(0.769 0.188 70.08);
+    --chart-3: oklch(0.666 0.179 58.318);
+    --chart-4: oklch(0.555 0.163 48.998);
+    --chart-5: oklch(0.473 0.137 46.201);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.987 0.002 197.1);
+    --sidebar-foreground: oklch(0.148 0.004 228.8);
+    --sidebar-primary: oklch(0.218 0.008 223.9);
+    --sidebar-primary-foreground: oklch(0.987 0.002 197.1);
+    --sidebar-accent: oklch(0.963 0.002 197.1);
+    --sidebar-accent-foreground: oklch(0.218 0.008 223.9);
+    --sidebar-border: oklch(0.925 0.005 214.3);
+    --sidebar-ring: oklch(0.723 0.014 214.4);
+
+    --brand: oklch(0.666 0.179 58.318);
+    --brand-hover: oklch(0.595 0.166 55);
+    --brand-foreground: oklch(0.987 0.002 197.1);
+    --brand-soft: oklch(0.666 0.179 58.318 / 12%);
+    --brand-border: oklch(0.666 0.179 58.318 / 30%);
+    --surface: oklch(0.963 0.002 197.1);
+    --surface-raised: oklch(0.925 0.005 214.3);
+    --surface-subtle: oklch(0 0 0 / 4%);
+    /* --- Status -------------------------------------------------------
+     * Verde/amarelo/azul nao existem no preset, e nao podem ser achatados
+     * no neutro: um badge "pago" e um "reembolsado" ficariam identicos.
+     * Carregam informacao, nao marca — por isso viram tokens proprios.
+     */
+    --success: oklch(0.723 0.192 149.6);
+    --success-soft: oklch(0.723 0.192 149.6 / 12%);
+    --success-border: oklch(0.723 0.192 149.6 / 28%);
+    --warning: oklch(0.795 0.162 86);
+    --warning-soft: oklch(0.795 0.162 86 / 12%);
+    --warning-border: oklch(0.795 0.162 86 / 28%);
+    --info: oklch(0.623 0.188 259.8);
+    --info-soft: oklch(0.623 0.188 259.8 / 12%);
+    --destructive-soft: oklch(0.704 0.191 22.216 / 12%);
+    --destructive-border: oklch(0.704 0.191 22.216 / 28%);
+  }
+
+  .dark {
+    --background: oklch(0.148 0.004 228.8);
+    --foreground: oklch(0.987 0.002 197.1);
+    --card: oklch(0.218 0.008 223.9);
+    --card-foreground: oklch(0.987 0.002 197.1);
+    --popover: oklch(0.218 0.008 223.9);
+    --popover-foreground: oklch(0.987 0.002 197.1);
+    --primary: oklch(0.925 0.005 214.3);
+    --primary-foreground: oklch(0.218 0.008 223.9);
+    --secondary: oklch(0.275 0.011 216.9);
+    --secondary-foreground: oklch(0.987 0.002 197.1);
+    --muted: oklch(0.275 0.011 216.9);
+    --muted-foreground: oklch(0.723 0.014 214.4);
+    --accent: oklch(0.275 0.011 216.9);
+    --accent-foreground: oklch(0.987 0.002 197.1);
+    --destructive: oklch(0.704 0.191 22.216);
+    --destructive-foreground: oklch(0.987 0.002 197.1);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.56 0.021 213.5);
+    --chart-1: oklch(0.879 0.169 91.605);
+    --chart-2: oklch(0.769 0.188 70.08);
+    --chart-3: oklch(0.666 0.179 58.318);
+    --chart-4: oklch(0.555 0.163 48.998);
+    --chart-5: oklch(0.473 0.137 46.201);
+    --sidebar: oklch(0.218 0.008 223.9);
+    --sidebar-foreground: oklch(0.987 0.002 197.1);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.987 0.002 197.1);
+    --sidebar-accent: oklch(0.275 0.011 216.9);
+    --sidebar-accent-foreground: oklch(0.987 0.002 197.1);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.56 0.021 213.5);
+
+    /* --- Tokens de acento e superficie ---------------------------------
+     * O preset nao nomeia uma cor de acento: --primary no dark e um slate
+     * quase branco. Mas a UI do CutMakers depende de acento em 190 pontos
+     * (nav ativa, icones, badges, destaques) — mapear tudo para --primary
+     * achataria a hierarquia inteira.
+     *
+     * Solucao sem sair do preset: --chart-3 E o laranja dele. Promovido a
+     * acento da marca, com as variacoes que a UI precisa.
+     */
+    --brand: oklch(0.666 0.179 58.318);
+    --brand-hover: oklch(0.595 0.166 55);
+    --brand-foreground: oklch(0.987 0.002 197.1);
+    --brand-soft: oklch(0.666 0.179 58.318 / 12%);
+    --brand-border: oklch(0.666 0.179 58.318 / 30%);
+
+    /* Superficies elevadas entre --card e --muted */
+    --surface: oklch(0.218 0.008 223.9);
+    --surface-raised: oklch(0.275 0.011 216.9);
+    --surface-subtle: oklch(1 0 0 / 4%);
+    /* --- Status -------------------------------------------------------
+     * Verde/amarelo/azul nao existem no preset, e nao podem ser achatados
+     * no neutro: um badge "pago" e um "reembolsado" ficariam identicos.
+     * Carregam informacao, nao marca — por isso viram tokens proprios.
+     */
+    --success: oklch(0.723 0.192 149.6);
+    --success-soft: oklch(0.723 0.192 149.6 / 12%);
+    --success-border: oklch(0.723 0.192 149.6 / 28%);
+    --warning: oklch(0.795 0.162 86);
+    --warning-soft: oklch(0.795 0.162 86 / 12%);
+    --warning-border: oklch(0.795 0.162 86 / 28%);
+    --info: oklch(0.623 0.188 259.8);
+    --info-soft: oklch(0.623 0.188 259.8 / 12%);
+    --destructive-soft: oklch(0.704 0.191 22.216 / 12%);
+    --destructive-border: oklch(0.704 0.191 22.216 / 28%);
+  }
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 
-body {
-  background: var(--navy);
-  font-family: 'DM Sans', sans-serif;
-  margin: 0;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
+  body {
+    @apply bg-background text-foreground font-sans;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
 }
 
 @layer components {
+  /* Input e botão primário usados nos formulários de auth e nos modais */
+  /* Sem modificador de opacidade (ex. bg-input/40): no Tailwind v3 ele exige o
+     placeholder <alpha-value> na cor, e os tokens do preset sao oklch cru. */
   .input-field {
-    @apply w-full h-[42px] rounded-[8px] text-sm text-white placeholder:text-white/40 outline-none transition-colors;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 0 14px;
+    @apply w-full h-[42px] rounded-md bg-input border border-border px-3.5 text-sm text-foreground outline-none transition-colors;
+    @apply placeholder:text-muted-foreground focus:border-ring;
   }
 
-  .input-field:focus {
-    border-color: rgba(244, 99, 30, 0.5);
-  }
-
+  /* Usa --brand, nao --primary: os CTAs inline da aplicacao (190 pontos) foram
+     para --brand, e --primary no dark do preset e um slate quase branco. Deixar
+     este botao em --primary faria o "Entrar" do login destoar de todo CTA do app. */
   .btn-primary {
-    @apply w-full h-11 text-white rounded-[8px] font-heading text-sm font-semibold cursor-pointer transition-all border-none;
-    background: var(--orange);
-  }
-
-  .btn-primary:hover {
-    background: var(--orange-hover);
-  }
-
-  .btn-primary:active {
-    transform: scale(0.98);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+    @apply w-full h-11 rounded-md bg-brand text-brand-foreground font-heading text-sm font-semibold;
+    @apply cursor-pointer border-none transition-all hover:bg-brand-hover active:scale-[0.98];
+    @apply disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none;
   }
 }

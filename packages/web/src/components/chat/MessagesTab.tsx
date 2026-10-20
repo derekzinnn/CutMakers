@@ -5,7 +5,10 @@ import { listConversations, type ConversationDTO } from '@/lib/conversations'
 import { useAuth } from '@/hooks/use-auth'
 import { ChatPanel } from './ChatPanel'
 
-const AVATAR_PALETTE = ['#F4631E', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
+// Paleta CATEGORICA de identidade (avatar por usuario): precisa de matizes
+// DISTINTOS entre si, entao fica fora dos tokens do tema. Os chart-* do
+// preset sao todos laranja/ambar — usa-los deixaria todo avatar igual.
+const AVATAR_PALETTE = ['var(--brand)', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
 
 function nameHash(name: string) {
   let h = 0
@@ -116,7 +119,7 @@ export function MessagesTab() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-        <IconLoader2 size={24} stroke={1.5} color="#F4631E" style={{ animation: 'spin 1s linear infinite' }} />
+        <IconLoader2 size={24} stroke={1.5} color="var(--brand)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -126,19 +129,19 @@ export function MessagesTab() {
     return (
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '64px 32px', background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, textAlign: 'center',
+        padding: '64px 32px', background: 'var(--surface-subtle)',
+        border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center',
       }}>
         <div style={{
-          width: 64, height: 64, borderRadius: '50%', background: 'rgba(244,99,30,0.1)',
+          width: 64, height: 64, borderRadius: '50%', background: 'var(--brand-soft)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16,
         }}>
-          <IconMessage2 size={28} stroke={1.5} color="#F4631E" />
+          <IconMessage2 size={28} stroke={1.5} color="var(--brand)" />
         </div>
         <h3 style={{ fontSize: 18, fontWeight: 700, color: 'white', margin: '0 0 8px', fontFamily: "'Syne', sans-serif" }}>
           Nenhuma conversa
         </h3>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0, maxWidth: 320 }}>
+        <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: 0, maxWidth: 320 }}>
           As conversas aparecem aqui quando um pedido for criado.
         </p>
       </div>
@@ -148,18 +151,18 @@ export function MessagesTab() {
   return (
     <div style={{
       display: 'flex', height: 'calc(100vh - 124px)', minHeight: 480,
-      border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden',
+      border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden',
     }}>
       {/* ── Left: People list ── */}
       <div style={{
-        width: 260, flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.08)',
-        background: '#162436', overflowY: 'auto', display: 'flex', flexDirection: 'column',
+        width: 260, flexShrink: 0, borderRight: '1px solid var(--border)',
+        background: 'var(--card)', overflowY: 'auto', display: 'flex', flexDirection: 'column',
       }}>
         <div style={{
-          padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0,
+          padding: '14px 16px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0,
         }}>
           <span style={{
-            fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)',
+            fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)',
             fontFamily: "'Syne', sans-serif", textTransform: 'uppercase', letterSpacing: '0.1em',
           }}>
             Mensagens
@@ -178,13 +181,13 @@ export function MessagesTab() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '12px 16px', width: '100%', textAlign: 'left',
-                background: isSelected ? 'rgba(244,99,30,0.08)' : 'transparent',
-                borderLeft: isSelected ? '3px solid #F4631E' : '3px solid transparent',
+                background: isSelected ? 'var(--brand-soft)' : 'transparent',
+                borderLeft: isSelected ? '3px solid var(--brand)' : '3px solid transparent',
                 border: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
+                borderBottom: '1px solid var(--surface-subtle)',
                 cursor: 'pointer', transition: 'background 0.15s',
               }}
-              onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+              onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--surface-subtle)' }}
               onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
             >
               <Avatar name={group.personName} avatarUrl={group.personAvatar} size={38} />
@@ -192,27 +195,27 @@ export function MessagesTab() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <span style={{
                     fontSize: 13, fontWeight: isSelected ? 700 : 500,
-                    color: isSelected ? 'white' : 'rgba(255,255,255,0.85)',
+                    color: isSelected ? 'white' : 'var(--foreground)',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     fontFamily: "'Syne', sans-serif",
                   }}>
                     {group.personName}
                   </span>
                   {group.latestTime && (
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', flexShrink: 0, marginLeft: 6 }}>
+                    <span style={{ fontSize: 10, color: 'var(--muted-foreground)', flexShrink: 0, marginLeft: 6 }}>
                       {relativeDate(group.latestTime)}
                     </span>
                   )}
                 </div>
                 {group.latestMessage ? (
                   <p style={{
-                    fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: 0,
+                    fontSize: 12, color: 'var(--muted-foreground)', margin: 0,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     {group.latestMessage}
                   </p>
                 ) : (
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
+                  <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>
                     {group.conversations.length} projeto{group.conversations.length !== 1 ? 's' : ''}
                   </p>
                 )}
@@ -223,13 +226,13 @@ export function MessagesTab() {
       </div>
 
       {/* ── Right: Chat area ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: '#0D1B2A' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--background)' }}>
         {selectedGroup && selectedConv ? (
           <>
             {/* Chat header: person name */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px',
-              borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#162436', flexShrink: 0,
+              borderBottom: '1px solid var(--border)', background: 'var(--card)', flexShrink: 0,
             }}>
               <Avatar name={selectedGroup.personName} avatarUrl={selectedGroup.personAvatar} size={32} />
               <p style={{ fontSize: 14, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
@@ -241,16 +244,16 @@ export function MessagesTab() {
                   style={{
                     marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5,
                     padding: '5px 10px', borderRadius: 6, fontSize: 11,
-                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
-                    color: 'rgba(255,255,255,0.55)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+                    background: 'var(--border)', border: '1px solid var(--border)',
+                    color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(244,99,30,0.1)'
-                    e.currentTarget.style.color = '#F4631E'
+                    e.currentTarget.style.background = 'var(--brand-soft)'
+                    e.currentTarget.style.color = 'var(--brand)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.55)'
+                    e.currentTarget.style.background = 'var(--border)'
+                    e.currentTarget.style.color = 'var(--muted-foreground)'
                   }}
                 >
                   <IconExternalLink size={12} stroke={1.5} />
@@ -263,8 +266,8 @@ export function MessagesTab() {
             {selectedGroup.conversations.length > 1 && (
               <div style={{
                 display: 'flex', justifyContent: 'center', gap: 8, padding: '10px 20px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(255,255,255,0.02)', flexShrink: 0, flexWrap: 'wrap',
+                borderBottom: '1px solid var(--border)',
+                background: 'var(--surface-subtle)', flexShrink: 0, flexWrap: 'wrap',
               }}>
                 {selectedGroup.conversations.map((conv) => {
                   const isActive = conv.id === selectedConv.id
@@ -274,9 +277,9 @@ export function MessagesTab() {
                       onClick={() => setSelectedConvId(conv.id)}
                       style={{
                         padding: '4px 14px', borderRadius: 20, fontSize: 12, fontWeight: isActive ? 600 : 400,
-                        background: isActive ? '#F4631E' : 'rgba(255,255,255,0.07)',
-                        color: isActive ? 'white' : 'rgba(255,255,255,0.55)',
-                        border: isActive ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                        background: isActive ? 'var(--brand)' : 'var(--border)',
+                        color: isActive ? 'white' : 'var(--muted-foreground)',
+                        border: isActive ? 'none' : '1px solid var(--input)',
                         cursor: 'pointer', transition: 'all 0.15s',
                         fontFamily: "'DM Sans', sans-serif",
                       }}
@@ -293,7 +296,7 @@ export function MessagesTab() {
         ) : (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', color: 'rgba(255,255,255,0.3)', fontSize: 14,
+            height: '100%', color: 'var(--muted-foreground)', fontSize: 14,
             flexDirection: 'column', gap: 12,
           }}>
             <IconMessage2 size={32} stroke={1.5} />

@@ -5,7 +5,10 @@ import { useAuth } from '@/hooks/use-auth'
 
 // ─── Avatar helper ────────────────────────────────────────────────────────────
 
-const AVATAR_PALETTE = ['#F4631E', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
+// Paleta CATEGORICA de identidade (avatar por usuario): precisa de matizes
+// DISTINTOS entre si, entao fica fora dos tokens do tema. Os chart-* do
+// preset sao todos laranja/ambar — usa-los deixaria todo avatar igual.
+const AVATAR_PALETTE = ['var(--brand)', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
 
 function nameHash(name: string) {
   let h = 0
@@ -133,10 +136,10 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
         display: 'flex',
         flexDirection: 'column',
         height: compact ? 360 : '100%',
-        background: '#0D1B2A',
+        background: 'var(--background)',
         borderRadius: compact ? 12 : 0,
         overflow: 'hidden',
-        border: compact ? '1px solid rgba(255,255,255,0.08)' : 'none',
+        border: compact ? '1px solid var(--border)' : 'none',
       }}
     >
       {/* Header */}
@@ -147,15 +150,15 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
             alignItems: 'center',
             gap: 10,
             padding: '12px 16px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-            background: '#162436',
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--card)',
             flexShrink: 0,
           }}
         >
           <Avatar name={otherParty.name} avatarUrl={otherParty.avatarUrl} size={28} />
           <div>
             <p style={{ fontSize: 13, fontWeight: 600, color: 'white', margin: 0 }}>{otherParty.name}</p>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+            <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0 }}>
               {conversation.order?.title ?? 'Conversa'}
             </p>
           </div>
@@ -177,13 +180,13 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
       >
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-            <IconLoader2 size={20} stroke={1.5} color="#F4631E" style={{ animation: 'spin 1s linear infinite' }} />
+            <IconLoader2 size={20} stroke={1.5} color="var(--brand)" style={{ animation: 'spin 1s linear infinite' }} />
           </div>
         ) : messages.length === 0 ? (
           <div
             style={{
               textAlign: 'center',
-              color: 'rgba(255,255,255,0.3)',
+              color: 'var(--muted-foreground)',
               fontSize: 13,
               margin: 'auto',
               padding: '20px 0',
@@ -212,7 +215,7 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
                     style={{
                       padding: '8px 12px',
                       borderRadius: isMe ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-                      background: isMe ? '#F4631E' : 'rgba(255,255,255,0.07)',
+                      background: isMe ? 'var(--brand)' : 'var(--border)',
                       color: 'white',
                       fontSize: 13,
                       lineHeight: 1.5,
@@ -221,7 +224,7 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
                   >
                     {msg.content}
                   </div>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
+                  <span style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>
                     {formatTime(msg.createdAt)}
                   </span>
                 </div>
@@ -238,8 +241,8 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
           display: 'flex',
           gap: 8,
           padding: '12px 16px',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          background: '#162436',
+          borderTop: '1px solid var(--border)',
+          background: 'var(--card)',
           flexShrink: 0,
         }}
       >
@@ -251,8 +254,8 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
           placeholder="Digite uma mensagem..."
           style={{
             flex: 1,
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'var(--surface-subtle)',
+            border: '1px solid var(--input)',
             borderRadius: 8,
             padding: '8px 12px',
             color: 'white',
@@ -268,7 +271,7 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
             width: 36,
             height: 36,
             borderRadius: 8,
-            background: input.trim() && !sending ? '#F4631E' : 'rgba(255,255,255,0.07)',
+            background: input.trim() && !sending ? 'var(--brand)' : 'var(--border)',
             border: 'none',
             cursor: input.trim() && !sending ? 'pointer' : 'default',
             display: 'flex',

@@ -44,8 +44,8 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
       <div
         className="w-full overflow-hidden rounded-modal"
         style={{
-          background: '#162436',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
           maxWidth: widths[size],
           maxHeight: 'calc(100vh - 4rem)',
           display: 'flex',
@@ -56,12 +56,12 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
         {/* Header */}
         <div
           className="flex items-start justify-between px-6 py-5"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
           <div>
             <h2 className="font-heading text-lg font-bold text-white">{title}</h2>
             {subtitle && (
-              <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
                 {subtitle}
               </p>
             )}
@@ -72,18 +72,18 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
             aria-label="Fechar"
             className="flex h-8 w-8 items-center justify-center rounded-[8px] transition-colors"
             style={{
-              color: 'rgba(255,255,255,0.4)',
+              color: 'var(--muted-foreground)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-              e.currentTarget.style.color = 'rgba(255,255,255,0.8)'
+              e.currentTarget.style.background = 'var(--surface-subtle)'
+              e.currentTarget.style.color = 'var(--foreground)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'none'
-              e.currentTarget.style.color = 'rgba(255,255,255,0.4)'
+              e.currentTarget.style.color = 'var(--muted-foreground)'
             }}
           >
             <IconX size={18} stroke={1.5} />
@@ -97,7 +97,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
         {footer && (
           <div
             className="flex items-center justify-end gap-2 px-6 py-4"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.15)' }}
+            style={{ borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.15)' }}
           >
             {footer}
           </div>

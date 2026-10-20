@@ -42,7 +42,7 @@ export function MyProposalsSection({
   if (!data || data.proposals.length === 0) {
     return (
       <Empty
-        icon={<IconSend size={24} stroke={1.5} color="#F4631E" />}
+        icon={<IconSend size={24} stroke={1.5} color="var(--brand)" />}
         title="Você ainda não enviou propostas"
         text="Explore as oportunidades abertas e envie sua proposta para os projetos que combinam com você."
         action={<PrimaryButton onClick={onBrowse}>Ver oportunidades</PrimaryButton>}
@@ -52,10 +52,10 @@ export function MyProposalsSection({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-[12px]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="overflow-hidden rounded-[12px]" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
         <div
           className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-3 text-xs font-medium"
-          style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border)' }}
         >
           <span>Solicitação</span>
           <span>Valor</span>
@@ -67,17 +67,17 @@ export function MyProposalsSection({
           <div
             key={p.id}
             className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] items-center gap-4 px-5 py-3.5 text-sm"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+            style={{ borderBottom: '1px solid var(--surface-subtle)' }}
           >
             <span className="min-w-0">
               <span className="block truncate font-medium text-white">{p.request.title}</span>
-              <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
                 {p.request.category.name} · {p.request.creatorName}
               </span>
             </span>
             <span className="font-heading font-semibold text-white">{fmtBRL(p.amount)}</span>
             <span><Pill label={PROPOSAL_STATUS_LABELS[p.status]} color={PROPOSAL_STATUS_COLORS[p.status]} /></span>
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtDate(p.createdAt)}</span>
+            <span style={{ color: 'var(--muted-foreground)' }}>{fmtDate(p.createdAt)}</span>
             <span className="flex justify-end">
               {p.status === 'ACCEPTED' && p.orderId ? (
                 <PrimaryButton onClick={() => onOpenOrder(p.orderId!)}>

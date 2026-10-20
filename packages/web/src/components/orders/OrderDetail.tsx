@@ -61,7 +61,10 @@ function fmtBRL(n: number) {
 }
 
 function avatarBg(name: string) {
-  const PALETTE = ['#F4631E', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4']
+  // Paleta CATEGORICA de identidade (avatar por usuario): precisa de matizes
+  // DISTINTOS entre si, entao fica fora dos tokens do tema. Os chart-* do
+  // preset sao todos laranja/ambar — usa-los deixaria todo avatar igual.
+  const PALETTE = ['var(--brand)', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', 'var(--destructive)', '#06B6D4']
   let h = 0
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % PALETTE.length
   return PALETTE[h]
@@ -71,7 +74,7 @@ function avatarBg(name: string) {
 
 function ContentSection({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="rounded-[12px] p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-[12px] p-5" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-heading text-sm font-semibold text-white">{title}</h2>
         {action}
@@ -83,7 +86,7 @@ function ContentSection({ title, children, action }: { title: string; children: 
 
 function SideCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-[12px] p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-[12px] p-4" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
       {children}
     </div>
   )
@@ -92,8 +95,8 @@ function SideCard({ children }: { children: React.ReactNode }) {
 function Row({ label, value, muted, highlight }: { label: string; value: string; muted?: boolean; highlight?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-sm" style={{ color: muted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.6)' }}>{label}</span>
-      <span className="text-sm" style={{ color: highlight ? '#F4631E' : muted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.9)', fontWeight: highlight ? 600 : 400 }}>
+      <span className="text-sm" style={{ color: muted ? 'var(--muted-foreground)' : 'var(--foreground)' }}>{label}</span>
+      <span className="text-sm" style={{ color: highlight ? 'var(--brand)' : muted ? 'var(--muted-foreground)' : 'var(--foreground)', fontWeight: highlight ? 600 : 400 }}>
         {value}
       </span>
     </div>
@@ -116,12 +119,12 @@ function StatusStepper({ order }: { order: OrderDetailDTO }) {
   return (
     <div className="mb-6 w-full overflow-x-auto">
       {isBad && (
-        <div className="rounded-[8px] px-4 py-2 text-center text-sm font-medium" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#EF4444' }}>
+        <div className="rounded-[8px] px-4 py-2 text-center text-sm font-medium" style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)' }}>
           {STATUS_LABELS[order.status]}
         </div>
       )}
       {isRevision && (
-        <div className="rounded-[8px] px-4 py-2 text-center text-sm font-medium" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.25)', color: '#EAB308' }}>
+        <div className="rounded-[8px] px-4 py-2 text-center text-sm font-medium" style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-border)', color: '#EAB308' }}>
           Revisão solicitada — editor revisará em breve
         </div>
       )}
@@ -139,19 +142,19 @@ function StatusStepper({ order }: { order: OrderDetailDTO }) {
                   <div
                     className="flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-all"
                     style={{
-                      background: isDone ? '#22C55E' : isActive ? color : 'rgba(255,255,255,0.06)',
-                      border: isActive ? `2px solid ${color}` : isDone ? '2px solid #22C55E' : '2px solid rgba(255,255,255,0.1)',
-                      color: isDone || isActive ? 'white' : 'rgba(255,255,255,0.3)',
+                      background: isDone ? 'var(--success)' : isActive ? color : 'var(--border)',
+                      border: isActive ? `2px solid ${color}` : isDone ? '2px solid var(--success)' : '2px solid var(--input)',
+                      color: isDone || isActive ? 'white' : 'var(--muted-foreground)',
                     }}
                   >
                     {isDone ? <IconCheck size={12} stroke={2.5} /> : i + 1}
                   </div>
-                  <span className="text-center text-[10px] leading-tight" style={{ color: isActive ? color : isDone ? '#22C55E' : 'rgba(255,255,255,0.3)' }}>
+                  <span className="text-center text-[10px] leading-tight" style={{ color: isActive ? color : isDone ? 'var(--success)' : 'var(--muted-foreground)' }}>
                     {STATUS_LABELS[step]}
                   </span>
                 </div>
                 {i < happyPath.length - 1 && (
-                  <div className="mb-4 h-px flex-1" style={{ background: stepIndex < currentIndex ? '#22C55E' : 'rgba(255,255,255,0.08)' }} />
+                  <div className="mb-4 h-px flex-1" style={{ background: stepIndex < currentIndex ? 'var(--success)' : 'var(--border)' }} />
                 )}
               </div>
             )
@@ -213,10 +216,10 @@ function ProposalCard({
   }
 
   const statusColors: Record<string, { bg: string; color: string }> = {
-    PENDING: { bg: 'rgba(244,99,30,0.12)', color: '#F4631E' },
-    ACCEPTED: { bg: 'rgba(34,197,94,0.12)', color: '#22C55E' },
-    REJECTED: { bg: 'rgba(239,68,68,0.12)', color: '#EF4444' },
-    COUNTERED: { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' },
+    PENDING: { bg: 'var(--brand-soft)', color: 'var(--brand)' },
+    ACCEPTED: { bg: 'var(--success-soft)', color: 'var(--success)' },
+    REJECTED: { bg: 'var(--destructive-soft)', color: 'var(--destructive)' },
+    COUNTERED: { bg: 'var(--border)', color: 'var(--muted-foreground)' },
   }
   const sc = statusColors[proposal.status] ?? statusColors.COUNTERED
 
@@ -227,8 +230,8 @@ function ProposalCard({
       <div
         className="max-w-[85%] rounded-[12px] p-4"
         style={{
-          background: isOwn ? 'rgba(244,99,30,0.08)' : 'rgba(255,255,255,0.04)',
-          border: isOwn ? '1px solid rgba(244,99,30,0.2)' : '1px solid rgba(255,255,255,0.08)',
+          background: isOwn ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+          border: isOwn ? '1px solid var(--brand-border)' : '1px solid var(--border)',
         }}
       >
         {/* Header: name + time */}
@@ -243,7 +246,7 @@ function ProposalCard({
             }
           </div>
           <span className="text-xs font-medium text-white">{proposal.user.name}</span>
-          <span className="ml-auto text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <span className="ml-auto text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
             {new Date(proposal.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
@@ -262,22 +265,22 @@ function ProposalCard({
         {/* Fee breakdown */}
         <div className="mb-2 space-y-0.5">
           {perspective === 'editor' && (
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Você recebe: <span style={{ color: '#22C55E', fontWeight: 600 }}>{fmtBRL(proposal.netAmount)}</span>
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}> · taxa 10%: {fmtBRL(proposal.platformFee)}</span>
+            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+              Você recebe: <span style={{ color: 'var(--success)', fontWeight: 600 }}>{fmtBRL(proposal.netAmount)}</span>
+              <span style={{ color: 'var(--muted-foreground)' }}> · taxa 10%: {fmtBRL(proposal.platformFee)}</span>
             </p>
           )}
           {perspective === 'creator' && (
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
               Você paga: <span className="font-medium text-white">{fmtBRL(proposal.amount)}</span>
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}> · editor recebe: {fmtBRL(proposal.netAmount)}</span>
+              <span style={{ color: 'var(--muted-foreground)' }}> · editor recebe: {fmtBRL(proposal.netAmount)}</span>
             </p>
           )}
         </div>
 
         {/* Message */}
         {proposal.message && (
-          <p className="mb-3 text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          <p className="mb-3 text-xs leading-relaxed" style={{ color: 'var(--foreground)' }}>
             {proposal.message}
           </p>
         )}
@@ -290,7 +293,7 @@ function ProposalCard({
               disabled={busy !== null}
               className="flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-xs font-semibold transition-all"
               style={{
-                background: '#F4631E', color: 'white', border: 'none',
+                background: 'var(--brand)', color: 'white', border: 'none',
                 cursor: busy ? 'not-allowed' : 'pointer',
                 opacity: busy ? 0.6 : 1,
                 fontFamily: "'Syne', sans-serif",
@@ -304,8 +307,8 @@ function ProposalCard({
               disabled={busy !== null}
               className="flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-xs font-semibold transition-all"
               style={{
-                background: 'rgba(239,68,68,0.1)', color: '#EF4444',
-                border: '1px solid rgba(239,68,68,0.25)',
+                background: 'var(--destructive-soft)', color: 'var(--destructive)',
+                border: '1px solid var(--destructive-border)',
                 cursor: busy ? 'not-allowed' : 'pointer',
                 opacity: busy ? 0.6 : 1,
                 fontFamily: "'Syne', sans-serif",
@@ -318,13 +321,13 @@ function ProposalCard({
         )}
 
         {isPending && isOwn && (
-          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
             <IconClock size={12} stroke={1.5} />
             Aguardando resposta da contraparte...
           </div>
         )}
 
-        {error && <p className="mt-2 text-[11px]" style={{ color: '#FCA5A5' }}>{error}</p>}
+        {error && <p className="mt-2 text-[11px]" style={{ color: 'var(--destructive)' }}>{error}</p>}
       </div>
     </div>
   )
@@ -379,9 +382,9 @@ function ProposalForm({
           onClick={() => setOpen(true)}
           className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
           style={{
-            background: isCounter ? 'rgba(255,255,255,0.06)' : '#F4631E',
-            color: isCounter ? 'rgba(255,255,255,0.8)' : 'white',
-            border: isCounter ? '1px solid rgba(255,255,255,0.12)' : 'none',
+            background: isCounter ? 'var(--border)' : 'var(--brand)',
+            color: isCounter ? 'var(--foreground)' : 'white',
+            border: isCounter ? '1px solid var(--input)' : 'none',
             cursor: 'pointer',
             fontFamily: "'Syne', sans-serif",
           }}
@@ -393,24 +396,24 @@ function ProposalForm({
         <form
           onSubmit={handleSubmit}
           className="rounded-[12px] p-4 space-y-3"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)' }}
         >
           <p className="text-sm font-semibold text-white">{label}</p>
           <div>
-            <label className="mb-1 block text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Valor (R$)</label>
+            <label className="mb-1 block text-xs" style={{ color: 'var(--muted-foreground)' }}>Valor (R$)</label>
             <input
               type="text"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0,00"
               className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)' }}
               disabled={submitting}
               autoFocus
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Mensagem (opcional)</label>
+            <label className="mb-1 block text-xs" style={{ color: 'var(--muted-foreground)' }}>Mensagem (opcional)</label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -418,29 +421,29 @@ function ProposalForm({
               rows={2}
               maxLength={2000}
               className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
               disabled={submitting}
             />
           </div>
           {amount && !isNaN(parseFloat(amount.replace(',', '.'))) && parseFloat(amount.replace(',', '.')) > 0 && (
-            <div className="rounded-[8px] px-3 py-2 text-xs space-y-0.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="rounded-[8px] px-3 py-2 text-xs space-y-0.5" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
               <div className="flex justify-between">
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Taxa plataforma (10%)</span>
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtBRL(Math.round(parseFloat(amount.replace(',', '.')) * 0.1 * 100) / 100)}</span>
+                <span style={{ color: 'var(--muted-foreground)' }}>Taxa plataforma (10%)</span>
+                <span style={{ color: 'var(--muted-foreground)' }}>{fmtBRL(Math.round(parseFloat(amount.replace(',', '.')) * 0.1 * 100) / 100)}</span>
               </div>
               <div className="flex justify-between font-medium">
-                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Editor recebe</span>
-                <span style={{ color: '#22C55E' }}>{fmtBRL(Math.round(parseFloat(amount.replace(',', '.')) * 0.9 * 100) / 100)}</span>
+                <span style={{ color: 'var(--foreground)' }}>Editor recebe</span>
+                <span style={{ color: 'var(--success)' }}>{fmtBRL(Math.round(parseFloat(amount.replace(',', '.')) * 0.9 * 100) / 100)}</span>
               </div>
             </div>
           )}
-          {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+          {error && <p className="text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
           <div className="flex gap-2 justify-end">
             <button
               type="button"
               onClick={() => { setOpen(false); setError(null) }}
               className="rounded-[8px] px-3 py-2 text-xs"
-              style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+              style={{ background: 'var(--surface-subtle)', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer' }}
             >
               Cancelar
             </button>
@@ -449,7 +452,7 @@ function ProposalForm({
               disabled={submitting}
               className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
               style={{
-                background: '#F4631E', color: 'white', border: 'none',
+                background: 'var(--brand)', color: 'white', border: 'none',
                 cursor: submitting ? 'not-allowed' : 'pointer',
                 opacity: submitting ? 0.6 : 1,
                 fontFamily: "'Syne', sans-serif",
@@ -483,14 +486,14 @@ function NegotiationSection({
   return (
     <ContentSection title="Negociação">
       <div className="mb-3 flex items-center gap-2">
-        <IconArrowsExchange size={14} stroke={1.5} style={{ color: '#F4631E' }} />
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        <IconArrowsExchange size={14} stroke={1.5} style={{ color: 'var(--brand)' }} />
+        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
           Negocie o valor com a contraparte. Quando ambos concordarem, o creator realiza o pagamento e o projeto inicia.
         </p>
       </div>
 
       {order.proposals.length === 0 ? (
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhuma proposta ainda.</p>
+        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Nenhuma proposta ainda.</p>
       ) : (
         <div className="mb-4 space-y-3">
           {order.proposals.map((p) => (
@@ -541,19 +544,19 @@ function AwaitingPaymentSection({
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <div
             className="flex h-12 w-12 items-center justify-center rounded-full"
-            style={{ background: 'rgba(234,179,8,0.12)', border: '1px solid rgba(234,179,8,0.25)' }}
+            style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-border)' }}
           >
             <IconClock size={22} stroke={1.5} style={{ color: '#EAB308' }} />
           </div>
           <p className="font-heading text-sm font-semibold text-white">Aguardando pagamento do creator</p>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
             O creator precisa realizar o pagamento PIX para o projeto iniciar.
           </p>
           {acceptedProposal && (
-            <div className="mt-2 rounded-[10px] px-5 py-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Valor acordado</p>
+            <div className="mt-2 rounded-[10px] px-5 py-3 text-center" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+              <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Valor acordado</p>
               <p className="font-heading text-lg font-bold text-white">{fmtBRL(order.budget)}</p>
-              <p className="text-xs" style={{ color: '#22C55E' }}>Você recebe {fmtBRL(order.budget - order.platformFee)}</p>
+              <p className="text-xs" style={{ color: 'var(--success)' }}>Você recebe {fmtBRL(order.budget - order.platformFee)}</p>
             </div>
           )}
         </div>
@@ -574,14 +577,14 @@ function AwaitingPaymentSection({
   return (
     <ContentSection title="Pagamento">
       <div className="space-y-4">
-        <div className="rounded-[10px] p-4" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.2)' }}>
+        <div className="rounded-[10px] p-4" style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-border)' }}>
           <p className="mb-1 text-xs font-semibold" style={{ color: '#EAB308' }}>Proposta aceita — realize o pagamento</p>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="font-heading text-2xl font-bold text-white">{fmtBRL(order.budget)}</span>
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>via PIX</span>
+            <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>via PIX</span>
           </div>
           <div className="mt-1 space-y-0.5">
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
               Taxa plataforma (10%): {fmtBRL(order.platformFee)} · Editor recebe: {fmtBRL(order.budget - order.platformFee)}
             </p>
           </div>
@@ -590,10 +593,10 @@ function AwaitingPaymentSection({
         {contractPending && !alreadyInitiated ? (
           <div
             className="flex items-center gap-2 rounded-[8px] px-4 py-3"
-            style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)' }}
+            style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-border)' }}
           >
             <IconFileText size={16} stroke={1.5} style={{ color: '#EAB308', flexShrink: 0 }} />
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            <p className="text-xs" style={{ color: 'var(--foreground)' }}>
               O pagamento libera após <strong style={{ color: '#EAB308' }}>ambas as partes aceitarem o contrato</strong> (seção acima).
             </p>
           </div>
@@ -603,7 +606,7 @@ function AwaitingPaymentSection({
             disabled={busy}
             className="flex w-full items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-semibold transition-all"
             style={{
-              background: '#F4631E', color: 'white', border: 'none',
+              background: 'var(--brand)', color: 'white', border: 'none',
               cursor: busy ? 'not-allowed' : 'pointer',
               opacity: busy ? 0.7 : 1,
               fontFamily: "'Syne', sans-serif",
@@ -613,19 +616,19 @@ function AwaitingPaymentSection({
             {busy ? 'Gerando cobrança...' : 'Pagar via PIX'}
           </button>
         ) : (
-          <div className="rounded-[8px] px-4 py-3 text-center" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
+          <div className="rounded-[8px] px-4 py-3 text-center" style={{ background: 'var(--info-soft)', border: '1px solid rgba(59,130,246,0.2)' }}>
             <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>Pagamento iniciado</p>
-            <p className="mt-0.5 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="mt-0.5 text-xs" style={{ color: 'var(--muted-foreground)' }}>
               Aguardando confirmação do PIX...
             </p>
           </div>
         )}
 
         {payError && (
-          <p className="text-xs" style={{ color: '#FCA5A5' }}>{payError}</p>
+          <p className="text-xs" style={{ color: 'var(--destructive)' }}>{payError}</p>
         )}
 
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
           O pagamento fica retido em escrow e é liberado ao editor apenas quando você aprovar a entrega.
         </p>
       </div>
@@ -687,25 +690,25 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 500, background: '#162436',
-          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
+          width: '100%', maxWidth: 500, background: 'var(--card)',
+          border: '1px solid var(--border)', borderRadius: 16,
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
           <div>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
               Enviar entrega
             </h3>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
+            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '3px 0 0' }}>
               O creator será notificado para revisar e aprovar
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 4 }}
           >
             <IconX size={18} stroke={1.5} />
           </button>
@@ -722,9 +725,9 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
                 onClick={() => setUseUpload(v)}
                 style={{
                   padding: '6px 14px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
-                  background: useUpload === v ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.04)',
-                  color: useUpload === v ? '#F4631E' : 'rgba(255,255,255,0.5)',
-                  border: useUpload === v ? '1px solid rgba(244,99,30,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                  background: useUpload === v ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+                  color: useUpload === v ? 'var(--brand)' : 'var(--muted-foreground)',
+                  border: useUpload === v ? '1px solid var(--brand-border)' : '1px solid var(--border)',
                   fontFamily: "'DM Sans', sans-serif",
                 }}
               >
@@ -739,40 +742,40 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 10, padding: '28px 16px', borderRadius: 10, cursor: 'pointer',
-                background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.12)', transition: 'all 0.15s',
+                background: 'var(--surface-subtle)', border: '1px dashed var(--input)', transition: 'all 0.15s',
               }}
-              onMouseEnter={(e) => { if (!videoFile && !uploading) { e.currentTarget.style.background = 'rgba(244,99,30,0.05)'; e.currentTarget.style.borderColor = 'rgba(244,99,30,0.3)' } }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
+              onMouseEnter={(e) => { if (!videoFile && !uploading) { e.currentTarget.style.background = 'var(--brand-soft)'; e.currentTarget.style.borderColor = 'var(--brand-border)' } }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-subtle)'; e.currentTarget.style.borderColor = 'var(--input)' }}
             >
               {uploading ? (
                 <>
-                  <IconLoader2 size={28} stroke={1.5} color="#F4631E" style={{ animation: 'spin 1s linear infinite' }} />
+                  <IconLoader2 size={28} stroke={1.5} color="var(--brand)" style={{ animation: 'spin 1s linear infinite' }} />
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ fontSize: 13, color: 'white', margin: '0 0 4px', fontWeight: 500 }}>Enviando vídeo...</p>
-                    <div style={{ width: 200, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${progress}%`, background: '#F4631E', transition: 'width 0.3s' }} />
+                    <div style={{ width: 200, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${progress}%`, background: 'var(--brand)', transition: 'width 0.3s' }} />
                     </div>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>{progress}%</p>
+                    <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '4px 0 0' }}>{progress}%</p>
                   </div>
                 </>
               ) : videoFile ? (
                 <>
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <IconCheck size={22} stroke={2} color="#22C55E" />
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--success-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconCheck size={22} stroke={2} color="var(--success)" />
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: 13, color: '#22C55E', margin: '0 0 2px', fontWeight: 500 }}>Vídeo pronto</p>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0 }}>{videoFile.name}</p>
+                    <p style={{ fontSize: 13, color: 'var(--success)', margin: '0 0 2px', fontWeight: 500 }}>Vídeo pronto</p>
+                    <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0 }}>{videoFile.name}</p>
                   </div>
                 </>
               ) : (
                 <>
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(244,99,30,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <IconUpload size={20} stroke={1.5} color="#F4631E" />
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--brand-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconUpload size={20} stroke={1.5} color="var(--brand)" />
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '0 0 2px', fontWeight: 500 }}>Clique para selecionar o vídeo</p>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>MP4, MOV, AVI...</p>
+                    <p style={{ fontSize: 13, color: 'var(--foreground)', margin: '0 0 2px', fontWeight: 500 }}>Clique para selecionar o vídeo</p>
+                    <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0 }}>MP4, MOV, AVI...</p>
                   </div>
                 </>
               )}
@@ -786,11 +789,11 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
               placeholder="https://drive.google.com/... ou YouTube, Vimeo..."
               style={{
                 width: '100%', padding: '12px 14px', borderRadius: 8, fontSize: 13, color: 'white',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--surface-subtle)', border: '1px solid var(--input)',
                 outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box',
               }}
-              onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
-              onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+              onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
+              onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
               disabled={submitting}
             />
           )}
@@ -804,17 +807,17 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
             maxLength={2000}
             style={{
               width: '100%', padding: '12px 14px', borderRadius: 8, fontSize: 13, color: 'white',
-              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--surface-subtle)', border: '1px solid var(--input)',
               outline: 'none', resize: 'vertical', fontFamily: "'DM Sans', sans-serif",
               lineHeight: 1.6, boxSizing: 'border-box',
             }}
-            onFocus={(e) => { e.target.style.borderColor = 'rgba(244,99,30,0.5)' }}
-            onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+            onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
+            onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
             disabled={submitting}
           />
 
           {error && (
-            <p style={{ fontSize: 12, color: '#FCA5A5', padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', margin: 0 }}>
+            <p style={{ fontSize: 12, color: 'var(--destructive)', padding: '8px 12px', borderRadius: 8, background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', margin: 0 }}>
               {error}
             </p>
           )}
@@ -824,7 +827,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
             <button
               type="button"
               onClick={onClose}
-              style={{ padding: '9px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+              style={{ padding: '9px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
             >
               Cancelar
             </button>
@@ -834,7 +837,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
               style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '9px 20px',
                 borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "'Syne', sans-serif",
-                background: '#F4631E', color: 'white', border: 'none',
+                background: 'var(--brand)', color: 'white', border: 'none',
                 cursor: submitting || uploading || !videoUrl ? 'not-allowed' : 'pointer',
                 opacity: submitting || uploading || !videoUrl ? 0.6 : 1,
               }}
@@ -867,7 +870,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
         >
           <IconStarFilled
             size={28}
-            style={{ color: star <= (hovered || value) ? '#F4631E' : 'rgba(255,255,255,0.12)', transition: 'color 0.1s' }}
+            style={{ color: star <= (hovered || value) ? 'var(--brand)' : 'var(--input)', transition: 'color 0.1s' }}
           />
         </button>
       ))}
@@ -939,22 +942,22 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 480, background: '#162436',
-          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
+          width: '100%', maxWidth: 480, background: 'var(--card)',
+          border: '1px solid var(--border)', borderRadius: 16,
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
           <div>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
               Adicionar arquivos
             </h3>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
+            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '3px 0 0' }}>
               Novos arquivos de referência para este pedido
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 4 }}>
             <IconX size={18} stroke={1.5} />
           </button>
         </div>
@@ -966,18 +969,18 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               gap: 8, padding: '28px 16px', borderRadius: 10, cursor: 'pointer',
-              background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.12)', transition: 'all 0.15s',
+              background: 'var(--surface-subtle)', border: '1px dashed var(--input)', transition: 'all 0.15s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(244,99,30,0.05)'; e.currentTarget.style.borderColor = 'rgba(244,99,30,0.3)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--brand-soft)'; e.currentTarget.style.borderColor = 'var(--brand-border)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-subtle)'; e.currentTarget.style.borderColor = 'var(--input)' }}
           >
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(244,99,30,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconUpload size={18} stroke={1.5} color="#F4631E" />
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--brand-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconUpload size={18} stroke={1.5} color="var(--brand)" />
             </div>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0, fontWeight: 500 }}>
+            <p style={{ fontSize: 13, color: 'var(--foreground)', margin: 0, fontWeight: 500 }}>
               Clique ou arraste arquivos aqui
             </p>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Vídeos, imagens, PDFs</p>
+            <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0 }}>Vídeos, imagens, PDFs</p>
             <input type="file" multiple className="hidden"
               onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }}
               disabled={pending.length >= 10}
@@ -990,21 +993,21 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
               {pending.map((p) => (
                 <li key={p.file.name + p.file.lastModified} style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                  borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 8, background: 'var(--surface-subtle)', border: '1px solid var(--border)',
                 }}>
-                  <IconFile size={14} stroke={1.5} color="rgba(255,255,255,0.4)" />
+                  <IconFile size={14} stroke={1.5} color="var(--muted-foreground)" />
                   <span style={{ flex: 1, fontSize: 12, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {p.file.name}
                   </span>
                   <span style={{ fontSize: 11, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4,
-                    color: p.error ? '#EF4444' : p.uploaded ? '#22C55E' : 'rgba(255,255,255,0.4)' }}>
+                    color: p.error ? 'var(--destructive)' : p.uploaded ? 'var(--success)' : 'var(--muted-foreground)' }}>
                     {p.error ? p.error : p.uploaded
                       ? <><IconCheck size={10} stroke={2.5} /> ok</>
                       : <><IconLoader2 size={10} style={{ animation: 'spin 1s linear infinite' }} /> {p.progress}%</>}
                   </span>
                   <button type="button"
                     onClick={() => setPending((prev) => prev.filter((x) => x.file !== p.file))}
-                    style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--border)', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <IconX size={10} stroke={2} />
                   </button>
                 </li>
@@ -1013,15 +1016,15 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
           )}
 
           {error && (
-            <p style={{ fontSize: 12, color: '#FCA5A5', padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', margin: 0 }}>
+            <p style={{ fontSize: 12, color: 'var(--destructive)', padding: '8px 12px', borderRadius: 8, background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', margin: 0 }}>
               {error}
             </p>
           )}
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '14px 22px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.1)' }}>
-          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '14px 22px', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.1)' }}>
+          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
             Cancelar
           </button>
           <button
@@ -1030,7 +1033,7 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px',
               borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "'Syne', sans-serif",
-              background: pending.length > 0 && !submitting ? '#F4631E' : 'rgba(244,99,30,0.4)',
+              background: pending.length > 0 && !submitting ? 'var(--brand)' : 'var(--brand-border)',
               color: 'white', border: 'none', cursor: submitting || pending.length === 0 ? 'not-allowed' : 'pointer',
             }}
           >
@@ -1071,13 +1074,13 @@ function ReviewFormSection({ orderId, onDone }: { orderId: string; onDone: () =>
   return (
     <ContentSection title="Avaliar entrega">
       <form onSubmit={handleSubmit}>
-        <p className="mb-4 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        <p className="mb-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
           Pedido concluído! Avalie sua experiência com este editor.
         </p>
         <div className="mb-4">
           <StarRating value={rating} onChange={setRating} />
           {rating > 0 && (
-            <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
               {['', 'Muito ruim', 'Ruim', 'Regular', 'Bom', 'Excelente'][rating]}
             </p>
           )}
@@ -1089,16 +1092,16 @@ function ReviewFormSection({ orderId, onDone }: { orderId: string; onDone: () =>
           rows={3}
           maxLength={2000}
           className="mb-3 w-full rounded-[8px] px-3 py-2.5 text-sm text-white outline-none"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
           disabled={submitting}
         />
-        {error && <p className="mb-3 text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+        {error && <p className="mb-3 text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
         <button
           type="submit"
           disabled={submitting || !rating}
           className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold"
           style={{
-            background: '#F4631E', color: '#fff', border: 'none',
+            background: 'var(--brand)', color: '#fff', border: 'none',
             cursor: submitting || !rating ? 'not-allowed' : 'pointer',
             opacity: submitting || !rating ? 0.6 : 1,
             fontFamily: "'Syne', sans-serif",
@@ -1133,12 +1136,12 @@ function AcceptanceRow({ label, acceptedAt }: { label: string; acceptedAt: strin
   return (
     <div className="flex items-center gap-2">
       {acceptedAt ? (
-        <IconCircleCheck size={14} stroke={2} style={{ color: '#22C55E' }} />
+        <IconCircleCheck size={14} stroke={2} style={{ color: 'var(--success)' }} />
       ) : (
         <IconClock size={14} stroke={1.5} style={{ color: '#EAB308' }} />
       )}
-      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>{label}</span>
-      <span className="ml-auto text-[11px]" style={{ color: acceptedAt ? '#22C55E' : '#EAB308' }}>
+      <span className="text-xs" style={{ color: 'var(--foreground)' }}>{label}</span>
+      <span className="ml-auto text-[11px]" style={{ color: acceptedAt ? 'var(--success)' : '#EAB308' }}>
         {acceptedAt
           ? `aceito em ${new Date(acceptedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
           : 'aguardando aceite'}
@@ -1187,19 +1190,19 @@ function ContractSection({
     <div
       className="rounded-[12px] p-5"
       style={{
-        background: agreement.bothAccepted ? 'rgba(255,255,255,0.03)' : 'rgba(244,99,30,0.05)',
-        border: agreement.bothAccepted ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(244,99,30,0.25)',
+        background: agreement.bothAccepted ? 'var(--surface-subtle)' : 'var(--brand-soft)',
+        border: agreement.bothAccepted ? '1px solid var(--border)' : '1px solid var(--brand-border)',
       }}
     >
       {/* Header */}
       <div className="flex items-center gap-2">
-        <IconFileText size={16} stroke={1.5} style={{ color: '#F4631E' }} />
+        <IconFileText size={16} stroke={1.5} style={{ color: 'var(--brand)' }} />
         <h2 className="font-heading text-sm font-semibold text-white">Contrato do projeto</h2>
         <span
           className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
           style={{
-            background: agreement.bothAccepted ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)',
-            color: agreement.bothAccepted ? '#22C55E' : '#EAB308',
+            background: agreement.bothAccepted ? 'var(--success-soft)' : 'var(--warning-soft)',
+            color: agreement.bothAccepted ? 'var(--success)' : '#EAB308',
           }}
         >
           {agreement.bothAccepted ? 'Aceito por ambos' : 'Aguardando aceites'}
@@ -1209,7 +1212,7 @@ function ContractSection({
             onClick={() => printAgreement(agreement.content, `Contrato — ${order.title}`)}
             title="Imprimir / Salvar PDF"
             className="flex h-7 w-7 items-center justify-center rounded-[6px]"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+            style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
           >
             <IconPrinter size={13} stroke={1.5} />
           </button>
@@ -1217,7 +1220,7 @@ function ContractSection({
             onClick={() => setExpanded((v) => !v)}
             title={expanded ? 'Recolher' : 'Ler contrato'}
             className="flex h-7 w-7 items-center justify-center rounded-[6px]"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+            style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
           >
             {expanded ? <IconChevronUp size={13} stroke={1.5} /> : <IconChevronDown size={13} stroke={1.5} />}
           </button>
@@ -1225,7 +1228,7 @@ function ContractSection({
       </div>
 
       {/* Status dos aceites */}
-      <div className="mt-3 space-y-1.5 rounded-[8px] px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="mt-3 space-y-1.5 rounded-[8px] px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid var(--surface-subtle)' }}>
         <AcceptanceRow label={`Criador — ${order.creator.name}`} acceptedAt={agreement.creatorAcceptedAt} />
         <AcceptanceRow label={`Editor — ${order.editor.name}`} acceptedAt={agreement.editorAcceptedAt} />
       </div>
@@ -1234,7 +1237,7 @@ function ContractSection({
       {expanded && (
         <pre
           className="mt-3 max-h-[380px] overflow-y-auto whitespace-pre-wrap rounded-[8px] p-4 text-xs leading-relaxed"
-          style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}
+          style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', color: 'var(--foreground)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}
         >
           {agreement.content}
         </pre>
@@ -1248,7 +1251,7 @@ function ContractSection({
             disabled={accepting}
             className="flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-semibold transition-all"
             style={{
-              background: '#F4631E', color: 'white', border: 'none',
+              background: 'var(--brand)', color: 'white', border: 'none',
               cursor: accepting ? 'not-allowed' : 'pointer',
               opacity: accepting ? 0.7 : 1,
               fontFamily: "'Syne', sans-serif",
@@ -1257,12 +1260,12 @@ function ContractSection({
             {accepting ? <IconLoader2 size={14} className="animate-spin" /> : <IconCircleCheck size={14} stroke={2} />}
             Li e aceito os termos
           </button>
-          <p className="mt-2 text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="mt-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
             O aceite eletrônico é registrado com data e hora (cláusula 12).
           </p>
         </div>
       )}
-      {error && <p className="mt-2 text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+      {error && <p className="mt-2 text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
     </div>
   )
 }
@@ -1311,7 +1314,7 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
       <button
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
-        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+        style={{ background: 'var(--border)', color: 'var(--foreground)', border: '1px solid var(--input)', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
       >
         <IconRefresh size={14} stroke={1.5} />
         Solicitar revisão
@@ -1321,7 +1324,7 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="rounded-[12px] p-4 space-y-3" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.25)' }}>
+      <form onSubmit={handleSubmit} className="rounded-[12px] p-4 space-y-3" style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-border)' }}>
         <p className="text-sm font-semibold" style={{ color: '#EAB308' }}>Solicitar revisão</p>
         <textarea
           value={description}
@@ -1331,16 +1334,16 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
           maxLength={2000}
           autoFocus
           className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
           disabled={submitting}
         />
-        {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+        {error && <p className="text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
         <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={() => { setOpen(false); setError(null) }}
             className="rounded-[8px] px-3 py-2 text-xs"
-            style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+            style={{ background: 'var(--surface-subtle)', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer' }}
           >
             Cancelar
           </button>
@@ -1369,7 +1372,7 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
               onClick={() => setConfirmOpen(false)}
               disabled={submitting}
               className="rounded-[8px] px-4 py-2 text-sm"
-              style={{ background: 'transparent', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)', cursor: submitting ? 'not-allowed' : 'pointer' }}
+              style={{ background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', cursor: submitting ? 'not-allowed' : 'pointer' }}
             >
               Cancelar
             </button>
@@ -1385,13 +1388,13 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
           </>
         }
       >
-        <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>
           Esta será a <strong style={{ color: '#EAB308' }}>{usedRevisions + 1}ª de {order.revisionsIncluded} revis{order.revisionsIncluded === 1 ? 'ão inclusa' : 'ões inclusas'}</strong> no
           contrato. O editor será notificado para ajustar a entrega.
         </p>
-        <div className="mt-3 rounded-[8px] px-3 py-2" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>O que será solicitado</p>
-          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{description}</p>
+        <div className="mt-3 rounded-[8px] px-3 py-2" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)' }}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>O que será solicitado</p>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--foreground)' }}>{description}</p>
         </div>
       </Modal>
     </>
@@ -1438,12 +1441,12 @@ function DisputeForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => P
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-[12px] p-4 space-y-3" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)' }}>
+    <form onSubmit={handleSubmit} className="rounded-[12px] p-4 space-y-3" style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)' }}>
       <div className="flex items-center gap-2">
-        <IconAlertTriangle size={15} stroke={1.5} style={{ color: '#EF4444' }} />
-        <p className="text-sm font-semibold" style={{ color: '#EF4444' }}>Abrir disputa</p>
+        <IconAlertTriangle size={15} stroke={1.5} style={{ color: 'var(--destructive)' }} />
+        <p className="text-sm font-semibold" style={{ color: 'var(--destructive)' }}>Abrir disputa</p>
       </div>
-      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+      <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
         Use apenas se não foi possível resolver com revisões. O pedido será congelado e a CutMakers fará a análise. O pagamento permanece retido até a decisão.
       </p>
       <textarea
@@ -1454,16 +1457,16 @@ function DisputeForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => P
         maxLength={2000}
         autoFocus
         className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
         disabled={submitting}
       />
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+      {error && <p className="text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
       <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={() => { setOpen(false); setError(null) }}
           className="rounded-[8px] px-3 py-2 text-xs"
-          style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+          style={{ background: 'var(--surface-subtle)', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer' }}
         >
           Cancelar
         </button>
@@ -1471,7 +1474,7 @@ function DisputeForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => P
           type="submit"
           disabled={submitting || !reason.trim()}
           className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
-          style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.35)', cursor: submitting || !reason.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !reason.trim() ? 0.6 : 1, fontFamily: "'Syne', sans-serif" }}
+          style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: submitting || !reason.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !reason.trim() ? 0.6 : 1, fontFamily: "'Syne', sans-serif" }}
         >
           {submitting && <IconLoader2 size={12} className="animate-spin" />}
           Confirmar disputa
@@ -1485,15 +1488,15 @@ function DisputeForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => P
 
 function PendingRevisionCard({ revision }: { revision: RevisionDTO }) {
   return (
-    <div className="mb-6 rounded-[12px] p-5" style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)' }}>
+    <div className="mb-6 rounded-[12px] p-5" style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-border)' }}>
       <div className="mb-2 flex items-center gap-2">
         <IconRefresh size={16} stroke={1.5} style={{ color: '#EAB308' }} />
         <p className="font-heading text-sm font-semibold" style={{ color: '#EAB308' }}>
           Revisão solicitada na entrega v{revision.deliveryVersion}
         </p>
       </div>
-      <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>{revision.description}</p>
-      <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{revision.description}</p>
+      <p className="mt-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
         Solicitada em {new Date(revision.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
       </p>
     </div>
@@ -1510,17 +1513,17 @@ function RevisionHistorySection({ revisions }: { revisions: RevisionDTO[] }) {
         {revisions.map((r) => {
           const resolved = r.status === 'ADDRESSED'
           return (
-            <li key={r.id} className="rounded-[8px] p-4" style={{ background: 'rgba(234,179,8,0.05)', border: '1px solid rgba(234,179,8,0.18)' }}>
+            <li key={r.id} className="rounded-[8px] p-4" style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-soft)' }}>
               <div className="mb-2 flex items-center gap-2">
                 <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>v{r.deliveryVersion}</span>
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: resolved ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)', color: resolved ? '#22C55E' : '#EAB308' }}>
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: resolved ? 'var(--success-soft)' : 'var(--warning-soft)', color: resolved ? 'var(--success)' : '#EAB308' }}>
                   {REVISION_STATUS_LABELS[r.status]}
                 </span>
-                <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <span className="ml-auto text-xs" style={{ color: 'var(--muted-foreground)' }}>
                   {new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{r.description}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{r.description}</p>
             </li>
           )
         })}
@@ -1546,20 +1549,20 @@ function DisputeBanner({
 }) {
   const dispute = order.dispute
   return (
-    <div className="mb-6 rounded-[12px] p-5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+    <div className="mb-6 rounded-[12px] p-5" style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)' }}>
       <div className="mb-2 flex items-center gap-2">
-        <IconGavel size={18} stroke={1.5} style={{ color: '#EF4444' }} />
-        <p className="font-heading text-sm font-bold" style={{ color: '#EF4444' }}>
+        <IconGavel size={18} stroke={1.5} style={{ color: 'var(--destructive)' }} />
+        <p className="font-heading text-sm font-bold" style={{ color: 'var(--destructive)' }}>
           Em disputa — aguardando análise da CutMakers
         </p>
       </div>
       {dispute?.reason && (
-        <div className="mt-2 rounded-[8px] px-3 py-2" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Motivo</p>
-          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)' }}>{dispute.reason}</p>
+        <div className="mt-2 rounded-[8px] px-3 py-2" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)' }}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Motivo</p>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{dispute.reason}</p>
         </div>
       )}
-      <p className="mt-3 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+      <p className="mt-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
         {perspective === 'admin'
           ? 'Resolva a disputa liberando o pagamento ao editor ou reembolsando o creator. O pagamento está retido em escrow.'
           : 'O pedido está congelado e o pagamento permanece retido em escrow até a decisão da equipe.'}
@@ -1571,7 +1574,7 @@ function DisputeBanner({
             onClick={() => onResolve('RELEASE')}
             disabled={resolving !== null}
             className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
-            style={{ background: '#22C55E', color: 'white', border: 'none', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
           >
             {resolving === 'RELEASE' ? <IconLoader2 size={14} className="animate-spin" /> : <IconCircleCheck size={14} stroke={2} />}
             Liberar ao editor
@@ -1580,14 +1583,14 @@ function DisputeBanner({
             onClick={() => onResolve('REFUND')}
             disabled={resolving !== null}
             className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
-            style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
           >
             {resolving === 'REFUND' ? <IconLoader2 size={14} className="animate-spin" /> : <IconArrowLeft size={14} stroke={2} />}
             Reembolsar creator
           </button>
         </div>
       )}
-      {resolveError && <p className="mt-3 text-xs" style={{ color: '#FCA5A5' }}>{resolveError}</p>}
+      {resolveError && <p className="mt-3 text-xs" style={{ color: 'var(--destructive)' }}>{resolveError}</p>}
     </div>
   )
 }
@@ -1628,9 +1631,9 @@ function ActionButtons({
       disabled={busy !== null}
       className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
       style={{
-        background: variant === 'primary' ? '#F4631E' : variant === 'danger' ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.06)',
-        color: variant === 'primary' ? 'white' : variant === 'danger' ? '#EF4444' : 'rgba(255,255,255,0.8)',
-        border: variant === 'primary' ? 'none' : variant === 'danger' ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(255,255,255,0.1)',
+        background: variant === 'primary' ? 'var(--brand)' : variant === 'danger' ? 'var(--destructive-soft)' : 'var(--border)',
+        color: variant === 'primary' ? 'white' : variant === 'danger' ? 'var(--destructive)' : 'var(--foreground)',
+        border: variant === 'primary' ? 'none' : variant === 'danger' ? '1px solid var(--destructive-border)' : '1px solid var(--input)',
         cursor: busy !== null ? 'not-allowed' : 'pointer',
         opacity: busy !== null ? 0.7 : 1,
         fontFamily: "'Syne', sans-serif",
@@ -1691,7 +1694,7 @@ function ActionButtons({
           <div className="flex flex-col gap-3">
             {btn('Aprovar entrega', () => setConfirmApprove(true), 'COMPLETED', 'primary', <IconCheck size={14} stroke={2} />)}
             <RevisionRequestForm order={order} onDone={onRefresh} />
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10 }}>
               <DisputeForm order={order} onDone={onRefresh} />
             </div>
           </div>
@@ -1709,7 +1712,7 @@ function ActionButtons({
                   onClick={() => setConfirmApprove(false)}
                   disabled={busy !== null}
                   className="rounded-[8px] px-4 py-2 text-sm"
-                  style={{ background: 'transparent', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)', cursor: busy ? 'not-allowed' : 'pointer' }}
+                  style={{ background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', cursor: busy ? 'not-allowed' : 'pointer' }}
                 >
                   Cancelar
                 </button>
@@ -1717,7 +1720,7 @@ function ActionButtons({
                   onClick={async () => { await doAction('COMPLETED'); setConfirmApprove(false) }}
                   disabled={busy !== null}
                   className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
-                  style={{ background: '#22C55E', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+                  style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
                 >
                   {busy === 'COMPLETED' ? <IconLoader2 size={14} className="animate-spin" /> : <IconCheck size={14} stroke={2} />}
                   Confirmar aprovação
@@ -1725,12 +1728,12 @@ function ActionButtons({
               </>
             }
           >
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>
               Ao aprovar, o pagamento de{' '}
-              <strong style={{ color: '#22C55E' }}>{fmtBRL(order.budget - order.platformFee)}</strong>{' '}
+              <strong style={{ color: 'var(--success)' }}>{fmtBRL(order.budget - order.platformFee)}</strong>{' '}
               será liberado ao editor e o pedido será concluído.
             </p>
-            <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="mt-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
               Esta ação não pode ser desfeita (cláusula 4a do contrato).
             </p>
           </Modal>
@@ -1740,7 +1743,7 @@ function ActionButtons({
     if (status === 'REVISION_REQUESTED') {
       return (
         <div className="flex flex-col gap-2">
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
             O editor foi notificado e irá aplicar a revisão solicitada.
           </p>
           <DisputeForm order={order} onDone={onRefresh} />
@@ -1841,21 +1844,21 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
     }
   }
 
-  const statusColor = order ? STATUS_COLORS[order.status] : '#F4631E'
+  const statusColor = order ? STATUS_COLORS[order.status] : 'var(--brand)'
   const counterpart = order ? (perspective === 'creator' ? order.editor : order.creator) : null
   const counterpartLabel = perspective === 'creator' ? 'Editor' : 'Creator'
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <IconLoader2 size={28} className="animate-spin" style={{ color: '#F4631E' }} />
+        <IconLoader2 size={28} className="animate-spin" style={{ color: 'var(--brand)' }} />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="rounded-[12px] p-6 text-center" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#FCA5A5' }}>
+      <div className="rounded-[12px] p-6 text-center" style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)' }}>
         <IconAlertCircle size={28} className="mx-auto mb-2" />
         {error}
       </div>
@@ -1897,7 +1900,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
           <button
             onClick={onBack}
             className="mt-1 flex shrink-0 items-center gap-1.5 rounded-[8px] px-3 py-2 text-sm transition-all"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+            style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
           >
             <IconArrowLeft size={14} stroke={1.5} />
             Voltar
@@ -1905,7 +1908,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
         )}
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-3">
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
               {order.category.name} · criado em {new Date(order.createdAt).toLocaleDateString('pt-BR')}
             </p>
             <span
@@ -1942,7 +1945,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
         })()}
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 2, marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 2, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
         {tabs.map((tab) => {
           const active = currentTab === tab.id
           return (
@@ -1951,8 +1954,8 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               onClick={() => setActiveTab(tab.id)}
               style={{
                 padding: '10px 20px', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer',
-                background: 'none', border: 'none', borderBottom: active ? '2px solid #F4631E' : '2px solid transparent',
-                color: active ? '#F4631E' : 'rgba(255,255,255,0.5)',
+                background: 'none', border: 'none', borderBottom: active ? '2px solid var(--brand)' : '2px solid transparent',
+                color: active ? 'var(--brand)' : 'var(--muted-foreground)',
                 fontFamily: "'DM Sans', sans-serif", marginBottom: -1, transition: 'all 0.15s',
               }}
             >
@@ -1988,7 +1991,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <ContentSection title="Ações">
                 <ActionButtons order={order} perspective={perspective} onAction={handleAction} onRefresh={load} />
                 {actionError && (
-                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)' }}>
                     {actionError}
                   </div>
                 )}
@@ -1999,7 +2002,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
           <div className="space-y-4">
             {counterpart && (
               <SideCard>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>{counterpartLabel}</p>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>{counterpartLabel}</p>
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
                     {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
@@ -2009,27 +2012,27 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               </SideCard>
             )}
             <SideCard>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Financeiro</p>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Financeiro</p>
               <div className="space-y-2">
                 <Row label="Orçamento" value={fmtBRL(order.budget)} />
                 <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
                   <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
                 </div>
                 {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
               </div>
             </SideCard>
             <SideCard>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Pagamento</p>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Pagamento</p>
               {order.transaction ? (
                 <span className="inline-block rounded-full px-2.5 py-1 text-[11px] font-medium" style={{
-                  background: order.transaction.status === 'RELEASED' ? 'rgba(34,197,94,0.15)' : order.transaction.status === 'HELD' ? 'rgba(59,130,246,0.15)' : 'rgba(244,99,30,0.15)',
-                  color: order.transaction.status === 'RELEASED' ? '#22C55E' : order.transaction.status === 'HELD' ? '#3B82F6' : '#F4631E',
+                  background: order.transaction.status === 'RELEASED' ? 'var(--success-soft)' : order.transaction.status === 'HELD' ? 'var(--info-soft)' : 'var(--brand-soft)',
+                  color: order.transaction.status === 'RELEASED' ? 'var(--success)' : order.transaction.status === 'HELD' ? '#3B82F6' : 'var(--brand)',
                 }}>
                   {TRANSACTION_LABELS[order.transaction.status]}
                 </span>
               ) : (
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                   {order.status === 'NEGOTIATING' ? 'Aguardando conclusão da negociação.' : 'Aguardando pagamento.'}
                 </p>
               )}
@@ -2050,13 +2053,13 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <AwaitingPaymentSection order={order} perspective={perspective} onPayment={handlePayment} payError={payError} />
             )}
             <ContentSection title="Briefing">
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.description}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{order.description}</p>
             </ContentSection>
           </div>
           <div className="space-y-4">
             {counterpart && (
               <SideCard>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>{counterpartLabel}</p>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>{counterpartLabel}</p>
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
                     {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
@@ -2066,11 +2069,11 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               </SideCard>
             )}
             <SideCard>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Financeiro</p>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Financeiro</p>
               <div className="space-y-2">
                 <Row label="Orçamento" value={fmtBRL(order.budget)} />
                 <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
                   <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
                 </div>
                 {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
@@ -2078,10 +2081,10 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             </SideCard>
             {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && order.status !== 'DISPUTED' && (
               <SideCard>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Ações</p>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Ações</p>
                 <ActionButtons order={order} perspective={perspective} onAction={handleAction} onRefresh={load} />
                 {actionError && (
-                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)' }}>
                     {actionError}
                   </div>
                 )}
@@ -2096,7 +2099,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       {currentTab === 'briefing' && perspective !== 'editor' && prePayment && (
         <div className="space-y-6">
           <ContentSection title="Briefing">
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.description}</p>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{order.description}</p>
           </ContentSection>
 
           <ContentSection
@@ -2104,7 +2107,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             action={
               <button
                 onClick={() => setAddFilesOpen(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'rgba(244,99,30,0.1)', border: '1px solid rgba(244,99,30,0.25)', color: '#F4631E', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--brand)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
               >
                 <IconUpload size={11} stroke={2} />
                 Novos arquivos
@@ -2114,18 +2117,18 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             {order.files.length > 0 ? (
               <ul className="space-y-2">
                 {order.files.map((f) => (
-                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <IconFile size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+                    <IconFile size={16} stroke={1.5} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
                     <span className="flex-1 truncate text-white">{f.fileName}</span>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{f.fileType}</span>
-                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'rgba(244,99,30,0.1)', color: '#F4631E', textDecoration: 'none' }}>
+                    <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{f.fileType}</span>
+                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'var(--brand-soft)', color: 'var(--brand)', textDecoration: 'none' }}>
                       <IconDownload size={13} stroke={1.5} />
                     </a>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="py-1 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhum arquivo adicionado ainda.</p>
+              <p className="py-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>Nenhum arquivo adicionado ainda.</p>
             )}
           </ContentSection>
         </div>
@@ -2138,7 +2141,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             <ContractSection order={order} perspective={perspective} onRefresh={load} />
 
             <ContentSection title="Briefing">
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.description}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{order.description}</p>
             </ContentSection>
 
             {order.deliveries.length > 0 && (
@@ -2148,9 +2151,9 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                     <li key={d.id} className="rounded-[8px] p-4" style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)' }}>
                       <div className="mb-2 flex items-center gap-2">
                         <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>v{d.version}</span>
-                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
-                      {d.message && <p className="mb-3 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{d.message}</p>}
+                      {d.message && <p className="mb-3 text-xs" style={{ color: 'var(--foreground)' }}>{d.message}</p>}
                       <a href={d.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-[6px] px-3 py-1.5 text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', textDecoration: 'none', border: '1px solid rgba(168,85,247,0.3)' }}>
                         <IconPlayerPlay size={12} stroke={1.5} />
                         Abrir vídeo
@@ -2166,7 +2169,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <ContentSection title="Ações">
                 <ActionButtons order={order} perspective={perspective} onAction={handleAction} onRefresh={load} />
                 {actionError && (
-                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+                  <div className="mt-3 rounded-[8px] px-4 py-3 text-xs" style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)' }}>
                     {actionError}
                   </div>
                 )}
@@ -2180,12 +2183,12 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                 <ContentSection title="Sua avaliação">
                   <div className="flex items-center gap-2 mb-2">
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <IconStarFilled key={s} size={18} style={{ color: s <= order.review!.rating ? '#F4631E' : 'rgba(255,255,255,0.12)' }} />
+                      <IconStarFilled key={s} size={18} style={{ color: s <= order.review!.rating ? 'var(--brand)' : 'var(--input)' }} />
                     ))}
                     <span className="text-sm font-semibold text-white ml-1">{order.review.rating}/5</span>
                   </div>
-                  {order.review.comment && <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{order.review.comment}</p>}
-                  <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Avaliado em {new Date(order.review.createdAt).toLocaleDateString('pt-BR')}</p>
+                  {order.review.comment && <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{order.review.comment}</p>}
+                  <p className="mt-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>Avaliado em {new Date(order.review.createdAt).toLocaleDateString('pt-BR')}</p>
                 </ContentSection>
               ) : (
                 <ReviewFormSection orderId={order.id} onDone={load} />
@@ -2197,7 +2200,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
           <div className="space-y-4">
             {counterpart && (
               <SideCard>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>{counterpartLabel}</p>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>{counterpartLabel}</p>
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
                     {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
@@ -2207,27 +2210,27 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               </SideCard>
             )}
             <SideCard>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Financeiro</p>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Financeiro</p>
               <div className="space-y-2">
                 <Row label="Orçamento" value={fmtBRL(order.budget)} />
                 <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
                   <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
                 </div>
                 {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
               </div>
             </SideCard>
             <SideCard>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>Pagamento</p>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Pagamento</p>
               {order.transaction ? (
                 <span className="inline-block rounded-full px-2.5 py-1 text-[11px] font-medium" style={{
-                  background: order.transaction.status === 'RELEASED' ? 'rgba(34,197,94,0.15)' : order.transaction.status === 'HELD' ? 'rgba(59,130,246,0.15)' : 'rgba(244,99,30,0.15)',
-                  color: order.transaction.status === 'RELEASED' ? '#22C55E' : order.transaction.status === 'HELD' ? '#3B82F6' : '#F4631E',
+                  background: order.transaction.status === 'RELEASED' ? 'var(--success-soft)' : order.transaction.status === 'HELD' ? 'var(--info-soft)' : 'var(--brand-soft)',
+                  color: order.transaction.status === 'RELEASED' ? 'var(--success)' : order.transaction.status === 'HELD' ? '#3B82F6' : 'var(--brand)',
                 }}>
                   {TRANSACTION_LABELS[order.transaction.status]}
                 </span>
               ) : (
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Sem transação registrada.</p>
+                <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Sem transação registrada.</p>
               )}
             </SideCard>
           </div>
@@ -2243,7 +2246,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               order.status !== 'COMPLETED' && order.status !== 'CANCELLED' ? (
                 <button
                   onClick={() => setAddFilesOpen(true)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'rgba(244,99,30,0.1)', border: '1px solid rgba(244,99,30,0.25)', color: '#F4631E', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--brand)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
                 >
                   <IconUpload size={11} stroke={2} />
                   Novos arquivos
@@ -2254,18 +2257,18 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             {order.files.length > 0 ? (
               <ul className="space-y-2">
                 {order.files.map((f) => (
-                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <IconFile size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+                    <IconFile size={16} stroke={1.5} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
                     <span className="flex-1 truncate text-white">{f.fileName}</span>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{f.fileType}</span>
-                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'rgba(244,99,30,0.1)', color: '#F4631E', textDecoration: 'none' }}>
+                    <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{f.fileType}</span>
+                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'var(--brand-soft)', color: 'var(--brand)', textDecoration: 'none' }}>
                       <IconDownload size={13} stroke={1.5} />
                     </a>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="py-1 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhum arquivo adicionado ainda.</p>
+              <p className="py-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>Nenhum arquivo adicionado ainda.</p>
             )}
           </ContentSection>
         </div>
@@ -2281,15 +2284,15 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                  que o material existe, sem entregar os links. */
               <div
                 className="flex flex-col items-center gap-2 rounded-[8px] px-4 py-8 text-center"
-                style={{ background: 'rgba(244,99,30,0.06)', border: '1px solid rgba(244,99,30,0.2)' }}
+                style={{ background: 'var(--brand-soft)', border: '1px solid var(--brand-border)' }}
               >
-                <IconLock size={22} stroke={1.5} style={{ color: '#F4631E' }} />
+                <IconLock size={22} stroke={1.5} style={{ color: 'var(--brand)' }} />
                 <p className="text-sm font-medium text-white">
                   {order.filesCount > 0
                     ? `${order.filesCount} ${order.filesCount === 1 ? 'arquivo' : 'arquivos'} aguardando liberação`
                     : 'Arquivos aguardando liberação'}
                 </p>
-                <p className="max-w-sm text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                <p className="max-w-sm text-xs leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
                   O material de referência do criador fica disponível assim que o pagamento
                   entrar em custódia. Isso protege o briefing dele e garante o seu recebimento.
                 </p>
@@ -2297,18 +2300,18 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             ) : order.files.length > 0 ? (
               <ul className="space-y-2">
                 {order.files.map((f) => (
-                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <IconFile size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                  <li key={f.id} className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+                    <IconFile size={16} stroke={1.5} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
                     <span className="flex-1 truncate text-white">{f.fileName}</span>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{f.fileType}</span>
-                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'rgba(244,99,30,0.1)', color: '#F4631E', textDecoration: 'none' }}>
+                    <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{f.fileType}</span>
+                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-[6px]" style={{ background: 'var(--brand-soft)', color: 'var(--brand)', textDecoration: 'none' }}>
                       <IconDownload size={13} stroke={1.5} />
                     </a>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="py-1 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhum arquivo adicionado ainda.</p>
+              <p className="py-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>Nenhum arquivo adicionado ainda.</p>
             )}
           </ContentSection>
 
@@ -2319,9 +2322,9 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                   <li key={d.id} className="rounded-[8px] p-4" style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)' }}>
                     <div className="mb-2 flex items-center gap-2">
                       <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>v{d.version}</span>
-                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{new Date(d.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    {d.message && <p className="mb-3 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{d.message}</p>}
+                    {d.message && <p className="mb-3 text-xs" style={{ color: 'var(--foreground)' }}>{d.message}</p>}
                     <a href={d.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-[6px] px-3 py-1.5 text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', textDecoration: 'none', border: '1px solid rgba(168,85,247,0.3)' }}>
                       <IconPlayerPlay size={12} stroke={1.5} />
                       Abrir vídeo
@@ -2338,10 +2341,10 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
 
       {/* ── TAB: MENSAGENS ── */}
       {currentTab === 'mensagens' && (
-        <div className="overflow-hidden rounded-[12px]" style={{ border: '1px solid rgba(255,255,255,0.08)', height: 'calc(100vh - 320px)', minHeight: 400 }}>
+        <div className="overflow-hidden rounded-[12px]" style={{ border: '1px solid var(--border)', height: 'calc(100vh - 320px)', minHeight: 400 }}>
           {conversation
             ? <ChatPanel conversation={conversation} compact={false} />
-            : <div className="flex h-full items-center justify-center text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Carregando conversa...</div>
+            : <div className="flex h-full items-center justify-center text-sm" style={{ color: 'var(--muted-foreground)' }}>Carregando conversa...</div>
           }
         </div>
       )}

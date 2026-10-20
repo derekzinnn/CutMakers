@@ -153,9 +153,9 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
             disabled={saving}
             className="rounded-[8px] px-4 py-2 text-sm font-medium transition-colors"
             style={{
-              color: 'rgba(255,255,255,0.6)',
+              color: 'var(--foreground)',
               background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid var(--border)',
               cursor: 'pointer',
             }}
           >
@@ -167,7 +167,7 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
             disabled={saving || uploading}
             className="rounded-[8px] px-5 py-2 text-sm font-semibold transition-all"
             style={{
-              background: '#F4631E',
+              background: 'var(--brand)',
               color: 'white',
               border: 'none',
               cursor: saving || uploading ? 'not-allowed' : 'pointer',
@@ -183,7 +183,7 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
       <form id="portfolio-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Upload de vídeo */}
         <div>
-          <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--foreground)' }}>
             Vídeo do projeto
           </label>
           {!form.videoUrl ? (
@@ -193,8 +193,8 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
               disabled={uploading}
               className="flex w-full flex-col items-center justify-center gap-2 rounded-[10px] py-8 transition-colors"
               style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1.5px dashed rgba(255,255,255,0.15)',
+                background: 'var(--surface-subtle)',
+                border: '1.5px dashed var(--input)',
                 cursor: uploading ? 'wait' : 'pointer',
               }}
             >
@@ -203,23 +203,23 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
                   <div className="w-3/4">
                     <div
                       className="h-1.5 w-full overflow-hidden rounded-full"
-                      style={{ background: 'rgba(255,255,255,0.08)' }}
+                      style={{ background: 'var(--border)' }}
                     >
                       <div
                         className="h-full transition-all"
-                        style={{ width: `${uploadProgress}%`, background: '#F4631E' }}
+                        style={{ width: `${uploadProgress}%`, background: 'var(--brand)' }}
                       />
                     </div>
                   </div>
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <span className="text-xs" style={{ color: 'var(--foreground)' }}>
                     Enviando... {uploadProgress}%
                   </span>
                 </>
               ) : (
                 <>
-                  <IconUpload size={28} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+                  <IconUpload size={28} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
                   <span className="text-sm font-medium text-white">Clique para enviar um vídeo</span>
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                     MP4, MOV ou WebM · até 100MB
                   </span>
                 </>
@@ -228,7 +228,7 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
           ) : (
             <div
               className="flex items-center gap-3 rounded-[10px] p-3"
-              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}
+              style={{ background: 'var(--success-soft)', border: '1px solid var(--success-border)' }}
             >
               {form.thumbnailUrl ? (
                 <img
@@ -239,17 +239,17 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
               ) : (
                 <div
                   className="flex h-12 w-20 shrink-0 items-center justify-center rounded"
-                  style={{ background: 'rgba(255,255,255,0.08)' }}
+                  style={{ background: 'var(--border)' }}
                 >
-                  <IconVideo size={20} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+                  <IconVideo size={20} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <IconCheck size={14} stroke={2} color="#22C55E" />
+                  <IconCheck size={14} stroke={2} color="var(--success)" />
                   <span className="text-sm font-medium text-white">Vídeo enviado</span>
                 </div>
-                <p className="truncate text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                <p className="truncate text-xs" style={{ color: 'var(--muted-foreground)' }}>
                   {form.videoUrl.split('/').pop()}
                 </p>
               </div>
@@ -258,10 +258,10 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
                 onClick={() => setForm((f) => ({ ...f, videoUrl: '', thumbnailUrl: '' }))}
                 className="shrink-0 rounded-md p-1"
                 style={{
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'var(--surface-subtle)',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'rgba(255,255,255,0.5)',
+                  color: 'var(--muted-foreground)',
                 }}
               >
                 <IconX size={14} stroke={1.5} />
@@ -279,7 +279,7 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
 
         {/* Título */}
         <div>
-          <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--foreground)' }}>
             Título
           </label>
           <input
@@ -296,7 +296,7 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
         {/* Categoria + Preço (lado a lado) */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--foreground)' }}>
               Categoria
             </label>
             <select
@@ -306,15 +306,15 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
               style={{ paddingLeft: 12 }}
               required
             >
-              <option value="" style={{ background: '#162436' }}>
+              <option value="" style={{ background: 'var(--card)' }}>
                 Selecione...
               </option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id} style={{ background: '#162436' }}>
+                <option key={c.id} value={c.id} style={{ background: 'var(--card)' }}>
                   {c.name}
                 </option>
               ))}
-              <option value={OTHER_CATEGORY} style={{ background: '#162436' }}>
+              <option value={OTHER_CATEGORY} style={{ background: 'var(--card)' }}>
                 Outros...
               </option>
             </select>
@@ -331,7 +331,7 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
             )}
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--foreground)' }}>
               Preço base (R$)
             </label>
             <input
@@ -349,8 +349,8 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
 
         {/* Descrição */}
         <div>
-          <label className="mb-1.5 block text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            Descrição <span style={{ color: 'rgba(255,255,255,0.4)' }}>(opcional)</span>
+          <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--foreground)' }}>
+            Descrição <span style={{ color: 'var(--muted-foreground)' }}>(opcional)</span>
           </label>
           <textarea
             value={form.description}
@@ -367,9 +367,9 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
           <p
             className="rounded-[8px] px-3 py-2 text-xs"
             style={{
-              background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.2)',
-              color: '#FCA5A5',
+              background: 'var(--destructive-soft)',
+              border: '1px solid var(--destructive-border)',
+              color: 'var(--destructive)',
             }}
           >
             {error}

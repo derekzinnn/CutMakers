@@ -181,7 +181,7 @@ export function EditorDashboard() {
               onClick={openCreate}
               className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold transition-all"
               style={{
-                background: '#F4631E',
+                background: 'var(--brand)',
                 color: 'white',
                 border: 'none',
                 cursor: 'pointer',
@@ -197,7 +197,7 @@ export function EditorDashboard() {
         {loading ? (
           <div
             className="flex items-center justify-center py-20 text-sm"
-            style={{ color: 'rgba(255,255,255,0.4)' }}
+            style={{ color: 'var(--muted-foreground)' }}
           >
             Carregando...
           </div>
@@ -222,7 +222,7 @@ export function EditorDashboard() {
               ) : ordersLoading ? (
                 <div
                   className="flex items-center justify-center py-20 text-sm"
-                  style={{ color: 'rgba(255,255,255,0.4)' }}
+                  style={{ color: 'var(--muted-foreground)' }}
                 >
                   Carregando pedidos...
                 </div>
@@ -230,9 +230,9 @@ export function EditorDashboard() {
                 <div
                   className="rounded-card p-6 text-center text-sm"
                   style={{
-                    background: 'rgba(239,68,68,0.08)',
-                    border: '1px solid rgba(239,68,68,0.2)',
-                    color: '#FCA5A5',
+                    background: 'var(--destructive-soft)',
+                    border: '1px solid var(--destructive-border)',
+                    color: 'var(--destructive)',
                   }}
                 >
                   {ordersError}
@@ -241,18 +241,18 @@ export function EditorDashboard() {
                 <div
                   className="rounded-card p-12 text-center"
                   style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'var(--surface-subtle)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <div
                     className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-                    style={{ background: 'rgba(244,99,30,0.1)' }}
+                    style={{ background: 'var(--brand-soft)' }}
                   >
-                    <IconInbox size={28} stroke={1.5} color="#F4631E" />
+                    <IconInbox size={28} stroke={1.5} color="var(--brand)" />
                   </div>
                   <h3 className="font-heading text-lg font-bold text-white">Nenhum pedido ainda</h3>
-                  <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'var(--muted-foreground)' }}>
                     Quando um creator te contratar, os pedidos aparecerão aqui.
                   </p>
                 </div>
@@ -320,8 +320,8 @@ export function EditorDashboard() {
               className="rounded-[8px] px-4 py-2 text-sm"
               style={{
                 background: 'transparent',
-                color: 'rgba(255,255,255,0.6)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                color: 'var(--foreground)',
+                border: '1px solid var(--border)',
                 cursor: deleting ? 'not-allowed' : 'pointer',
               }}
             >
@@ -332,7 +332,7 @@ export function EditorDashboard() {
               disabled={deleting}
               className="rounded-[8px] px-4 py-2 text-sm font-semibold"
               style={{
-                background: '#EF4444',
+                background: 'var(--destructive)',
                 color: 'white',
                 border: 'none',
                 cursor: deleting ? 'not-allowed' : 'pointer',
@@ -345,13 +345,13 @@ export function EditorDashboard() {
           </>
         }
       >
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <p className="text-sm" style={{ color: 'var(--foreground)' }}>
           Esta ação não pode ser desfeita. O vídeo será removido do seu portfólio.
         </p>
         {deleteError && (
           <p
             className="mt-3 rounded-[8px] px-3 py-2 text-xs"
-            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#FCA5A5' }}
+            style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', color: 'var(--destructive)' }}
           >
             {deleteError}
           </p>
@@ -373,7 +373,7 @@ function StatusBarChart({ orders }: { orders: OrderDTO[] }) {
 
   if (entries.length === 0) {
     return (
-      <p className="py-6 text-center text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+      <p className="py-6 text-center text-xs" style={{ color: 'var(--muted-foreground)' }}>
         Sem pedidos ainda — seus projetos aparecerão aqui.
       </p>
     )
@@ -383,10 +383,10 @@ function StatusBarChart({ orders }: { orders: OrderDTO[] }) {
     <div className="space-y-2.5">
       {entries.map(([status, count]) => (
         <div key={status} className="flex items-center gap-3">
-          <span className="w-32 shrink-0 truncate text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          <span className="w-32 shrink-0 truncate text-xs" style={{ color: 'var(--foreground)' }}>
             {STATUS_LABELS[status]}
           </span>
-          <div className="h-4 flex-1 overflow-hidden rounded-[4px]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <div className="h-4 flex-1 overflow-hidden rounded-[4px]" style={{ background: 'var(--surface-subtle)' }}>
             <div
               className="h-full rounded-[4px] transition-all"
               style={{ width: `${(count / max) * 100}%`, background: STATUS_COLORS[status], opacity: 0.85 }}
@@ -414,7 +414,7 @@ function UpcomingDeadlines({ orders }: { orders: OrderDTO[] }) {
 
   if (upcoming.length === 0) {
     return (
-      <p className="py-6 text-center text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+      <p className="py-6 text-center text-xs" style={{ color: 'var(--muted-foreground)' }}>
         Nenhum prazo vencendo nos próximos 7 dias. 🎉
       </p>
     )
@@ -425,7 +425,7 @@ function UpcomingDeadlines({ orders }: { orders: OrderDTO[] }) {
       {upcoming.map(({ order, daysLeft }) => {
         const overdue = daysLeft < 0
         const urgent = daysLeft <= 2
-        const color = overdue ? '#EF4444' : urgent ? '#EAB308' : '#3B82F6'
+        const color = overdue ? 'var(--destructive)' : urgent ? '#EAB308' : '#3B82F6'
         return (
           <li
             key={order.id}
@@ -492,23 +492,23 @@ function OverviewSection({
             key={s.label}
             className="rounded-card p-5"
             style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--surface-subtle)',
+              border: '1px solid var(--border)',
             }}
           >
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <span className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
                 {s.label}
               </span>
               <span
                 className="flex h-8 w-8 items-center justify-center rounded-lg"
-                style={{ background: 'rgba(244,99,30,0.1)' }}
+                style={{ background: 'var(--brand-soft)' }}
               >
-                <s.Icon size={16} stroke={1.5} color="#F4631E" />
+                <s.Icon size={16} stroke={1.5} color="var(--brand)" />
               </span>
             </div>
             <p className="font-heading text-2xl font-bold text-white">{s.value}</p>
-            <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
               {s.hint}
             </p>
           </div>
@@ -519,14 +519,14 @@ function OverviewSection({
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div
           className="rounded-card p-5"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
         >
           <h3 className="mb-4 font-heading text-sm font-semibold text-white">Pedidos por status</h3>
           <StatusBarChart orders={orders} />
         </div>
         <div
           className="rounded-card p-5"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
         >
           <h3 className="mb-4 font-heading text-sm font-semibold text-white">Prazos próximos</h3>
           <UpcomingDeadlines orders={orders} />
@@ -538,20 +538,20 @@ function OverviewSection({
         <div
           className="rounded-card p-12 text-center"
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--surface-subtle)',
+            border: '1px solid var(--border)',
           }}
         >
           <div
             className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-            style={{ background: 'rgba(244,99,30,0.1)' }}
+            style={{ background: 'var(--brand-soft)' }}
           >
-            <IconBriefcase size={28} stroke={1.5} color="#F4631E" />
+            <IconBriefcase size={28} stroke={1.5} color="var(--brand)" />
           </div>
           <h3 className="font-heading text-lg font-bold text-white">
             Seu portfólio está vazio
           </h3>
-          <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'var(--muted-foreground)' }}>
             Adicione seus melhores projetos para começar a receber clientes.
             Criadores buscam editores com portfólios sólidos.
           </p>
@@ -579,25 +579,25 @@ function PortfolioSection({
       <div
         className="rounded-card p-12 text-center"
         style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'var(--surface-subtle)',
+          border: '1px solid var(--border)',
         }}
       >
         <div
           className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-          style={{ background: 'rgba(244,99,30,0.1)' }}
+          style={{ background: 'var(--brand-soft)' }}
         >
-          <IconBriefcase size={28} stroke={1.5} color="#F4631E" />
+          <IconBriefcase size={28} stroke={1.5} color="var(--brand)" />
         </div>
         <h3 className="font-heading text-lg font-bold text-white">Nenhum projeto ainda</h3>
-        <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'var(--muted-foreground)' }}>
           Adicione seu primeiro projeto e mostre seu trabalho aos criadores.
         </p>
         <button
           onClick={onAdd}
           className="mt-6 inline-flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-semibold transition-all"
           style={{
-            background: '#F4631E',
+            background: 'var(--brand)',
             color: 'white',
             border: 'none',
             cursor: 'pointer',
@@ -618,12 +618,12 @@ function PortfolioSection({
           key={item.id}
           className="group overflow-hidden rounded-card"
           style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--surface-subtle)',
+            border: '1px solid var(--border)',
           }}
         >
           {/* Thumbnail */}
-          <div className="relative aspect-video w-full overflow-hidden" style={{ background: '#0D1B2A' }}>
+          <div className="relative aspect-video w-full overflow-hidden" style={{ background: 'var(--background)' }}>
             {item.thumbnailUrl ? (
               <>
                 {/* Fundo desfocado + contain: vídeos verticais não quebram o card */}
@@ -643,7 +643,7 @@ function PortfolioSection({
               </>
             ) : (
               <div className="flex h-full w-full items-center justify-center">
-                <IconPlayerPlay size={32} stroke={1.5} style={{ color: 'rgba(255,255,255,0.2)' }} />
+                <IconPlayerPlay size={32} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
               </div>
             )}
             <a
@@ -655,7 +655,7 @@ function PortfolioSection({
             >
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-full"
-                style={{ background: '#F4631E' }}
+                style={{ background: 'var(--brand)' }}
               >
                 <IconPlayerPlay size={20} stroke={2} color="white" fill="white" />
               </div>
@@ -666,7 +666,7 @@ function PortfolioSection({
           <div className="p-4">
             <span
               className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
-              style={{ background: 'rgba(244,99,30,0.15)', color: '#F4631E' }}
+              style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}
             >
               {item.category.name}
             </span>
@@ -674,13 +674,13 @@ function PortfolioSection({
               {item.title}
             </h3>
             {item.description && (
-              <p className="mt-1 line-clamp-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <p className="mt-1 line-clamp-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
                 {item.description}
               </p>
             )}
             <p
               className="mt-2 font-heading text-base font-bold"
-              style={{ color: '#F4631E' }}
+              style={{ color: 'var(--brand)' }}
             >
               R$ {item.basePrice.toFixed(2)}
             </p>
@@ -688,7 +688,7 @@ function PortfolioSection({
             <div className="mt-3 flex items-center justify-between">
               <span
                 className="flex items-center gap-1 text-[10px]"
-                style={{ color: 'rgba(255,255,255,0.4)' }}
+                style={{ color: 'var(--muted-foreground)' }}
               >
                 <IconClock size={11} stroke={1.5} />
                 {new Date(item.createdAt).toLocaleDateString('pt-BR')}
@@ -698,9 +698,9 @@ function PortfolioSection({
                   onClick={() => onEdit(item)}
                   className="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                   style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    color: 'rgba(255,255,255,0.6)',
+                    background: 'var(--surface-subtle)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--foreground)',
                     cursor: 'pointer',
                   }}
                 >
@@ -710,8 +710,8 @@ function PortfolioSection({
                   onClick={() => onDelete(item.id, item.title)}
                   className="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                   style={{
-                    background: 'rgba(239,68,68,0.05)',
-                    border: '1px solid rgba(239,68,68,0.15)',
+                    background: 'var(--destructive-soft)',
+                    border: '1px solid var(--destructive-soft)',
                     color: 'rgba(239,68,68,0.8)',
                     cursor: 'pointer',
                   }}
@@ -775,7 +775,7 @@ function PremiumSection() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <IconLoader2 size={26} className="animate-spin" style={{ color: '#F4631E' }} />
+        <IconLoader2 size={26} className="animate-spin" style={{ color: 'var(--brand)' }} />
       </div>
     )
   }
@@ -792,32 +792,32 @@ function PremiumSection() {
       <div className="mx-auto max-w-2xl space-y-6">
         <div
           className="rounded-card p-8 text-center"
-          style={{ background: 'linear-gradient(180deg, rgba(244,99,30,0.12), rgba(244,99,30,0.03))', border: '1px solid rgba(244,99,30,0.3)' }}
+          style={{ background: 'linear-gradient(180deg, var(--brand-soft), var(--brand-soft))', border: '1px solid var(--brand-border)' }}
         >
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'rgba(244,99,30,0.15)' }}>
-            <IconCrown size={30} stroke={1.5} color="#F4631E" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'var(--brand-soft)' }}>
+            <IconCrown size={30} stroke={1.5} color="var(--brand)" />
           </div>
-          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'rgba(244,99,30,0.15)', color: '#F4631E' }}>
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}>
             <IconRosetteDiscountCheck size={14} stroke={2} />
             PREMIUM ATIVO
           </div>
           <h3 className="font-heading text-xl font-bold text-white">Você é um editor Premium</h3>
           {expiresAt && (
-            <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            <p className="mt-2 text-sm" style={{ color: 'var(--foreground)' }}>
               Válido até {expiresAt.toLocaleDateString('pt-BR')}
               {daysLeft !== null && daysLeft >= 0 && (
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}> · {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'}</span>
+                <span style={{ color: 'var(--muted-foreground)' }}> · {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'}</span>
               )}
             </p>
           )}
         </div>
 
-        <div className="rounded-card p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="rounded-card p-6" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
           <ul className="space-y-3">
             {PREMIUM_BENEFITS.map((b) => (
               <li key={b} className="flex items-center gap-3 text-sm text-white">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(34,197,94,0.15)' }}>
-                  <IconCheck size={12} stroke={2.5} color="#22C55E" />
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--success-soft)' }}>
+                  <IconCheck size={12} stroke={2.5} color="var(--success)" />
                 </span>
                 {b}
               </li>
@@ -830,9 +830,9 @@ function PremiumSection() {
               disabled={busy || !renewable}
               className="flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-semibold transition-all"
               style={{
-                background: renewable ? '#F4631E' : 'rgba(255,255,255,0.06)',
-                color: renewable ? 'white' : 'rgba(255,255,255,0.4)',
-                border: renewable ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                background: renewable ? 'var(--brand)' : 'var(--border)',
+                color: renewable ? 'white' : 'var(--muted-foreground)',
+                border: renewable ? 'none' : '1px solid var(--input)',
                 cursor: busy || !renewable ? 'not-allowed' : 'pointer',
                 opacity: busy ? 0.7 : 1,
                 fontFamily: "'Syne', sans-serif",
@@ -842,11 +842,11 @@ function PremiumSection() {
               Renovar assinatura
             </button>
             {!renewable && (
-              <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="mt-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
                 A renovação fica disponível nos últimos 5 dias antes do vencimento.
               </p>
             )}
-            {error && <p className="mt-2 text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+            {error && <p className="mt-2 text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
           </div>
         </div>
       </div>
@@ -856,22 +856,22 @@ function PremiumSection() {
   // ── Estado free (upsell) ──
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="rounded-card p-8" style={{ background: 'linear-gradient(180deg, rgba(244,99,30,0.1), rgba(255,255,255,0.02))', border: '1px solid rgba(244,99,30,0.25)' }}>
+      <div className="rounded-card p-8" style={{ background: 'linear-gradient(180deg, var(--brand-soft), var(--surface-subtle))', border: '1px solid var(--brand-border)' }}>
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: 'rgba(244,99,30,0.15)' }}>
-            <IconCrown size={24} stroke={1.5} color="#F4631E" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: 'var(--brand-soft)' }}>
+            <IconCrown size={24} stroke={1.5} color="var(--brand)" />
           </div>
           <div>
             <h3 className="font-heading text-xl font-bold text-white">CutMakers Premium</h3>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Mais visibilidade, mais clientes.</p>
+            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Mais visibilidade, mais clientes.</p>
           </div>
         </div>
 
         <ul className="space-y-3">
           {PREMIUM_BENEFITS.map((b) => (
             <li key={b} className="flex items-center gap-3 text-sm text-white">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(244,99,30,0.15)' }}>
-                <IconCheck size={12} stroke={2.5} color="#F4631E" />
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--brand-soft)' }}>
+                <IconCheck size={12} stroke={2.5} color="var(--brand)" />
               </span>
               {b}
             </li>
@@ -880,21 +880,21 @@ function PremiumSection() {
 
         <div className="mt-6 flex items-baseline gap-1.5">
           <span className="font-heading text-3xl font-bold text-white">R$ {price.toFixed(2).replace('.', ',')}</span>
-          <span className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>/mês</span>
+          <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>/mês</span>
         </div>
 
         <button
           onClick={handleSubscribe}
           disabled={busy}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-semibold transition-all"
-          style={{ background: '#F4631E', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+          style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
         >
           {busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconCrown size={16} stroke={1.5} />}
           {busy ? 'Gerando cobrança...' : `Assinar Premium — R$ ${price.toFixed(2).replace('.', ',')}/mês`}
         </button>
 
         {charge && (charge.pixCode || charge.paymentUrl) && (
-          <div className="mt-4 rounded-[8px] px-4 py-3" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
+          <div className="mt-4 rounded-[8px] px-4 py-3" style={{ background: 'var(--info-soft)', border: '1px solid rgba(59,130,246,0.2)' }}>
             <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>Cobrança PIX gerada</p>
             {charge.paymentUrl && (
               <a href={charge.paymentUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs underline" style={{ color: '#93C5FD' }}>
@@ -902,17 +902,17 @@ function PremiumSection() {
               </a>
             )}
             {charge.pixCode && (
-              <p className="mt-2 break-all rounded-[6px] px-2 py-1.5 text-[11px]" style={{ background: 'rgba(0,0,0,0.2)', color: 'rgba(255,255,255,0.7)' }}>
+              <p className="mt-2 break-all rounded-[6px] px-2 py-1.5 text-[11px]" style={{ background: 'rgba(0,0,0,0.2)', color: 'var(--foreground)' }}>
                 {charge.pixCode}
               </p>
             )}
-            <p className="mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="mt-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
               Assim que o pagamento for confirmado, seu perfil vira Premium automaticamente.
             </p>
           </div>
         )}
 
-        {error && <p className="mt-3 text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+        {error && <p className="mt-3 text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
       </div>
     </div>
   )

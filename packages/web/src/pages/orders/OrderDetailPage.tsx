@@ -8,7 +8,7 @@ export function OrderDetailPage() {
   if (!id) return null
 
   return (
-    <div className="min-h-screen" style={{ background: '#0D1B2A' }}>
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       <main className="mx-auto max-w-5xl px-4 py-8">
         <OrderDetail orderId={id} onBack={() => navigate(-1)} />
       </main>

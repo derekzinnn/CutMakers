@@ -79,9 +79,9 @@ export function OpportunitiesSection({ initialRequestId }: { initialRequestId?: 
   useEffect(() => { load() }, [load])
 
   const selectStyle: React.CSSProperties = {
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    color: 'rgba(255,255,255,0.8)',
+    background: 'var(--surface-subtle)',
+    border: '1px solid var(--border)',
+    color: 'var(--foreground)',
     colorScheme: 'dark',
   }
 
@@ -89,8 +89,8 @@ export function OpportunitiesSection({ initialRequestId }: { initialRequestId?: 
     <div className="space-y-5">
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 rounded-[8px] px-3 py-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <IconSearch size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+        <div className="flex items-center gap-2 rounded-[8px] px-3 py-2" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+          <IconSearch size={14} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
           <input
             value={rawSearch}
             onChange={(e) => setRawSearch(e.target.value)}
@@ -99,25 +99,25 @@ export function OpportunitiesSection({ initialRequestId }: { initialRequestId?: 
           />
         </div>
         <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-[8px] px-3 py-2 text-xs outline-none" style={selectStyle}>
-          <option value="" style={{ background: '#162436' }}>Todas as categorias</option>
+          <option value="" style={{ background: 'var(--card)' }}>Todas as categorias</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id} style={{ background: '#162436' }}>{c.name}</option>
+            <option key={c.id} value={c.id} style={{ background: 'var(--card)' }}>{c.name}</option>
           ))}
         </select>
         <select value={sort} onChange={(e) => setSort(e.target.value as 'recent' | 'budget_desc')} className="rounded-[8px] px-3 py-2 text-xs outline-none" style={selectStyle}>
-          <option value="recent" style={{ background: '#162436' }}>Mais recentes</option>
-          <option value="budget_desc" style={{ background: '#162436' }}>Maior orçamento</option>
+          <option value="recent" style={{ background: 'var(--card)' }}>Mais recentes</option>
+          <option value="budget_desc" style={{ background: 'var(--card)' }}>Maior orçamento</option>
         </select>
         <button
           onClick={load}
           title="Atualizar"
           className="flex h-8 w-8 items-center justify-center rounded-[8px]"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
         >
           <IconRefresh size={14} stroke={1.5} />
         </button>
         {data && (
-          <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <span className="ml-auto text-xs" style={{ color: 'var(--muted-foreground)' }}>
             {data.total} oportunidade{data.total !== 1 ? 's' : ''}
           </span>
         )}
@@ -127,7 +127,7 @@ export function OpportunitiesSection({ initialRequestId }: { initialRequestId?: 
         <Loading />
       ) : !data || data.requests.length === 0 ? (
         <Empty
-          icon={<IconBriefcase size={26} stroke={1.5} color="#F4631E" />}
+          icon={<IconBriefcase size={26} stroke={1.5} color="var(--brand)" />}
           title="Nenhuma oportunidade no momento"
           text="Quando criadores publicarem projetos nas suas categorias, eles aparecem aqui. Tente outros filtros."
         />
@@ -152,17 +152,17 @@ function OpportunityCard({ request: r, onOpen }: { request: BoardRequest; onOpen
   return (
     <div
       className="flex flex-col rounded-[12px] p-5"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
     >
       <div className="mb-2 flex items-center gap-2">
-        <Pill label={r.category.name} color="#94A3B8" />
+        <Pill label={r.category.name} color="var(--muted-foreground)" />
         {dl && <span className="text-[11px]" style={{ color: dl.color }}>{dl.text}</span>}
-        <span className="ml-auto text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{fmtDate(r.createdAt)}</span>
+        <span className="ml-auto text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{fmtDate(r.createdAt)}</span>
       </div>
       <h3 className="font-heading text-base font-semibold text-white">{r.title}</h3>
-      <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>{r.descriptionPreview}</p>
+      <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{r.descriptionPreview}</p>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
         <span className="font-semibold text-white">{budgetLabel(r.budgetMin, r.budgetMax)}</span>
         <span className="inline-flex items-center gap-1">
           <IconUsers size={12} stroke={1.5} />
@@ -174,7 +174,7 @@ function OpportunityCard({ request: r, onOpen }: { request: BoardRequest; onOpen
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-3">
-        <span className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        <span className="flex items-center gap-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
           <Avatar name={r.creator.name} url={r.creator.avatarUrl} size={22} />
           {r.creator.name}
         </span>
@@ -292,7 +292,7 @@ export function OpportunityDetailModal({
             <div className="flex flex-wrap items-center gap-2">
               {!isOpen && <Pill label={REQUEST_STATUS_LABELS[request.status]} color={REQUEST_STATUS_COLORS[request.status]} />}
               <span className="text-sm font-semibold text-white">{budgetLabel(request.budgetMin, request.budgetMax)}</span>
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                 · Prazo: {request.deadline ? new Date(request.deadline).toLocaleDateString('pt-BR') : 'a combinar'}
                 · {request.revisionsIncluded} revis{request.revisionsIncluded === 1 ? 'ão inclusa' : 'ões inclusas'}
                 · {request.proposalCount} proposta{request.proposalCount !== 1 ? 's' : ''}
@@ -301,7 +301,7 @@ export function OpportunityDetailModal({
 
             <div>
               <h4 className="mb-1.5 font-heading text-sm font-semibold text-white">Descrição</h4>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{request.description}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{request.description}</p>
             </div>
 
             {request.referenceLinks.length > 0 && (
@@ -309,7 +309,7 @@ export function OpportunityDetailModal({
                 <h4 className="mb-1.5 font-heading text-sm font-semibold text-white">Referências</h4>
                 <div className="space-y-1.5">
                   {request.referenceLinks.map((link) => (
-                    <a key={link} href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 truncate text-xs hover:underline" style={{ color: '#F4631E' }}>
+                    <a key={link} href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 truncate text-xs hover:underline" style={{ color: 'var(--brand)' }}>
                       <IconLink size={12} stroke={1.5} /> {link}
                     </a>
                   ))}
@@ -317,26 +317,26 @@ export function OpportunityDetailModal({
               </div>
             )}
 
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <p className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
               Arquivos brutos do criador são liberados apenas ao editor escolhido, após a confirmação do pagamento.
             </p>
 
             {mine && mine.status !== 'WITHDRAWN' && (
-              <div className="rounded-[10px] p-4" style={{ background: 'rgba(244,99,30,0.06)', border: '1px solid rgba(244,99,30,0.2)' }}>
+              <div className="rounded-[10px] p-4" style={{ background: 'var(--brand-soft)', border: '1px solid var(--brand-border)' }}>
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="text-xs font-semibold" style={{ color: '#F4631E' }}>Sua proposta</span>
+                  <span className="text-xs font-semibold" style={{ color: 'var(--brand)' }}>Sua proposta</span>
                   <Pill label={PROPOSAL_STATUS_LABELS[mine.status]} color={PROPOSAL_STATUS_COLORS[mine.status]} />
                 </div>
                 <p className="text-sm text-white">
                   <strong>{fmtBRL(mine.amount)}</strong>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}> · entrega em {mine.deliveryDays} dia{mine.deliveryDays !== 1 ? 's' : ''}</span>
+                  <span style={{ color: 'var(--muted-foreground)' }}> · entrega em {mine.deliveryDays} dia{mine.deliveryDays !== 1 ? 's' : ''}</span>
                 </p>
-                <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>{mine.message}</p>
+                <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed" style={{ color: 'var(--foreground)' }}>{mine.message}</p>
               </div>
             )}
 
             {confirmWithdraw && (
-              <p className="text-xs" style={{ color: '#FCA5A5' }}>
+              <p className="text-xs" style={{ color: 'var(--destructive)' }}>
                 Ao retirar, sua proposta deixa de ser considerada. Você poderá enviar outra enquanto a solicitação estiver aberta.
               </p>
             )}

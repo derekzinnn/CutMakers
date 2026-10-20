@@ -136,9 +136,9 @@ export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
               className="input-field"
               style={{ paddingLeft: 12, opacity: isEdit ? 0.6 : 1 }}
             >
-              <option value="" style={{ background: '#162436' }}>Selecione...</option>
+              <option value="" style={{ background: 'var(--card)' }}>Selecione...</option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id} style={{ background: '#162436' }}>{c.name}</option>
+                <option key={c.id} value={c.id} style={{ background: 'var(--card)' }}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -178,7 +178,7 @@ export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
             className="input-field"
             style={{ height: 'auto', padding: '10px 14px', resize: 'vertical', minHeight: 110 }}
           />
-          <p className="mt-1 text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="mt-1 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
             Editores veem esta descrição completa. Arquivos brutos só são liberados ao editor escolhido após o pagamento.
           </p>
         </div>
@@ -238,7 +238,7 @@ export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
                   onClick={() => setLinks((prev) => prev.filter((_, idx) => idx !== i))}
                   aria-label="Remover link"
                   className="flex w-10 shrink-0 items-center justify-center rounded-[8px]"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}
+                  style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--muted-foreground)', cursor: 'pointer' }}
                 >
                   <IconX size={14} stroke={1.5} />
                 </button>

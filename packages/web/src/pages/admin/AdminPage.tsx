@@ -73,10 +73,10 @@ const ROLE_LABELS: Record<UserRole, string> = {
 }
 
 const TRANSACTION_COLORS: Record<TransactionStatus, string> = {
-  PENDING: '#F4631E',
+  PENDING: 'var(--brand)',
   HELD: '#3B82F6',
-  RELEASED: '#22C55E',
-  REFUNDED: '#EF4444',
+  RELEASED: 'var(--success)',
+  REFUNDED: 'var(--destructive)',
 }
 
 const ALL_ORDER_STATUSES: OrderStatus[] = [
@@ -96,7 +96,7 @@ function useDebounced<T>(value: T, ms = 350): T {
 function Spinner() {
   return (
     <div className="flex items-center justify-center py-16">
-      <IconLoader2 size={24} className="animate-spin" style={{ color: '#F4631E' }} />
+      <IconLoader2 size={24} className="animate-spin" style={{ color: 'var(--brand)' }} />
     </div>
   )
 }
@@ -109,9 +109,9 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
       disabled={disabled}
       className="flex h-8 w-8 items-center justify-center rounded-[8px]"
       style={{
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        color: disabled ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)',
+        background: 'var(--surface-subtle)',
+        border: '1px solid var(--border)',
+        color: disabled ? 'var(--muted-foreground)' : 'var(--foreground)',
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
     >
@@ -120,7 +120,7 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
   )
   return (
     <div className="mt-4 flex items-center justify-between">
-      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
         Página {page} de {totalPages}
       </span>
       <div className="flex gap-2">
@@ -180,21 +180,21 @@ function StatsCard({
   return (
     <div
       className="rounded-card p-5"
-      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
     >
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>
+        <span className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
           {label}
         </span>
         <span
           className="flex h-8 w-8 items-center justify-center rounded-lg"
-          style={{ background: 'rgba(244,99,30,0.1)' }}
+          style={{ background: 'var(--brand-soft)' }}
         >
-          <Icon size={16} stroke={1.5} color="#F4631E" />
+          <Icon size={16} stroke={1.5} color="var(--brand)" />
         </span>
       </div>
       <p className="font-heading text-2xl font-bold text-white">{value}</p>
-      <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+      <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
         {delta}
       </p>
     </div>
@@ -206,12 +206,12 @@ function EmptyState({ message }: { message: string }) {
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div
         className="mb-4 flex h-14 w-14 items-center justify-center rounded-full"
-        style={{ background: 'rgba(255,255,255,0.05)' }}
+        style={{ background: 'var(--surface-subtle)' }}
       >
-        <IconDots size={24} stroke={1.5} style={{ color: 'rgba(255,255,255,0.2)' }} />
+        <IconDots size={24} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
       </div>
       <p className="text-sm font-medium text-white">Nenhum dado ainda</p>
-      <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+      <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
         {message}
       </p>
     </div>
@@ -242,14 +242,14 @@ function DashboardSection() {
       {/* Últimos usuários */}
       <div
         className="rounded-card p-6"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
       >
         <SectionHeader
           title="Últimos Usuários"
           action={
             <button
               className="flex items-center gap-1 text-xs"
-              style={{ color: '#F4631E', background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               Ver todos <IconChevronRight size={12} />
             </button>
@@ -261,14 +261,14 @@ function DashboardSection() {
       {/* Últimos pedidos */}
       <div
         className="rounded-card p-6"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
       >
         <SectionHeader
           title="Últimos Pedidos"
           action={
             <button
               className="flex items-center gap-1 text-xs"
-              style={{ color: '#F4631E', background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               Ver todos <IconChevronRight size={12} />
             </button>
@@ -329,11 +329,11 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
   }
 
   return (
-    <div className="rounded-card p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="rounded-card p-6" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
       {/* Busca + filtro de role */}
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 rounded-[8px] px-3 py-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <IconSearch size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+        <div className="flex items-center gap-2 rounded-[8px] px-3 py-2" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+          <IconSearch size={14} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
           <input
             value={rawSearch}
             onChange={(e) => setRawSearch(e.target.value)}
@@ -350,9 +350,9 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                 onClick={() => setRole(r.value)}
                 className="rounded-full px-3 py-1 text-xs transition-colors"
                 style={{
-                  background: active ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.05)',
-                  color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                  border: `1px solid ${active ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  background: active ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+                  color: active ? 'var(--brand)' : 'var(--foreground)',
+                  border: `1px solid ${active ? 'var(--brand-border)' : 'var(--border)'}`,
                   cursor: 'pointer',
                 }}
               >
@@ -364,7 +364,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
       </div>
 
       {/* Cabeçalho da tabela */}
-      <div className="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_1.2fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)' }}>
+      <div className="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_1.2fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)' }}>
         <span>Nome</span>
         <span>Email</span>
         <span>Role</span>
@@ -380,19 +380,19 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
       ) : (
         <div className="mt-1">
           {data.users.map((u) => (
-            <div key={u.id} className="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_1.2fr] items-center gap-4 border-b px-4 py-3 text-sm" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+            <div key={u.id} className="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_1.2fr] items-center gap-4 border-b px-4 py-3 text-sm" style={{ borderColor: 'var(--surface-subtle)' }}>
               <span className="flex items-center gap-2 truncate text-white">
                 {u.name}
-                {u.isPremium && <IconRosetteDiscountCheck size={14} stroke={2} style={{ color: '#F4631E', flexShrink: 0 }} />}
+                {u.isPremium && <IconRosetteDiscountCheck size={14} stroke={2} style={{ color: 'var(--brand)', flexShrink: 0 }} />}
               </span>
-              <span className="truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{u.email}</span>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>{ROLE_LABELS[u.role]}</span>
-              <span style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtDate(u.createdAt)}</span>
+              <span className="truncate" style={{ color: 'var(--foreground)' }}>{u.email}</span>
+              <span style={{ color: 'var(--foreground)' }}>{ROLE_LABELS[u.role]}</span>
+              <span style={{ color: 'var(--muted-foreground)' }}>{fmtDate(u.createdAt)}</span>
               <span>
                 {u.banned ? (
-                  <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(239,68,68,0.12)', color: '#EF4444' }}>Suspenso</span>
+                  <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)' }}>Suspenso</span>
                 ) : (
-                  <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}>Ativo</span>
+                  <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>Ativo</span>
                 )}
               </span>
               <div className="flex items-center justify-end gap-2">
@@ -401,7 +401,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                     onClick={() => onViewUser(u)}
                     title="Ver perfil"
                     className="flex h-7 w-7 items-center justify-center rounded-[6px]"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+                    style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
                   >
                     <IconEye size={14} stroke={1.5} />
                   </button>
@@ -412,9 +412,9 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                     title={u.banned ? 'Desbanir' : 'Banir'}
                     className="flex h-7 items-center gap-1 rounded-[6px] px-2 text-[11px] font-medium"
                     style={{
-                      background: u.banned ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-                      border: `1px solid ${u.banned ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
-                      color: u.banned ? '#22C55E' : '#EF4444',
+                      background: u.banned ? 'var(--success-soft)' : 'var(--destructive-soft)',
+                      border: `1px solid ${u.banned ? 'var(--success-border)' : 'var(--destructive-border)'}`,
+                      color: u.banned ? 'var(--success)' : 'var(--destructive)',
                       cursor: 'pointer',
                     }}
                   >
@@ -441,7 +441,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
               onClick={() => setTarget(null)}
               disabled={busy}
               className="rounded-[8px] px-4 py-2 text-sm"
-              style={{ background: 'transparent', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', cursor: busy ? 'not-allowed' : 'pointer' }}
+              style={{ background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: busy ? 'not-allowed' : 'pointer' }}
             >
               Cancelar
             </button>
@@ -450,7 +450,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
               disabled={busy}
               className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
               style={{
-                background: target?.banned ? '#22C55E' : '#EF4444',
+                background: target?.banned ? 'var(--success)' : 'var(--destructive)',
                 color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1,
                 fontFamily: "'Syne', sans-serif",
               }}
@@ -461,7 +461,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
           </>
         }
       >
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <p className="text-sm" style={{ color: 'var(--foreground)' }}>
           {target?.banned
             ? 'O usuário poderá voltar a fazer login normalmente.'
             : 'O usuário não poderá mais fazer login enquanto estiver suspenso. Ele verá a mensagem "Conta suspensa. Entre em contato com o suporte."'}
@@ -499,16 +499,16 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   const disputeByOrderId = new Map(disputes.map((d) => [d.order.id, d]))
 
   return (
-    <div className="rounded-card p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="rounded-card p-6" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
       {/* Filtro de status */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <button
           onClick={() => setStatus('ALL')}
           className="rounded-full px-3 py-1 text-xs"
           style={{
-            background: status === 'ALL' ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.05)',
-            color: status === 'ALL' ? '#F4631E' : 'rgba(255,255,255,0.6)',
-            border: `1px solid ${status === 'ALL' ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+            background: status === 'ALL' ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+            color: status === 'ALL' ? 'var(--brand)' : 'var(--foreground)',
+            border: `1px solid ${status === 'ALL' ? 'var(--brand-border)' : 'var(--border)'}`,
             cursor: 'pointer',
           }}
         >
@@ -522,9 +522,9 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
               onClick={() => setStatus(s)}
               className="rounded-full px-3 py-1 text-xs"
               style={{
-                background: active ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.05)',
-                color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                border: `1px solid ${active ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                background: active ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+                color: active ? 'var(--brand)' : 'var(--foreground)',
+                border: `1px solid ${active ? 'var(--brand-border)' : 'var(--border)'}`,
                 cursor: 'pointer',
               }}
             >
@@ -535,7 +535,7 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
       </div>
 
       {/* Cabeçalho */}
-      <div className="grid grid-cols-[0.7fr_1.2fr_1.2fr_1fr_1.2fr_1fr_1fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)' }}>
+      <div className="grid grid-cols-[0.7fr_1.2fr_1.2fr_1fr_1.2fr_1fr_1fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)' }}>
         <span>ID</span>
         <span>Criador</span>
         <span>Editor</span>
@@ -560,30 +560,30 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                 onClick={() => onOpenOrder(o.id)}
                 className="grid cursor-pointer grid-cols-[0.7fr_1.2fr_1.2fr_1fr_1.2fr_1fr_1fr] items-center gap-4 border-b px-4 py-3 text-sm transition-colors"
                 style={{
-                  borderColor: 'rgba(255,255,255,0.05)',
-                  background: isDisputed ? 'rgba(244,99,30,0.06)' : 'transparent',
+                  borderColor: 'var(--surface-subtle)',
+                  background: isDisputed ? 'var(--brand-soft)' : 'transparent',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = isDisputed ? 'rgba(244,99,30,0.1)' : 'rgba(255,255,255,0.03)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = isDisputed ? 'rgba(244,99,30,0.06)' : 'transparent' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = isDisputed ? 'var(--brand-soft)' : 'var(--surface-subtle)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isDisputed ? 'var(--brand-soft)' : 'transparent' }}
               >
-                <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>{shortId(o.id)}</span>
+                <span className="font-mono text-xs" style={{ color: 'var(--muted-foreground)' }}>{shortId(o.id)}</span>
                 <span className="truncate text-white">{o.creatorName}</span>
-                <span className="truncate" style={{ color: 'rgba(255,255,255,0.7)' }}>{o.editorName}</span>
-                <span style={{ color: 'rgba(255,255,255,0.8)' }}>{money(o.budget)}</span>
+                <span className="truncate" style={{ color: 'var(--foreground)' }}>{o.editorName}</span>
+                <span style={{ color: 'var(--foreground)' }}>{money(o.budget)}</span>
                 <span><OrderStatusBadge status={o.status} /></span>
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtDate(o.createdAt)}</span>
+                <span style={{ color: 'var(--muted-foreground)' }}>{fmtDate(o.createdAt)}</span>
                 <div className="flex justify-end">
                   {isDisputed && dispute ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); setResolveTarget(dispute) }}
                       className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[11px] font-semibold"
-                      style={{ background: 'rgba(244,99,30,0.15)', border: '1px solid rgba(244,99,30,0.3)', color: '#F4631E', cursor: 'pointer' }}
+                      style={{ background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--brand)', cursor: 'pointer' }}
                     >
                       <IconGavel size={12} stroke={1.5} />
                       Resolver
                     </button>
                   ) : (
-                    <IconChevronRight size={15} stroke={1.5} style={{ color: 'rgba(255,255,255,0.25)' }} />
+                    <IconChevronRight size={15} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
                   )}
                 </div>
               </div>
@@ -642,7 +642,7 @@ function ResolveDisputeModal({
             onClick={() => handle('REFUND')}
             disabled={busy !== null}
             className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
-            style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
           >
             {busy === 'REFUND' ? <IconLoader2 size={14} className="animate-spin" /> : <IconArrowBackUp size={14} stroke={1.5} />}
             Reembolsar criador
@@ -651,7 +651,7 @@ function ResolveDisputeModal({
             onClick={() => handle('RELEASE')}
             disabled={busy !== null}
             className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
-            style={{ background: '#22C55E', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
           >
             {busy === 'RELEASE' ? <IconLoader2 size={14} className="animate-spin" /> : <IconCheck size={14} stroke={2} />}
             Liberar para editor
@@ -662,31 +662,31 @@ function ResolveDisputeModal({
       {dispute && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-[8px] px-3 py-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Criador</p>
+            <div className="rounded-[8px] px-3 py-2" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+              <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Criador</p>
               <p className="text-sm text-white">{dispute.order.creatorName}</p>
             </div>
-            <div className="rounded-[8px] px-3 py-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Editor</p>
+            <div className="rounded-[8px] px-3 py-2" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+              <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Editor</p>
               <p className="text-sm text-white">{dispute.order.editorName}</p>
             </div>
           </div>
-          <div className="flex items-center justify-between rounded-[8px] px-3 py-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Valor em custódia</span>
+          <div className="flex items-center justify-between rounded-[8px] px-3 py-2" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+            <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Valor em custódia</span>
             <span className="font-heading text-sm font-bold text-white">{money(dispute.order.budget)}</span>
           </div>
-          <div className="rounded-[8px] p-3" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
+          <div className="rounded-[8px] p-3" style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)' }}>
             <div className="mb-1 flex items-center gap-1.5">
-              <IconAlertTriangle size={13} stroke={1.5} style={{ color: '#EF4444' }} />
-              <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#EF4444' }}>Motivo da disputa</p>
+              <IconAlertTriangle size={13} stroke={1.5} style={{ color: 'var(--destructive)' }} />
+              <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--destructive)' }}>Motivo da disputa</p>
             </div>
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)' }}>{dispute.reason}</p>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{dispute.reason}</p>
           </div>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
             <strong className="text-white">Liberar para editor</strong> conclui o pedido e libera o pagamento retido.{' '}
             <strong className="text-white">Reembolsar criador</strong> cancela o pedido e estorna o valor.
           </p>
-          {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>{error}</p>}
+          {error && <p className="text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
         </div>
       )}
     </Modal>
@@ -715,10 +715,10 @@ function FinanceiroSection() {
   }, [page])
 
   const cards: { label: string; value: number; Icon: React.ElementType; color: string }[] = [
-    { label: 'Total transacionado', value: summary?.totalTransacted ?? 0, Icon: IconTrendingUp, color: '#22C55E' },
-    { label: 'Taxas da plataforma', value: summary?.totalPlatformFees ?? 0, Icon: IconCreditCard, color: '#F4631E' },
+    { label: 'Total transacionado', value: summary?.totalTransacted ?? 0, Icon: IconTrendingUp, color: 'var(--success)' },
+    { label: 'Taxas da plataforma', value: summary?.totalPlatformFees ?? 0, Icon: IconCreditCard, color: 'var(--brand)' },
     { label: 'Em custódia (escrow)', value: summary?.totalHeldInEscrow ?? 0, Icon: IconClock, color: '#3B82F6' },
-    { label: 'Total reembolsado', value: summary?.totalRefunded ?? 0, Icon: IconArrowBackUp, color: '#EF4444' },
+    { label: 'Total reembolsado', value: summary?.totalRefunded ?? 0, Icon: IconArrowBackUp, color: 'var(--destructive)' },
   ]
 
   return (
@@ -726,9 +726,9 @@ function FinanceiroSection() {
       {/* Cards de resumo */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {cards.map((c) => (
-          <div key={c.label} className="rounded-card p-5" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div key={c.label} className="rounded-card p-5" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>{c.label}</span>
+              <span className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>{c.label}</span>
               <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${c.color}1A` }}>
                 <c.Icon size={16} stroke={1.5} color={c.color} />
               </span>
@@ -741,9 +741,9 @@ function FinanceiroSection() {
       </div>
 
       {/* Tabela de transações */}
-      <div className="rounded-card p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="rounded-card p-6" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
         <SectionHeader title="Últimas transações" />
-        <div className="grid grid-cols-[0.8fr_1.2fr_1.2fr_1fr_1fr_1.3fr_1fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)' }}>
+        <div className="grid grid-cols-[0.8fr_1.2fr_1.2fr_1fr_1fr_1.3fr_1fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)' }}>
           <span>Pedido</span>
           <span>Pagador</span>
           <span>Recebedor</span>
@@ -760,14 +760,14 @@ function FinanceiroSection() {
         ) : (
           <div className="mt-1">
             {data.transactions.map((t) => (
-              <div key={t.id} className="grid grid-cols-[0.8fr_1.2fr_1.2fr_1fr_1fr_1.3fr_1fr] items-center gap-4 border-b px-4 py-3 text-sm" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>{shortId(t.orderId)}</span>
+              <div key={t.id} className="grid grid-cols-[0.8fr_1.2fr_1.2fr_1fr_1fr_1.3fr_1fr] items-center gap-4 border-b px-4 py-3 text-sm" style={{ borderColor: 'var(--surface-subtle)' }}>
+                <span className="font-mono text-xs" style={{ color: 'var(--muted-foreground)' }}>{shortId(t.orderId)}</span>
                 <span className="truncate text-white">{t.payerName}</span>
-                <span className="truncate" style={{ color: 'rgba(255,255,255,0.7)' }}>{t.payeeName}</span>
-                <span style={{ color: 'rgba(255,255,255,0.8)' }}>{money(t.amount)}</span>
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>{money(t.platformFee)}</span>
+                <span className="truncate" style={{ color: 'var(--foreground)' }}>{t.payeeName}</span>
+                <span style={{ color: 'var(--foreground)' }}>{money(t.amount)}</span>
+                <span style={{ color: 'var(--muted-foreground)' }}>{money(t.platformFee)}</span>
                 <span><TransactionBadge status={t.status} /></span>
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtDate(t.createdAt)}</span>
+                <span style={{ color: 'var(--muted-foreground)' }}>{fmtDate(t.createdAt)}</span>
               </div>
             ))}
             <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />
@@ -782,13 +782,13 @@ function SubscriptionsSection() {
   return (
     <div
       className="rounded-card p-6"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
     >
       <SectionHeader title="Assinaturas Premium" />
 
       <div
         className="mb-2 grid grid-cols-4 gap-4 rounded-[8px] px-4 py-2 text-xs font-medium"
-        style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)' }}
+        style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)' }}
       >
         <span>Editor</span>
         <span>Status</span>
@@ -805,22 +805,22 @@ function SubscriptionsSection() {
 
 const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   ORDER_CREATED: { label: 'Pedido criado', color: '#3B82F6' },
-  ORDER_CANCELLED: { label: 'Pedido cancelado', color: '#EF4444' },
+  ORDER_CANCELLED: { label: 'Pedido cancelado', color: 'var(--destructive)' },
   PROPOSAL_ACCEPTED: { label: 'Proposta aceita', color: '#3B82F6' },
-  PAYMENT_INITIATED: { label: 'Pagamento iniciado', color: '#F4631E' },
-  PAYMENT_CONFIRMED: { label: 'Pagamento confirmado', color: '#22C55E' },
-  PAYMENT_RELEASED: { label: 'Pagamento liberado', color: '#22C55E' },
-  PAYMENT_REFUNDED: { label: 'Pagamento reembolsado', color: '#EF4444' },
+  PAYMENT_INITIATED: { label: 'Pagamento iniciado', color: 'var(--brand)' },
+  PAYMENT_CONFIRMED: { label: 'Pagamento confirmado', color: 'var(--success)' },
+  PAYMENT_RELEASED: { label: 'Pagamento liberado', color: 'var(--success)' },
+  PAYMENT_REFUNDED: { label: 'Pagamento reembolsado', color: 'var(--destructive)' },
   REVISION_REQUESTED: { label: 'Revisão solicitada', color: '#EAB308' },
-  DISPUTE_OPENED: { label: 'Disputa aberta', color: '#F4631E' },
-  DISPUTE_RESOLVED: { label: 'Disputa resolvida', color: '#F4631E' },
+  DISPUTE_OPENED: { label: 'Disputa aberta', color: 'var(--brand)' },
+  DISPUTE_RESOLVED: { label: 'Disputa resolvida', color: 'var(--brand)' },
   SUBSCRIPTION_ACTIVATED: { label: 'Assinatura ativada', color: '#A855F7' },
-  USER_BANNED: { label: 'Usuário suspenso', color: '#EF4444' },
-  USER_UNBANNED: { label: 'Usuário reativado', color: '#22C55E' },
+  USER_BANNED: { label: 'Usuário suspenso', color: 'var(--destructive)' },
+  USER_UNBANNED: { label: 'Usuário reativado', color: 'var(--success)' },
   REQUEST_CREATED: { label: 'Solicitação publicada', color: '#3B82F6' },
-  REQUEST_CANCELLED: { label: 'Solicitação cancelada', color: '#EF4444' },
+  REQUEST_CANCELLED: { label: 'Solicitação cancelada', color: 'var(--destructive)' },
   REQUEST_PROPOSAL_SENT: { label: 'Proposta enviada (solicitação)', color: '#EAB308' },
-  REQUEST_PROPOSAL_ACCEPTED: { label: 'Proposta aceita (solicitação)', color: '#22C55E' },
+  REQUEST_PROPOSAL_ACCEPTED: { label: 'Proposta aceita (solicitação)', color: 'var(--success)' },
 }
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -892,11 +892,11 @@ function AuditSection() {
   useEffect(() => { setPage(1) }, [action, actorSearch])
 
   return (
-    <div className="rounded-card p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="rounded-card p-6" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
       {/* Filtros */}
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 rounded-[8px] px-3 py-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <IconSearch size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+        <div className="flex items-center gap-2 rounded-[8px] px-3 py-2" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+          <IconSearch size={14} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
           <input
             value={rawSearch}
             onChange={(e) => setRawSearch(e.target.value)}
@@ -908,17 +908,17 @@ function AuditSection() {
           value={action}
           onChange={(e) => setAction(e.target.value)}
           className="rounded-[8px] px-3 py-2 text-xs outline-none"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', colorScheme: 'dark' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', colorScheme: 'dark' }}
         >
-          <option value="ALL" style={{ background: '#162436' }}>Todas as ações</option>
+          <option value="ALL" style={{ background: 'var(--card)' }}>Todas as ações</option>
           {Object.entries(AUDIT_ACTIONS).map(([value, { label }]) => (
-            <option key={value} value={value} style={{ background: '#162436' }}>{label}</option>
+            <option key={value} value={value} style={{ background: 'var(--card)' }}>{label}</option>
           ))}
         </select>
       </div>
 
       {/* Cabeçalho */}
-      <div className="grid grid-cols-[1.1fr_1.4fr_1.5fr_1fr_0.5fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)' }}>
+      <div className="grid grid-cols-[1.1fr_1.4fr_1.5fr_1fr_0.5fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)' }}>
         <span>Data/hora</span>
         <span>Ator</span>
         <span>Ação</span>
@@ -933,25 +933,25 @@ function AuditSection() {
       ) : (
         <div className="mt-1">
           {data.logs.map((log) => {
-            const cfg = AUDIT_ACTIONS[log.action] ?? { label: log.action, color: 'rgba(255,255,255,0.5)' }
+            const cfg = AUDIT_ACTIONS[log.action] ?? { label: log.action, color: 'var(--muted-foreground)' }
             const details = formatAuditMetadata(log.metadata)
             const expanded = expandedId === log.id
             const hasDetails = details.length > 0
             return (
-              <div key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={log.id} style={{ borderBottom: '1px solid var(--surface-subtle)' }}>
                 <div
                   onClick={() => hasDetails && setExpandedId(expanded ? null : log.id)}
                   className="grid grid-cols-[1.1fr_1.4fr_1.5fr_1fr_0.5fr] items-center gap-4 px-4 py-3 text-sm"
-                  style={{ cursor: hasDetails ? 'pointer' : 'default', background: expanded ? 'rgba(255,255,255,0.02)' : 'transparent' }}
+                  style={{ cursor: hasDetails ? 'pointer' : 'default', background: expanded ? 'var(--surface-subtle)' : 'transparent' }}
                 >
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                     {new Date(log.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </span>
                   <span className="truncate">
                     {log.actor ? (
                       <span className="text-white">{log.actor.name}</span>
                     ) : (
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)' }}>
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'var(--border)', color: 'var(--muted-foreground)' }}>
                         Sistema
                       </span>
                     )}
@@ -961,31 +961,31 @@ function AuditSection() {
                       {cfg.label}
                     </span>
                   </span>
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                     {ENTITY_LABELS[log.entityType] ?? log.entityType}
-                    <span className="ml-1.5 font-mono text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{shortId(log.entityId)}</span>
+                    <span className="ml-1.5 font-mono text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{shortId(log.entityId)}</span>
                   </span>
                   <span className="flex justify-end">
                     {hasDetails && (
                       expanded
-                        ? <IconChevronUp size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
-                        : <IconChevronDown size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
+                        ? <IconChevronUp size={14} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
+                        : <IconChevronDown size={14} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
                     )}
                   </span>
                 </div>
 
                 {expanded && hasDetails && (
-                  <div className="mx-4 mb-3 rounded-[8px] px-4 py-3" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="mx-4 mb-3 rounded-[8px] px-4 py-3" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)' }}>
                     <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                       {details.map((d) => (
                         <div key={d.label} className="flex items-baseline gap-2 text-xs">
-                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>{d.label}:</span>
+                          <span style={{ color: 'var(--muted-foreground)' }}>{d.label}:</span>
                           <span className="truncate text-white">{d.value}</span>
                         </div>
                       ))}
                       {log.actor && (
                         <div className="flex items-baseline gap-2 text-xs">
-                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>Email do ator:</span>
+                          <span style={{ color: 'var(--muted-foreground)' }}>Email do ator:</span>
                           <span className="truncate text-white">{log.actor.email}</span>
                         </div>
                       )}
@@ -1016,7 +1016,7 @@ function FeedSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-heading text-xl font-bold text-white">{title}</h2>
-          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>{subtitle}</p>
+          <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>{subtitle}</p>
         </div>
         {role === 'CREATOR' && (
           <button className="btn-primary" style={{ width: 'auto', padding: '0 20px' }}>
@@ -1032,9 +1032,9 @@ function FeedSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
             key={cat}
             className="rounded-full px-3 py-1 text-xs transition-colors"
             style={{
-              background: cat === 'Todos' ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.05)',
-              color: cat === 'Todos' ? '#F4631E' : 'rgba(255,255,255,0.6)',
-              border: `1px solid ${cat === 'Todos' ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+              background: cat === 'Todos' ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+              color: cat === 'Todos' ? 'var(--brand)' : 'var(--foreground)',
+              border: `1px solid ${cat === 'Todos' ? 'var(--brand-border)' : 'var(--border)'}`,
             }}
           >
             {cat}
@@ -1044,7 +1044,7 @@ function FeedSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
 
       <div
         className="rounded-card p-6"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
       >
         <EmptyState
           message={
@@ -1064,7 +1064,7 @@ function MyProjectsSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
       <div className="space-y-6">
         <div>
           <h2 className="font-heading text-xl font-bold text-white">Meus Projetos</h2>
-          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
             Acompanhe o status dos seus pedidos de edição
           </p>
         </div>
@@ -1075,9 +1075,9 @@ function MyProjectsSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
               key={f}
               className="rounded-full px-3 py-1 text-xs"
               style={{
-                background: f === 'Todos' ? 'rgba(244,99,30,0.15)' : 'rgba(255,255,255,0.05)',
-                color: f === 'Todos' ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                border: `1px solid ${f === 'Todos' ? 'rgba(244,99,30,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                background: f === 'Todos' ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+                color: f === 'Todos' ? 'var(--brand)' : 'var(--foreground)',
+                border: `1px solid ${f === 'Todos' ? 'var(--brand-border)' : 'var(--border)'}`,
               }}
             >
               {f}
@@ -1087,7 +1087,7 @@ function MyProjectsSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
 
         <div
           className="rounded-card p-6"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
         >
           <EmptyState message="Seus pedidos aparecerão aqui" />
         </div>
@@ -1101,7 +1101,7 @@ function MyProjectsSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-heading text-xl font-bold text-white">Meus Projetos</h2>
-          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
             Pedidos aceitos, portfólio e métricas
           </p>
         </div>
@@ -1122,7 +1122,7 @@ function MyProjectsSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
 
       <div
         className="rounded-card p-6"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
       >
         <SectionHeader title="Pedidos Recebidos" />
         <EmptyState message="Pedidos de criadores aparecerão aqui" />
@@ -1130,7 +1130,7 @@ function MyProjectsSection({ role }: { role: 'CREATOR' | 'EDITOR' }) {
 
       <div
         className="rounded-card p-6"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
       >
         <SectionHeader title="Meu Portfólio" />
         <EmptyState message="Adicione projetos ao seu portfólio" />
@@ -1144,14 +1144,14 @@ function AccountSection() {
     <div className="space-y-6">
       <div>
         <h2 className="font-heading text-xl font-bold text-white">Conta</h2>
-        <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+        <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
           Configurações da sua conta e perfil
         </p>
       </div>
 
       <div
         className="rounded-card p-6"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
       >
         <SectionHeader title="Em construção" />
         <EmptyState message="Configurações de conta em breve" />
@@ -1244,21 +1244,21 @@ export function AdminPage() {
       : `Visualização de ${viewMode === 'CREATOR' ? 'creator' : 'editor'}`
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0D1B2A' }}>
+    <div className="flex min-h-screen" style={{ background: 'var(--background)' }}>
       {/* ── Toast flutuante de modo de visualização ── */}
       {viewMode !== 'ADMIN' && (
         <div
           className="fixed left-1/2 top-4 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full px-4 py-2 shadow-lg"
           style={{
-            background: 'rgba(244,99,30,0.15)',
-            border: '1px solid rgba(244,99,30,0.35)',
+            background: 'var(--brand-soft)',
+            border: '1px solid var(--brand-border)',
             backdropFilter: 'blur(8px)',
           }}
         >
           {viewMode === 'CREATOR'
-            ? <IconCamera size={14} color="#F4631E" stroke={1.5} />
-            : <IconMovie size={14} color="#F4631E" stroke={1.5} />}
-          <span className="text-xs" style={{ color: '#F4631E' }}>
+            ? <IconCamera size={14} color="var(--brand)" stroke={1.5} />
+            : <IconMovie size={14} color="var(--brand)" stroke={1.5} />}
+          <span className="text-xs" style={{ color: 'var(--brand)' }}>
             Visualizando como <strong>{viewMode === 'CREATOR' ? 'Creator' : 'Editor'}</strong>
           </span>
           <button
@@ -1266,13 +1266,13 @@ export function AdminPage() {
             aria-label="Sair do modo de visualização"
             className="flex h-5 w-5 items-center justify-center rounded-full transition-colors"
             style={{
-              background: 'rgba(244,99,30,0.2)',
+              background: 'var(--brand-border)',
               border: 'none',
               cursor: 'pointer',
-              color: '#F4631E',
+              color: 'var(--brand)',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(244,99,30,0.35)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(244,99,30,0.2)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--brand-border)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand-border)' }}
           >
             <IconX size={12} stroke={2} />
           </button>
@@ -1283,20 +1283,20 @@ export function AdminPage() {
       <aside
         className="flex w-64 shrink-0 flex-col"
         style={{
-          background: '#162436',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--card)',
+          borderRight: '1px solid var(--border)',
           height: '100vh',
           position: 'sticky',
           top: 0,
         }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2 px-6 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <span className="h-2 w-2 rounded-full" style={{ background: '#F4631E' }} />
+        <div className="flex items-center gap-2 px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <span className="h-2 w-2 rounded-full" style={{ background: 'var(--brand)' }} />
           <span className="font-heading text-[18px] font-extrabold text-white">CutMakers</span>
           <span
             className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
-            style={{ background: 'rgba(244,99,30,0.15)', color: '#F4631E', fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--brand-soft)', color: 'var(--brand)', fontFamily: "'Syne', sans-serif" }}
           >
             {sidebarBadge}
           </span>
@@ -1304,7 +1304,7 @@ export function AdminPage() {
 
         {/* Nav principal */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)' }}>
             {viewMode === 'ADMIN' ? 'Gerenciamento' : 'Navegação'}
           </p>
 
@@ -1317,9 +1317,9 @@ export function AdminPage() {
                     onClick={() => setSection(id)}
                     className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
                     style={{
-                      background: active ? 'rgba(244,99,30,0.12)' : 'transparent',
-                      color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                      border: active ? '1px solid rgba(244,99,30,0.2)' : '1px solid transparent',
+                      background: active ? 'var(--brand-soft)' : 'transparent',
+                      color: active ? 'var(--brand)' : 'var(--foreground)',
+                      border: active ? '1px solid var(--brand-border)' : '1px solid transparent',
                       fontFamily: "'DM Sans', sans-serif",
                       fontWeight: active ? 500 : 400,
                       cursor: 'pointer',
@@ -1339,9 +1339,9 @@ export function AdminPage() {
                     onClick={() => setUserSection(id)}
                     className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
                     style={{
-                      background: active ? 'rgba(244,99,30,0.12)' : 'transparent',
-                      color: active ? '#F4631E' : 'rgba(255,255,255,0.6)',
-                      border: active ? '1px solid rgba(244,99,30,0.2)' : '1px solid transparent',
+                      background: active ? 'var(--brand-soft)' : 'transparent',
+                      color: active ? 'var(--brand)' : 'var(--foreground)',
+                      border: active ? '1px solid var(--brand-border)' : '1px solid transparent',
                       fontFamily: "'DM Sans', sans-serif",
                       fontWeight: active ? 500 : 400,
                       cursor: 'pointer',
@@ -1356,17 +1356,17 @@ export function AdminPage() {
         </nav>
 
         {/* Footer: usuário + logout */}
-        <div className="px-3 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }}>
           <div className="mb-2 flex items-center gap-3 rounded-[8px] px-3 py-2">
             <div
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-heading text-xs font-bold text-white"
-              style={{ background: '#F4631E' }}
+              style={{ background: 'var(--brand)' }}
             >
               {user.name?.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-white">{user.name}</p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <p className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
                 {viewMode === 'ADMIN'
                   ? 'Administrador'
                   : viewMode === 'CREATOR'
@@ -1379,14 +1379,14 @@ export function AdminPage() {
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
             style={{
-              color: 'rgba(255,255,255,0.4)',
+              color: 'var(--muted-foreground)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               fontFamily: "'DM Sans', sans-serif",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'none' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--destructive)'; e.currentTarget.style.background = 'var(--destructive-soft)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted-foreground)'; e.currentTarget.style.background = 'none' }}
           >
             <IconLogout size={16} stroke={1.5} />
             Sair
@@ -1400,18 +1400,18 @@ export function AdminPage() {
         {/* Top bar */}
         <header
           className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
           <div>
             <h1 className="font-heading text-lg font-bold text-white">{topbarTitle}</h1>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{topbarSubtitle}</p>
+            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{topbarSubtitle}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', cursor: 'pointer' }}
             >
-              <IconBell size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.6)' }} />
+              <IconBell size={16} stroke={1.5} style={{ color: 'var(--foreground)' }} />
             </button>
             <div className="relative" ref={profileMenuRef}>
               <button
@@ -1419,7 +1419,7 @@ export function AdminPage() {
                 aria-haspopup="menu"
                 aria-expanded={profileMenuOpen}
                 className="flex h-9 w-9 items-center justify-center rounded-full font-heading text-sm font-bold text-white transition-transform"
-                style={{ background: '#F4631E', border: 'none', cursor: 'pointer' }}
+                style={{ background: 'var(--brand)', border: 'none', cursor: 'pointer' }}
               >
                 {user.name?.charAt(0).toUpperCase()}
               </button>
@@ -1429,18 +1429,18 @@ export function AdminPage() {
                   role="menu"
                   className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-[12px] shadow-xl"
                   style={{
-                    background: '#162436',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <div
                     className="px-4 py-3"
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ borderBottom: '1px solid var(--border)' }}
                   >
                     <p className="truncate text-sm font-medium text-white">{user.name}</p>
                     <p
                       className="text-[10px] uppercase tracking-widest"
-                      style={{ color: 'rgba(255,255,255,0.4)' }}
+                      style={{ color: 'var(--muted-foreground)' }}
                     >
                       Administrador
                     </p>
@@ -1451,15 +1451,15 @@ export function AdminPage() {
                     onClick={() => enterViewMode('CREATOR')}
                     className="flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors"
                     style={{
-                      background: viewMode === 'CREATOR' ? 'rgba(244,99,30,0.1)' : 'transparent',
-                      color: viewMode === 'CREATOR' ? '#F4631E' : 'rgba(255,255,255,0.8)',
+                      background: viewMode === 'CREATOR' ? 'var(--brand-soft)' : 'transparent',
+                      color: viewMode === 'CREATOR' ? 'var(--brand)' : 'var(--foreground)',
                       border: 'none',
                       cursor: 'pointer',
                       fontFamily: "'DM Sans', sans-serif",
                       textAlign: 'left',
                     }}
                     onMouseEnter={(e) => {
-                      if (viewMode !== 'CREATOR') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+                      if (viewMode !== 'CREATOR') e.currentTarget.style.background = 'var(--surface-subtle)'
                     }}
                     onMouseLeave={(e) => {
                       if (viewMode !== 'CREATOR') e.currentTarget.style.background = 'transparent'
@@ -1474,15 +1474,15 @@ export function AdminPage() {
                     onClick={() => enterViewMode('EDITOR')}
                     className="flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors"
                     style={{
-                      background: viewMode === 'EDITOR' ? 'rgba(244,99,30,0.1)' : 'transparent',
-                      color: viewMode === 'EDITOR' ? '#F4631E' : 'rgba(255,255,255,0.8)',
+                      background: viewMode === 'EDITOR' ? 'var(--brand-soft)' : 'transparent',
+                      color: viewMode === 'EDITOR' ? 'var(--brand)' : 'var(--foreground)',
                       border: 'none',
                       cursor: 'pointer',
                       fontFamily: "'DM Sans', sans-serif",
                       textAlign: 'left',
                     }}
                     onMouseEnter={(e) => {
-                      if (viewMode !== 'EDITOR') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+                      if (viewMode !== 'EDITOR') e.currentTarget.style.background = 'var(--surface-subtle)'
                     }}
                     onMouseLeave={(e) => {
                       if (viewMode !== 'EDITOR') e.currentTarget.style.background = 'transparent'

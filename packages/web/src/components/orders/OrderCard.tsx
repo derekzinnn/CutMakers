@@ -18,15 +18,15 @@ export function OrderCard({ order, perspective, onClick }: Props) {
       onClick={onClick}
       className="rounded-card p-5 transition-all"
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--surface-subtle)',
+        border: '1px solid var(--border)',
         cursor: onClick ? 'pointer' : 'default',
       }}
       onMouseEnter={(e) => {
-        if (onClick) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+        if (onClick) e.currentTarget.style.background = 'var(--border)'
       }}
       onMouseLeave={(e) => {
-        if (onClick) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+        if (onClick) e.currentTarget.style.background = 'var(--surface-subtle)'
       }}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -34,7 +34,7 @@ export function OrderCard({ order, perspective, onClick }: Props) {
           <h3 className="truncate font-heading text-base font-semibold text-white">
             {order.title}
           </h3>
-          <p className="mt-0.5 text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="mt-0.5 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
             {order.category.name}
           </p>
         </div>
@@ -52,7 +52,7 @@ export function OrderCard({ order, perspective, onClick }: Props) {
 
       <p
         className="mb-4 line-clamp-2 text-xs"
-        style={{ color: 'rgba(255,255,255,0.6)' }}
+        style={{ color: 'var(--foreground)' }}
       >
         {order.description}
       </p>
@@ -62,7 +62,7 @@ export function OrderCard({ order, perspective, onClick }: Props) {
         <div className="flex items-center gap-2">
           <div
             className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-[10px] font-bold text-white"
-            style={{ background: '#F4631E' }}
+            style={{ background: 'var(--brand)' }}
           >
             {counterpart.avatarUrl ? (
               <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" />
@@ -71,14 +71,14 @@ export function OrderCard({ order, perspective, onClick }: Props) {
             )}
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>
               {counterpartLabel}
             </p>
             <p className="text-xs text-white">{counterpart.name}</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>
             Orçamento
           </p>
           <p className="font-heading text-sm font-bold text-white">
@@ -90,7 +90,7 @@ export function OrderCard({ order, perspective, onClick }: Props) {
       {/* Metadados */}
       <div
         className="flex flex-wrap items-center gap-3 pt-3 text-[11px]"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}
+        style={{ borderTop: '1px solid var(--border)', color: 'var(--muted-foreground)' }}
       >
         {order.deadline && (
           <span className="flex items-center gap-1">

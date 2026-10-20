@@ -65,7 +65,7 @@ type SortBy = 'rating' | 'jobs' | 'price-asc' | 'price-desc'
 
 const AVATAR_PALETTE = [
   '#3B82F6', '#10B981', '#8B5CF6', '#EC4899',
-  '#14B8A6', '#F59E0B', '#EF4444', '#06B6D4', '#F4631E',
+  '#14B8A6', '#F59E0B', 'var(--destructive)', '#06B6D4', 'var(--brand)',
 ]
 
 function getAvatarColor(name: string): string {
@@ -256,7 +256,7 @@ export function CreatorDashboard() {
             onClick={() => changeSection('orders')}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: '#F4631E', color: '#fff', border: 'none',
+              background: 'var(--brand)', color: '#fff', border: 'none',
               borderRadius: 8, padding: '8px 14px', fontSize: 13,
               fontWeight: 700, cursor: 'pointer', fontFamily: "'Syne', sans-serif",
             }}
@@ -274,8 +274,8 @@ export function CreatorDashboard() {
           {/* Search card */}
           <div
             style={{
-              background: '#162436',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--card)',
+              border: '1px solid var(--border)',
               borderRadius: 12,
               padding: '16px 20px',
               display: 'flex',
@@ -289,12 +289,12 @@ export function CreatorDashboard() {
               style={{
                 flex: '1 1 240px',
                 display: 'flex', alignItems: 'center', gap: 8,
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--surface-subtle)',
+                border: '1px solid var(--border)',
                 borderRadius: 8, padding: '9px 12px',
               }}
             >
-              <IconSearch size={14} stroke={1.5} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
+              <IconSearch size={14} stroke={1.5} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
               <input
                 type="text"
                 placeholder="Buscar por nome ou especialidade..."
@@ -314,10 +314,10 @@ export function CreatorDashboard() {
                 onChange={e => setSelectedCategory(e.target.value || null)}
                 style={{
                   appearance: 'none', WebkitAppearance: 'none',
-                  background: '#1E3045',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'var(--surface-raised)',
+                  border: '1px solid var(--input)',
                   borderRadius: 8, padding: '9px 36px 9px 12px',
-                  fontSize: 13, color: selectedCategory ? '#fff' : 'rgba(255,255,255,0.45)',
+                  fontSize: 13, color: selectedCategory ? '#fff' : 'var(--muted-foreground)',
                   cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", outline: 'none',
                   minWidth: 130, colorScheme: 'dark',
                 }}
@@ -331,7 +331,7 @@ export function CreatorDashboard() {
                 size={14} stroke={1.5}
                 style={{
                   position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                  color: 'rgba(255,255,255,0.4)', pointerEvents: 'none',
+                  color: 'var(--muted-foreground)', pointerEvents: 'none',
                 }}
               />
             </div>
@@ -343,8 +343,8 @@ export function CreatorDashboard() {
                 onChange={e => setSortBy(e.target.value as SortBy)}
                 style={{
                   appearance: 'none', WebkitAppearance: 'none',
-                  background: '#1E3045',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'var(--surface-raised)',
+                  border: '1px solid var(--input)',
                   borderRadius: 8, padding: '9px 36px 9px 12px',
                   fontSize: 13, color: '#fff', cursor: 'pointer',
                   fontFamily: "'DM Sans', sans-serif", outline: 'none',
@@ -360,7 +360,7 @@ export function CreatorDashboard() {
                 size={14} stroke={1.5}
                 style={{
                   position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                  color: 'rgba(255,255,255,0.4)', pointerEvents: 'none',
+                  color: 'var(--muted-foreground)', pointerEvents: 'none',
                 }}
               />
             </div>
@@ -369,7 +369,7 @@ export function CreatorDashboard() {
             <button
               onClick={loadEditors}
               style={{
-                background: '#F4631E', color: '#fff', border: 'none',
+                background: 'var(--brand)', color: '#fff', border: 'none',
                 borderRadius: 8, padding: '9px 20px', fontSize: 13,
                 fontWeight: 700, cursor: 'pointer', fontFamily: "'Syne', sans-serif",
                 flexShrink: 0,
@@ -396,7 +396,7 @@ export function CreatorDashboard() {
               </Chip>
             ))}
 
-            <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.1)', margin: '0 2px', flexShrink: 0 }} />
+            <div style={{ width: 1, height: 20, background: 'var(--input)', margin: '0 2px', flexShrink: 0 }} />
 
             <Chip active={premiumOnly} accent onClick={() => { setPremiumOnly(!premiumOnly); setSelectedCategory(null) }}>
               <IconBolt size={12} stroke={2} />
@@ -406,23 +406,23 @@ export function CreatorDashboard() {
 
           {/* Grid */}
           {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', color: 'var(--muted-foreground)', fontSize: 13 }}>
               Carregando editores...
             </div>
           ) : editors.length === 0 ? (
             <div
               style={{
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--surface-subtle)', border: '1px solid var(--border)',
                 borderRadius: 12, padding: '64px 24px', textAlign: 'center',
               }}
             >
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                <IconSearch size={24} stroke={1.5} style={{ color: 'rgba(255,255,255,0.25)' }} />
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--surface-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <IconSearch size={24} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
               </div>
               <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
                 Nenhum editor encontrado
               </h3>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, margin: 0 }}>
+              <p style={{ color: 'var(--muted-foreground)', fontSize: 13, margin: 0 }}>
                 Tente outros filtros — novos editores chegam toda semana.
               </p>
             </div>
@@ -447,27 +447,27 @@ export function CreatorDashboard() {
         selectedOrderId ? (
           <OrderDetail orderId={selectedOrderId} onBack={() => setSelectedOrderId(null)} />
         ) : ordersLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', color: 'var(--muted-foreground)', fontSize: 13 }}>
             Carregando pedidos...
           </div>
         ) : ordersError ? (
-          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: 24, color: '#FCA5A5', fontSize: 13, textAlign: 'center' }}>
+          <div style={{ background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', borderRadius: 12, padding: 24, color: 'var(--destructive)', fontSize: 13, textAlign: 'center' }}>
             {ordersError}
           </div>
         ) : orders.length === 0 ? (
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '64px 24px', textAlign: 'center' }}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(244,99,30,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <IconBriefcase size={24} stroke={1.5} color="#F4631E" />
+          <div style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', borderRadius: 12, padding: '64px 24px', textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--brand-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <IconBriefcase size={24} stroke={1.5} color="var(--brand)" />
             </div>
             <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
               Sem pedidos ainda
             </h3>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, margin: '0 0 20px' }}>
+            <p style={{ color: 'var(--muted-foreground)', fontSize: 13, margin: '0 0 20px' }}>
               Escolha um editor e crie seu primeiro projeto.
             </p>
             <button
               onClick={() => changeSection('feed')}
-              style={{ background: '#F4631E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+              style={{ background: 'var(--brand)', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
             >
               Explorar editores
             </button>
@@ -541,9 +541,9 @@ function Chip({
         cursor: 'pointer', border: 'none', transition: 'all 0.15s',
         fontFamily: "'DM Sans', sans-serif",
         background: active
-          ? accent ? '#F4631E' : '#F4631E'
-          : 'rgba(255,255,255,0.06)',
-        color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+          ? accent ? 'var(--brand)' : 'var(--brand)'
+          : 'var(--border)',
+        color: active ? '#fff' : 'var(--foreground)',
       }}
     >
       {children}
@@ -578,19 +578,19 @@ function EditorCard({
     <div
       onClick={() => onNavigate(`/editors/${editor.userId}`)}
       style={{
-        background: '#162436',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--card)',
+        border: '1px solid var(--border)',
         borderRadius: 12,
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'border-color 0.15s, transform 0.15s',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'rgba(244,99,30,0.35)'
+        e.currentTarget.style.borderColor = 'var(--brand-border)'
         e.currentTarget.style.transform = 'translateY(-2px)'
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+        e.currentTarget.style.borderColor = 'var(--border)'
         e.currentTarget.style.transform = 'translateY(0)'
       }}
     >
@@ -599,9 +599,9 @@ function EditorCard({
         style={{
           position: 'relative',
           aspectRatio: '16/10',
-          background: '#1E3045',
+          background: 'var(--surface-raised)',
           backgroundImage:
-            'repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 20px)',
+            'repeating-linear-gradient(135deg, var(--surface-subtle) 0px, var(--surface-subtle) 1px, transparent 1px, transparent 20px)',
           overflow: 'hidden',
         }}
       >
@@ -622,13 +622,13 @@ function EditorCard({
           <div
             style={{
               width: 44, height: 44, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.12)',
-              border: '1.5px solid rgba(255,255,255,0.25)',
+              background: 'var(--input)',
+              border: '1.5px solid var(--muted-foreground)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               backdropFilter: 'blur(4px)',
             }}
           >
-            <IconPlayerPlay size={16} stroke={1.5} style={{ color: 'rgba(255,255,255,0.8)', marginLeft: 2 }} />
+            <IconPlayerPlay size={16} stroke={1.5} style={{ color: 'var(--foreground)', marginLeft: 2 }} />
           </div>
         </div>
         {/* Badge */}
@@ -637,7 +637,7 @@ function EditorCard({
             style={{
               position: 'absolute', top: 10, right: 10,
               background: 'rgba(255,255,255,0.92)',
-              color: '#0D1B2A', fontSize: 11, fontWeight: 700,
+              color: 'var(--background)', fontSize: 11, fontWeight: 700,
               padding: '3px 9px', borderRadius: 20,
               fontFamily: "'DM Sans', sans-serif",
               backdropFilter: 'blur(4px)',
@@ -654,7 +654,7 @@ function EditorCard({
         <p
           style={{
             fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
-            color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase',
+            color: 'var(--muted-foreground)', textTransform: 'uppercase',
             marginBottom: 12, fontFamily: "'DM Sans', sans-serif",
           }}
         >
@@ -691,16 +691,16 @@ function EditorCard({
               >
                 {editor.name}
               </span>
-              <IconRosetteDiscountCheckFilled size={13} color="#F4631E" style={{ flexShrink: 0 }} />
+              <IconRosetteDiscountCheckFilled size={13} color="var(--brand)" style={{ flexShrink: 0 }} />
             </div>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1 }}>
+            <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1 }}>
               {editor.categories.slice(0, 3).map(c => c.name).join(' · ')}
             </p>
           </div>
 
           {/* Rating */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-            <IconStarFilled size={11} color="#F4631E" />
+            <IconStarFilled size={11} color="var(--brand)" />
             <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "'Syne', sans-serif" }}>
               {editor.avgRating ? editor.avgRating.toFixed(1) : '—'}
             </span>
@@ -711,8 +711,8 @@ function EditorCard({
         <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
           <span
             style={{
-              fontSize: 11, color: 'rgba(255,255,255,0.65)',
-              background: 'rgba(255,255,255,0.07)',
+              fontSize: 11, color: 'var(--foreground)',
+              background: 'var(--border)',
               borderRadius: 20, padding: '3px 10px',
               fontFamily: "'DM Sans', sans-serif",
             }}
@@ -726,7 +726,7 @@ function EditorCard({
           <div>
             <p
               style={{
-                fontSize: 10, color: 'rgba(255,255,255,0.4)',
+                fontSize: 10, color: 'var(--muted-foreground)',
                 textTransform: 'uppercase', letterSpacing: '0.06em',
                 margin: '0 0 3px', fontFamily: "'DM Sans', sans-serif",
               }}
@@ -747,13 +747,13 @@ function EditorCard({
             onClick={e => { e.stopPropagation(); onNavigate(`/editors/${editor.userId}`) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              background: '#F4631E', color: '#fff', border: 'none',
+              background: 'var(--brand)', color: '#fff', border: 'none',
               borderRadius: 8, padding: '9px 16px',
               fontSize: 13, fontWeight: 700, cursor: 'pointer',
               fontFamily: "'Syne', sans-serif",
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#E0551A')}
-            onMouseLeave={e => (e.currentTarget.style.background = '#F4631E')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--brand)')}
           >
             Ver perfil
             <IconArrowRight size={14} stroke={2.5} />
@@ -777,8 +777,8 @@ function ComingSoon({ section }: { section: Section }) {
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--surface-subtle)',
+        border: '1px solid var(--border)',
         borderRadius: 12, padding: '80px 24px', textAlign: 'center',
       }}
     >
@@ -790,7 +790,7 @@ function ComingSoon({ section }: { section: Section }) {
       >
         {SECTION_LABELS[section]} em breve
       </h3>
-      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: 0 }}>
+      <p style={{ color: 'var(--muted-foreground)', fontSize: 13, margin: 0 }}>
         Esta seção está sendo construída e chegará em breve.
       </p>
     </div>
@@ -800,10 +800,10 @@ function ComingSoon({ section }: { section: Section }) {
 // ─── Pagamentos ───────────────────────────────────────────────────────────────
 
 const TX_COLORS: Record<TransactionStatus, string> = {
-  PENDING: '#F4631E',
+  PENDING: 'var(--brand)',
   HELD: '#3B82F6',
-  RELEASED: '#22C55E',
-  REFUNDED: '#EF4444',
+  RELEASED: 'var(--success)',
+  REFUNDED: 'var(--destructive)',
 }
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -837,15 +837,15 @@ function PaymentsSection({
   }, [page])
 
   const cards = [
-    { label: 'Total pago', value: summary?.totalPaid ?? 0, Icon: IconCreditCard, color: '#F4631E' },
+    { label: 'Total pago', value: summary?.totalPaid ?? 0, Icon: IconCreditCard, color: 'var(--brand)' },
     { label: 'Em custódia (escrow)', value: summary?.totalHeld ?? 0, Icon: IconLock, color: '#3B82F6' },
-    { label: 'Total concluído', value: summary?.totalCompleted ?? 0, Icon: IconCircleCheck, color: '#22C55E' },
+    { label: 'Total concluído', value: summary?.totalCompleted ?? 0, Icon: IconCircleCheck, color: 'var(--success)' },
   ]
 
   if (loading && payments.length === 0) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
-        <IconLoader2 size={26} className="animate-spin" style={{ color: '#F4631E' }} />
+        <IconLoader2 size={26} className="animate-spin" style={{ color: 'var(--brand)' }} />
       </div>
     )
   }
@@ -858,10 +858,10 @@ function PaymentsSection({
           <div
             key={c.label}
             className="rounded-[12px] p-5"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+            style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
           >
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>{c.label}</span>
+              <span className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>{c.label}</span>
               <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${c.color}1A` }}>
                 <c.Icon size={16} stroke={1.5} color={c.color} />
               </span>
@@ -875,19 +875,19 @@ function PaymentsSection({
       {payments.length === 0 ? (
         <div
           className="rounded-[12px] p-12 text-center"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
         >
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'rgba(244,99,30,0.1)' }}>
-            <IconCreditCard size={28} stroke={1.5} color="#F4631E" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'var(--brand-soft)' }}>
+            <IconCreditCard size={28} stroke={1.5} color="var(--brand)" />
           </div>
           <h3 className="font-heading text-lg font-bold text-white">Você ainda não fez nenhum pagamento</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'var(--muted-foreground)' }}>
             Contrate um editor e o pagamento ficará registrado aqui, protegido em custódia até você aprovar a entrega.
           </p>
           <button
             onClick={onBrowse}
             className="mt-6 inline-flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-semibold"
-            style={{ background: '#F4631E', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
           >
             <IconSearch size={15} stroke={2} />
             Explorar editores
@@ -896,12 +896,12 @@ function PaymentsSection({
       ) : (
         <div
           className="overflow-hidden rounded-[12px]"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
         >
           {/* Cabeçalho */}
           <div
             className="grid grid-cols-[2fr_1.2fr_1fr_1.3fr_1fr] gap-4 px-5 py-3 text-xs font-medium"
-            style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border)' }}
           >
             <span>Projeto</span>
             <span>Editor</span>
@@ -917,15 +917,15 @@ function PaymentsSection({
                 key={p.id}
                 onClick={() => onOpenOrder(p.order.id)}
                 className="grid w-full grid-cols-[2fr_1.2fr_1fr_1.3fr_1fr] items-center gap-4 px-5 py-3.5 text-left text-sm transition-colors"
-                style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+                style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--surface-subtle)', cursor: 'pointer' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-subtle)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
               >
                 <span className="truncate">
                   <span className="font-medium text-white">{p.order.title}</span>
-                  <span className="ml-2 text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{p.order.categoryName}</span>
+                  <span className="ml-2 text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{p.order.categoryName}</span>
                 </span>
-                <span className="truncate" style={{ color: 'rgba(255,255,255,0.65)' }}>{p.order.editorName}</span>
+                <span className="truncate" style={{ color: 'var(--foreground)' }}>{p.order.editorName}</span>
                 <span className="font-heading font-semibold text-white">{money(p.amount)}</span>
                 <span>
                   <span
@@ -935,7 +935,7 @@ function PaymentsSection({
                     {TRANSACTION_LABELS[p.status]}
                   </span>
                 </span>
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>
+                <span style={{ color: 'var(--muted-foreground)' }}>
                   {new Date(p.createdAt).toLocaleDateString('pt-BR')}
                 </span>
               </button>
@@ -944,14 +944,14 @@ function PaymentsSection({
 
           {/* Paginação */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Página {page} de {totalPages}</span>
+            <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: '1px solid var(--border)' }}>
+              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Página {page} de {totalPages}</span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage((p) => p - 1)}
                   disabled={page <= 1}
                   className="flex h-8 w-8 items-center justify-center rounded-[8px]"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: page <= 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)', cursor: page <= 1 ? 'not-allowed' : 'pointer' }}
+                  style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: page <= 1 ? 'var(--muted-foreground)' : 'var(--foreground)', cursor: page <= 1 ? 'not-allowed' : 'pointer' }}
                 >
                   <IconChevronLeft size={15} stroke={1.5} />
                 </button>
@@ -959,7 +959,7 @@ function PaymentsSection({
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= totalPages}
                   className="flex h-8 w-8 items-center justify-center rounded-[8px]"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: page >= totalPages ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)', cursor: page >= totalPages ? 'not-allowed' : 'pointer' }}
+                  style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: page >= totalPages ? 'var(--muted-foreground)' : 'var(--foreground)', cursor: page >= totalPages ? 'not-allowed' : 'pointer' }}
                 >
                   <IconChevronRight size={15} stroke={1.5} />
                 </button>

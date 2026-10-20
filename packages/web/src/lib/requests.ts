@@ -243,9 +243,9 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
 }
 
 export const REQUEST_STATUS_COLORS: Record<RequestStatus, string> = {
-  OPEN: '#F4631E',
-  FILLED: '#22C55E',
-  CANCELLED: '#EF4444',
+  OPEN: 'var(--brand)',
+  FILLED: 'var(--success)',
+  CANCELLED: 'var(--destructive)',
 }
 
 export const PROPOSAL_STATUS_LABELS: Record<RequestProposalStatus, string> = {
@@ -257,9 +257,9 @@ export const PROPOSAL_STATUS_LABELS: Record<RequestProposalStatus, string> = {
 
 export const PROPOSAL_STATUS_COLORS: Record<RequestProposalStatus, string> = {
   PENDING: '#EAB308',
-  ACCEPTED: '#22C55E',
-  REJECTED: '#EF4444',
-  WITHDRAWN: '#94A3B8',
+  ACCEPTED: 'var(--success)',
+  REJECTED: 'var(--destructive)',
+  WITHDRAWN: 'var(--muted-foreground)',
 }
 
 export const PLATFORM_FEE_RATE = 0.1
