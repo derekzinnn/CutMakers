@@ -133,9 +133,9 @@ export class RevisionService {
   }
 
   // Marca revisões PENDING como ADDRESSED — chamado quando o editor envia nova entrega.
-  // Retorna as operações prisma para compor numa transação externa (createDelivery).
-  markAddressedOp(orderId: string) {
-    return prisma.revision.updateMany({
+  // `db` permite rodar dentro da transação interativa de createDelivery.
+  markAddressed(orderId: string, db: Prisma.TransactionClient = prisma) {
+    return db.revision.updateMany({
       where: { orderId, status: 'PENDING' },
       data: { status: 'ADDRESSED' },
     })

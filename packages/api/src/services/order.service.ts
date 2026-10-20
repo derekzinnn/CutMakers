@@ -48,8 +48,12 @@ const AUTO_APPROVE_THROTTLE_MS = 5 * 60 * 1000
 const AUTO_APPROVE_BATCH = 100
 let lastAutoApproveRun = 0
 
-/** Tentativas de gravar a entrega quando duas disputam a mesma versão. */
-const MAX_DELIVERY_ATTEMPTS = 3
+/**
+ * Tentativas de gravar a entrega quando várias disputam a mesma versão.
+ * Com N escritores simultâneos o perdedor pode perder até N-1 vezes — o teste de
+ * integração exercita 5 em paralelo, então o teto precisa cobrir isso.
+ */
+const MAX_DELIVERY_ATTEMPTS = 6
 
 /** Antes destes status o pedido ainda não foi pago — arquivos ficam retidos. */
 const PRE_WORK_STATUSES: OrderStatus[] = ['NEGOTIATING', 'AWAITING_PAYMENT', 'PENDING']
@@ -366,37 +370,45 @@ export class OrderService {
       throw BadRequest('Pedido precisa estar em andamento para enviar uma entrega')
     }
 
-    // Conversa do pedido criada sob demanda para a mensagem da entrega cair no chat.
-    // upsert em vez de find-then-create: duas entregas simultâneas não tentam
-    // criar a mesma conversa (orderId é @unique — a segunda falharia).
-    const conversation = await prisma.conversation.upsert({
-      where: { orderId },
-      create: { creatorId: order.creatorId, editorId: order.editorId, orderId },
-      update: {},
-    })
-
-    // A versão vem do número de entregas existentes. Sob concorrência duas chamadas
-    // podem calcular o mesmo número — aí a constraint @@unique([orderId, version])
-    // rejeita a segunda e o retry recalcula. Escolhemos isso em vez de um lock
-    // pessimista no pedido: o caso comum (sem corrida) não paga nada por isso.
+    // TUDO numa transação interativa dentro do retry.
+    //
+    // A primeira versão deste código criava a conversa com `upsert` FORA do loop,
+    // na crença de que upsert fosse atômico. Não é: em unique NULÁVEL (orderId é
+    // `String?`) o Prisma não consegue usar ON CONFLICT nativo e emula com
+    // SELECT-então-INSERT. Duas entregas simultâneas inseriam as duas e uma
+    // estourava P2002 — fora do try, então o erro cru escapava como 500.
+    // Os testes de integração pegaram isso (test/corridas.integration.test.ts).
+    //
+    // Com a conversa dentro da transação e do retry, perder a corrida em QUALQUER
+    // ponto (conversa ou versão da entrega) apenas refaz a tentativa, e aí o
+    // upsert encontra a linha que o vencedor criou.
     for (let attempt = 1; ; attempt++) {
-      const existingCount = await prisma.delivery.count({ where: { orderId } })
-      const version = existingCount + 1
-
-      const chatMessage = data.message?.trim()
-        ? `📦 Entrega v${version}: ${data.message.trim()}`
-        : `📦 Entrega v${version} enviada. Revise e aprove!`
-
       try {
-        const [delivery] = await prisma.$transaction([
-          prisma.delivery.create({
+        const delivery = await prisma.$transaction(async (tx) => {
+          const conversation = await tx.conversation.upsert({
+            where: { orderId },
+            create: { creatorId: order.creatorId, editorId: order.editorId, orderId },
+            update: {},
+          })
+
+          // A versão vem da contagem de entregas. Duas transações concorrentes podem
+          // ler a mesma contagem; aí o @@unique([orderId, version]) rejeita a segunda
+          // e o retry recalcula. Preferido a lock pessimista: o caso comum (sem
+          // corrida) não paga nada por isso.
+          const existingCount = await tx.delivery.count({ where: { orderId } })
+          const version = existingCount + 1
+
+          const chatMessage = data.message?.trim()
+            ? `📦 Entrega v${version}: ${data.message.trim()}`
+            : `📦 Entrega v${version} enviada. Revise e aprove!`
+
+          const criada = await tx.delivery.create({
             data: { orderId, videoUrl: data.videoUrl, message: data.message, version },
-          }),
-          prisma.order.update({
-            where: { id: orderId },
-            data: { status: 'DELIVERED' },
-          }),
-          prisma.notification.create({
+          })
+
+          await tx.order.update({ where: { id: orderId }, data: { status: 'DELIVERED' } })
+
+          await tx.notification.create({
             data: {
               userId: order.creatorId,
               type: 'DELIVERY_RECEIVED',
@@ -404,13 +416,17 @@ export class OrderService {
               body: `O editor enviou a versão ${version} do pedido "${order.title}". Revise e aprove ou solicite revisão.`,
               relatedOrderId: orderId,
             },
-          }),
-          prisma.message.create({
+          })
+
+          await tx.message.create({
             data: { conversationId: conversation.id, senderId: editorId, content: chatMessage },
-          }),
+          })
+
           // Uma nova entrega resolve automaticamente qualquer revisão pendente
-          revisionService.markAddressedOp(orderId),
-        ])
+          await revisionService.markAddressed(orderId, tx)
+
+          return criada
+        })
 
         return {
           id: delivery.id,
@@ -421,10 +437,10 @@ export class OrderService {
           createdAt: delivery.createdAt,
         }
       } catch (err) {
-        const lostRace =
+        const perdeuCorrida =
           err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
-        if (lostRace && attempt < MAX_DELIVERY_ATTEMPTS) continue
-        if (lostRace) {
+        if (perdeuCorrida && attempt < MAX_DELIVERY_ATTEMPTS) continue
+        if (perdeuCorrida) {
           throw Conflict('Não foi possível registrar a entrega. Tente novamente.')
         }
         throw err

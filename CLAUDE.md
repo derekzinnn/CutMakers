@@ -674,18 +674,50 @@ Ver `packages/api/.env.example`. Precisa:
        `CREATE UNIQUE INDEX` de Delivery falha se houver versão duplicada. O reparo ficou FORA da
        migration de propósito — é UPDATE de dados, não pertence a migration de produção
 
+✅ Fase 13.4 — Migrations adotadas no banco real + testes de integração
+   [x] Inspeção do banco revelou que ele estava na **Fase 11**, não na 12: `db push` da Fase 12
+       nunca rodou. ProjectRequest, RequestProposal, os enums RequestStatus/RequestProposalStatus,
+       Order.requestId/revisionsIncluded, Notification.relatedRequestId e os 3 REQUEST_PROPOSAL_*
+       estavam ausentes — `/api/requests` quebrava em produção
+   [x] Migration dividida na fronteira real (Fase 11, commit 93fc8ad), porque a versão única
+       ia de Fase 8→atual e falharia em `CREATE TABLE "OrderAgreement"` (já existia):
+       `20261019120000_fases_10_11` (marcada como aplicada) + `20261019120100_fase_12_e_indices` (roda)
+   [x] Aplicadas no `public` com `resolve --applied` x2 + `migrate deploy`:
+       índices 3→29, as 2 tabelas novas, o unique de Delivery, os 3 valores de enum.
+       **Nenhuma linha perdida** — 12 contadores idênticos antes/depois. Drift check: 0
+   [x] Pré-voo limpo: nenhuma entrega com versão duplicada, nenhum email a normalizar
+   [x] Harness de integração: schema isolado `cutmakers_test` no MESMO Supabase. O setup injeta o
+       client no cache `globalThis` que `lib/prisma.ts` já usava, então os services falam com o
+       schema de teste sem nenhuma mudança no código de produção. Guardas que recusam rodar se a
+       URL não tiver `?schema=cutmakers_test` ou se usar pgBouncer (6543)
+   [x] `pnpm --filter @cutmakers/api test:integration` — 27 testes, 4 arquivos:
+       escrow (replay do webhook não reverte RELEASED, entregas simultâneas do gateway, release só
+       sobre HELD), corridas (versão de entrega com 2 e 5 concorrentes, duplo "Aprovar" com
+       totalJobs=1, auto-aprovação concorrente), gate de arquivos (editor bloqueado em
+       NEGOTIATING/AWAITING_PAYMENT/PENDING, liberado após pagamento, listagem sem URL,
+       terceiro barrado), propostas (duplo aceite → 409, sem notificação dupla, Decimal em 199.99)
+
+✅ Fase 13.5 — Bug encontrado PELOS testes de integração
+   [x] `conversation.upsert` NÃO é atômico em unique nulável: `Conversation.orderId` é `String?`,
+       então o Prisma não usa ON CONFLICT nativo e emula com SELECT-então-INSERT. Duas entregas
+       simultâneas inseriam as duas e uma estourava P2002 — e o upsert estava FORA do try, então o
+       erro cru escapava como 500 em vez de 409, derrubando também a Message por FK
+   [x] `createDelivery` reescrito: conversa + contagem + entrega + notificação + mensagem +
+       markAddressed TODOS numa transação interativa dentro do retry. Perder a corrida em qualquer
+       ponto refaz a tentativa, e aí o upsert encontra a linha do vencedor
+   [x] `revisionService.markAddressedOp` → `markAddressed(orderId, db = prisma)`, aceita tx
+   [x] MAX_DELIVERY_ATTEMPTS 3 → 6: com N escritores o perdedor pode perder até N-1 vezes, e o
+       teste exercita 5 em paralelo
+
 ⏳ Fase 14 — Próximos (pendem decisão/credenciais do dono)
-   [ ] **Banco de dev indisponível**: o projeto Supabase do `.env` responde "tenant not found" —
-       apagado ou pausado por inatividade. Bloqueia `db push`/`migrate deploy`, os scripts de
-       pré-voo e qualquer teste de integração
-   [ ] Testes de integração dos claims otimistas — são as mudanças de maior risco da Fase 13.1 e
-       seguem sem verificação. Harness decidido: schema isolado no MESMO Supabase via
-       `TEST_DATABASE_URL=...?schema=cutmakers_test` (documentado no .env.example), porta 5432.
-       A aplicação fica em `public` e o teste nunca a alcança; descarte com DROP SCHEMA CASCADE
+   [ ] Testes de integração dos fluxos ainda não cobertos: disputas, assinaturas, revisões,
+       marketplace invertido (aceite de proposta de solicitação), e o enforcement de ban no refresh
+       (este precisa da camada HTTP — supertest)
    [ ] Guardar `paymentUrl`/`pixCode` na Subscription, para o editor reabrir a cobrança em aberto
        em vez de ser bloqueado por 30min (schema + UI)
    [ ] Disputa pós-conclusão: precisa de fluxo de estorno próprio (escrow já liberado), não é PATCH de status
    [ ] Cron de verdade para auto-aprovação e expiração de assinatura (hoje oportunista no login)
+   [ ] CI rodando `test` + `test:integration` (o integration precisa de TEST_DATABASE_URL no runner)
    [ ] Decidir se edição de solicitação deve travar campos (orçamento/descrição) após a 1ª proposta
    [ ] Login com Google funcional (requer GOOGLE_CLIENT_ID/SECRET do Google Cloud — decisão do dono)
    [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)
