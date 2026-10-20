@@ -1,37 +1,23 @@
--- Migration das Fases 10, 11 e 12 + indices de performance.
+-- Fase 12 (marketplace invertido) + os 26 indices de performance da Fase 13.1
+-- e o unique que fecha a corrida de versao de entrega.
 --
--- Por que ela existe: ate aqui o repo tinha apenas o baseline 0_init (Fase 8).
--- Tudo depois disso foi aplicado via `prisma db push`, que nao versiona nada.
--- Producao roda `migrate deploy`, entao sem esta migration nenhuma das mudancas
--- das Fases 10-12 nem os indices chegam ao banco de producao.
+-- Gerada por `prisma migrate diff` entre o schema da Fase 11 (93fc8ad) e o atual.
 --
--- Como foi gerada (reproduzivel):
---   prisma migrate diff \
---     --from-schema-datamodel <schema.prisma em fdc9655, a Fase 8> \
---     --to-schema-datamodel  prisma/schema.prisma \
---     --script
+-- Esta e a migration que REALMENTE roda no staging: o `db push` da Fase 12 nunca
+-- foi executado lá, entao ProjectRequest, RequestProposal, os enums
+-- RequestStatus/RequestProposalStatus, Order.requestId, Order.revisionsIncluded,
+-- Notification.relatedRequestId e os 3 NotificationType REQUEST_PROPOSAL_* estao
+-- todos ausentes. Sem ela, qualquer chamada a /api/requests quebra.
 --
--- A cadeia foi conferida: regenerar 0_init a partir do schema da Fase 8 produz
--- um arquivo byte-identico ao que esta versionado, entao baseline + este delta
--- correspondem exatamente ao schema atual.
+-- Seguranca: nenhum DROP, TRUNCATE ou DELETE. As colunas novas sao nullable ou
+-- NOT NULL DEFAULT, entao nao falham em tabela populada. Os valores novos de
+-- enum nao sao usados nesta mesma transacao (requisito do Postgres).
 --
--- Conteudo: 4 tabelas novas (ProjectRequest, RequestProposal, AuditLog,
--- OrderAgreement), 2 enums novos, 4 valores em NotificationType, 4 colunas
--- (todas nullable ou com default), 29 indices e 4 unique. Nenhum DROP, nenhum
--- TRUNCATE, nenhuma coluna NOT NULL sem default — nao ha perda de dados.
---
--- ATENCAO ANTES DE APLICAR EM BANCO COM DADOS:
--- A linha `CREATE UNIQUE INDEX "Delivery_orderId_version_key"` FALHA se ja
--- existirem entregas com (orderId, version) repetido — justamente o bug que
--- esta constraint passa a impedir. Rode antes:
---     pnpm --filter @cutmakers/api deliveries:check
--- e, se houver duplicatas, `deliveries:fix` para renumerar por ordem
--- cronologica. O reparo ficou fora desta migration de proposito: e um UPDATE
--- de dados, e migration de producao nao e lugar para isso.
---
--- Nota do proprio Prisma sobre o ALTER TYPE multiplo abaixo: em PostgreSQL 11
--- ou anterior seria necessario quebrar em varias migrations. O Supabase roda
--- PG 15+, e os valores novos nao sao usados nesta mesma transacao, entao passa.
+-- UNICO PONTO QUE PODE FALHAR:
+-- `CREATE UNIQUE INDEX "Delivery_orderId_version_key"` falha se houver entrega
+-- com (orderId, version) repetido. Confira antes:
+--   pnpm --filter @cutmakers/api deliveries:check
+-- (verificado em 19/10/2026 no staging: 8 entregas, nenhuma duplicata)
 
 -- CreateEnum
 CREATE TYPE "RequestStatus" AS ENUM ('OPEN', 'FILLED', 'CANCELLED');
@@ -47,13 +33,9 @@ CREATE TYPE "RequestProposalStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 
 -- the enum.
 
 
-ALTER TYPE "NotificationType" ADD VALUE 'CONTRACT_ACCEPTED';
 ALTER TYPE "NotificationType" ADD VALUE 'REQUEST_PROPOSAL_RECEIVED';
 ALTER TYPE "NotificationType" ADD VALUE 'REQUEST_PROPOSAL_ACCEPTED';
 ALTER TYPE "NotificationType" ADD VALUE 'REQUEST_PROPOSAL_REJECTED';
-
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "termsAcceptedAt" TIMESTAMP(3);
 
 -- AlterTable
 ALTER TABLE "Order" ADD COLUMN     "requestId" TEXT,
@@ -96,32 +78,6 @@ CREATE TABLE "RequestProposal" (
     CONSTRAINT "RequestProposal_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "AuditLog" (
-    "id" TEXT NOT NULL,
-    "actorId" TEXT,
-    "action" TEXT NOT NULL,
-    "entityType" TEXT NOT NULL,
-    "entityId" TEXT NOT NULL,
-    "metadata" JSONB,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "OrderAgreement" (
-    "id" TEXT NOT NULL,
-    "orderId" TEXT NOT NULL,
-    "termsVersion" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "creatorAcceptedAt" TIMESTAMP(3),
-    "editorAcceptedAt" TIMESTAMP(3),
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "OrderAgreement_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE INDEX "ProjectRequest_status_categoryId_idx" ON "ProjectRequest"("status", "categoryId");
 
@@ -133,18 +89,6 @@ CREATE INDEX "RequestProposal_editorId_idx" ON "RequestProposal"("editorId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "RequestProposal_requestId_editorId_key" ON "RequestProposal"("requestId", "editorId");
-
--- CreateIndex
-CREATE INDEX "AuditLog_entityType_entityId_idx" ON "AuditLog"("entityType", "entityId");
-
--- CreateIndex
-CREATE INDEX "AuditLog_actorId_idx" ON "AuditLog"("actorId");
-
--- CreateIndex
-CREATE INDEX "AuditLog_action_idx" ON "AuditLog"("action");
-
--- CreateIndex
-CREATE UNIQUE INDEX "OrderAgreement_orderId_key" ON "OrderAgreement"("orderId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Order_requestId_key" ON "Order"("requestId");
@@ -238,10 +182,4 @@ ALTER TABLE "RequestProposal" ADD CONSTRAINT "RequestProposal_requestId_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "RequestProposal" ADD CONSTRAINT "RequestProposal_editorId_fkey" FOREIGN KEY ("editorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "OrderAgreement" ADD CONSTRAINT "OrderAgreement_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
