@@ -89,7 +89,12 @@ export class EditorService {
         where,
         skip,
         take: limit,
+        // A faixa de avaliacao vem PRIMEIRO: o Premium desempata dentro dela em
+        // vez de atropelar a qualidade. Antes `isPremium` era o primeiro
+        // criterio, entao um premium mediano ficava a frente de um gratuito
+        // excelente — pior para quem contrata e venda perdida para a plataforma.
         orderBy: [
+          { ratingBand: 'desc' },
           { isPremium: 'desc' },
           { avgRating: 'desc' },
           { totalJobs: 'desc' },

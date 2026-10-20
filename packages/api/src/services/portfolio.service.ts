@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
+import { portfolioLimitFor, PREMIUM_PORTFOLIO_LIMIT } from '../lib/plans'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
@@ -128,6 +129,20 @@ export class PortfolioService {
     let profile = await prisma.editorProfile.findUnique({ where: { userId } })
     if (!profile) {
       profile = await prisma.editorProfile.create({ data: { userId } })
+    }
+
+    // Teto de publicacoes por plano. Vale apenas para itens NOVOS: quem ja
+    // passou do limite (publicou antes da regra, ou era premium e expirou)
+    // mantem tudo que tem — so nao adiciona mais ate liberar espaco ou assinar.
+    const publicados = await prisma.portfolioItem.count({ where: { editorProfileId: profile.id } })
+    const limite = portfolioLimitFor(profile.isPremium)
+    if (publicados >= limite) {
+      throw BadRequest(
+        profile.isPremium
+          ? `Voce atingiu o limite de ${limite} publicacoes do plano Premium. Remova um item para adicionar outro.`
+          : `O plano gratuito permite ate ${limite} publicacoes no portfolio. ` +
+            `Assine o Premium para publicar ate ${PREMIUM_PORTFOLIO_LIMIT}, ou remova um item para abrir espaco.`,
+      )
     }
 
     // resolve categoria (id existente ou nome livre — "Outros")

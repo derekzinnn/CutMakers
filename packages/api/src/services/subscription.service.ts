@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma'
 import { BadRequest, NotFound } from '../lib/errors'
 import { paymentService } from './payment.service'
 import { logEvent } from './audit.service'
+import { portfolioLimitFor, PREMIUM_PORTFOLIO_LIMIT } from '../lib/plans'
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,12 @@ export interface MySubscriptionDTO {
   premiumExpiresAt: Date | null
   price: number
   subscription: ReturnType<typeof subscriptionToDTO> | null
+  /** Teto de publicacoes do plano atual */
+  portfolioLimit: number
+  /** Quantas o editor ja publicou — a UI usa para avisar ANTES de bloquear */
+  portfolioUsed: number
+  /** Teto do Premium, para a UI mostrar o ganho de assinar */
+  portfolioLimitPremium: number
 }
 
 // ─── Serviço ──────────────────────────────────────────────────────────────────
@@ -131,19 +138,33 @@ export class SubscriptionService {
   async getMySubscription(userId: string): Promise<MySubscriptionDTO> {
     const profile = await prisma.editorProfile.findUnique({ where: { userId } })
     if (!profile) {
-      return { isPremium: false, premiumExpiresAt: null, price: PREMIUM_MONTHLY_PRICE, subscription: null }
+      return {
+        isPremium: false,
+        premiumExpiresAt: null,
+        price: PREMIUM_MONTHLY_PRICE,
+        subscription: null,
+        portfolioLimit: portfolioLimitFor(false),
+        portfolioUsed: 0,
+        portfolioLimitPremium: PREMIUM_PORTFOLIO_LIMIT,
+      }
     }
 
-    const subscription = await prisma.subscription.findFirst({
-      where: { editorProfileId: profile.id },
-      orderBy: { startedAt: 'desc' },
-    })
+    const [subscription, portfolioUsed] = await Promise.all([
+      prisma.subscription.findFirst({
+        where: { editorProfileId: profile.id },
+        orderBy: { startedAt: 'desc' },
+      }),
+      prisma.portfolioItem.count({ where: { editorProfileId: profile.id } }),
+    ])
 
     return {
       isPremium: profile.isPremium,
       premiumExpiresAt: profile.premiumExpiresAt,
       price: PREMIUM_MONTHLY_PRICE,
       subscription: subscription ? subscriptionToDTO(subscription) : null,
+      portfolioLimit: portfolioLimitFor(profile.isPremium),
+      portfolioUsed,
+      portfolioLimitPremium: PREMIUM_PORTFOLIO_LIMIT,
     }
   }
 

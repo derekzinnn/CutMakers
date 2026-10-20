@@ -729,11 +729,19 @@ function PortfolioSection({
 
 // ─── Section: Premium ──────────────────────────────────────────────────────────
 
-const PREMIUM_BENEFITS = [
-  'Aparecer primeiro nas buscas dos criadores',
-  'Badge verificado no seu perfil público',
-  'Sem limite de projetos simultâneos',
-]
+// Beneficios REAIS do plano. A lista anterior prometia coisas que o produto nao
+// entrega: "aparecer primeiro nas buscas" deixou de ser verdade quando o Premium
+// virou desempate dentro da faixa de avaliacao (ele nao atropela quem tem nota
+// melhor), e "sem limite de projetos simultaneos" nunca existiu — nao ha limite
+// de projetos para ninguem. Prometer no plano pago o que o produto nao faz e a
+// mesma falha da promo removida na Fase 11.1.
+function premiumBenefits(limiteFree: number, limitePremium: number) {
+  return [
+    `Publique até ${limitePremium} itens no portfólio (o plano gratuito permite ${limiteFree})`,
+    'Prioridade na busca entre editores com avaliação equivalente',
+    'Selo PREMIUM no seu perfil e nos resultados de busca',
+  ]
+}
 
 function PremiumSection() {
   const [data, setData] = useState<MySubscription | null>(null)
@@ -814,7 +822,7 @@ function PremiumSection() {
 
         <div className="rounded-card p-6" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
           <ul className="space-y-3">
-            {PREMIUM_BENEFITS.map((b) => (
+            {premiumBenefits(data?.portfolioLimit ?? 5, data?.portfolioLimitPremium ?? 20).map((b) => (
               <li key={b} className="flex items-center gap-3 text-sm text-white">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--success-soft)' }}>
                   <IconCheck size={12} stroke={2.5} color="var(--success)" />
@@ -867,8 +875,39 @@ function PremiumSection() {
           </div>
         </div>
 
+        {data && !data.isPremium && (
+          <div
+            className="mb-5 rounded-lg px-4 py-3"
+            style={{
+              background: data.portfolioUsed >= data.portfolioLimit ? 'var(--warning-soft)' : 'var(--surface-subtle)',
+              border: `1px solid ${data.portfolioUsed >= data.portfolioLimit ? 'var(--warning-border)' : 'var(--border)'}`,
+            }}
+          >
+            <div className="flex items-baseline justify-between text-sm">
+              <span style={{ color: 'var(--foreground)' }}>Portfólio</span>
+              <span className="font-heading font-semibold text-white">
+                {data.portfolioUsed} de {data.portfolioLimit}
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--border)' }}>
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(100, (data.portfolioUsed / Math.max(data.portfolioLimit, 1)) * 100)}%`,
+                  background: data.portfolioUsed >= data.portfolioLimit ? 'var(--warning)' : 'var(--brand)',
+                }}
+              />
+            </div>
+            {data.portfolioUsed >= data.portfolioLimit && (
+              <p className="mt-2 text-xs" style={{ color: 'var(--warning)' }}>
+                Você atingiu o limite do plano gratuito.
+              </p>
+            )}
+          </div>
+        )}
+
         <ul className="space-y-3">
-          {PREMIUM_BENEFITS.map((b) => (
+          {premiumBenefits(data?.portfolioLimit ?? 5, data?.portfolioLimitPremium ?? 20).map((b) => (
             <li key={b} className="flex items-center gap-3 text-sm text-white">
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--brand-soft)' }}>
                 <IconCheck size={12} stroke={2.5} color="var(--brand)" />

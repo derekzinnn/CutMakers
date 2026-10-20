@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma'
+import { ratingBandOf } from '../lib/plans'
 import { BadRequest, Forbidden, NotFound } from '../lib/errors'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -51,9 +52,12 @@ export class ReviewService {
         _avg: { rating: true },
       })
 
+      // ratingBand acompanha avgRating: a ordenacao da busca usa a faixa para
+      // que o Premium desempate dentro dela, sem atropelar quem tem nota maior
+      const media = agg._avg.rating ?? 0
       await tx.editorProfile.update({
         where: { id: editorProfile.id },
-        data: { avgRating: agg._avg.rating ?? 0 },
+        data: { avgRating: media, ratingBand: ratingBandOf(media) },
       })
 
       return created

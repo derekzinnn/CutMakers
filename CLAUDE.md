@@ -222,7 +222,12 @@ Gráficos      --chart-1 .. --chart-5
   - Cria `Subscription` PENDING (`amount` Decimal, `expiresAt` null) + cobrança PIX no Abacatepay
   - Dev (sem `ABACATEPAY_API_KEY`): confirma na hora (`devConfirmed: true`)
   - Retorna `{ paymentUrl, pixCode, pixQrCode, expiresAt, devConfirmed }`
-- `GET /me` — status atual: `{ isPremium, premiumExpiresAt, price, subscription }`
+- `GET /me` — status atual: `{ isPremium, premiumExpiresAt, price, subscription,
+  portfolioLimit, portfolioUsed, portfolioLimitPremium }`
+- **Limites do plano** (`src/lib/plans.ts`): portfólio de 5 (grátis) a 20 (premium).
+  Vale só para itens novos — quem passou do teto mantém o que tem
+- **Ranking da busca**: `ratingBand` (meia estrela) é o 1º critério, `isPremium` o 2º.
+  O plano desempata DENTRO da faixa; não atropela quem tem nota maior
 - Confirmação via webhook `billing.paid`: se o `externalId` não casar com nenhuma `Transaction`,
   procura `Subscription` por `externalSubscriptionId` → `confirmSubscriptionPayment`
   (status ACTIVE, `expiresAt` = agora/vencimento + 30d, `EditorProfile.isPremium = true`)
@@ -719,6 +724,35 @@ Ver `packages/api/.env.example`. Precisa:
    [x] `revisionService.markAddressedOp` → `markAddressed(orderId, db = prisma)`, aceita tx
    [x] MAX_DELIVERY_ATTEMPTS 3 → 6: com N escritores o perdedor pode perder até N-1 vezes, e o
        teste exercita 5 em paralelo
+
+✅ Fase 15 — Plano Premium com valor real (limite de portfólio + ranking)
+   Problema: o Premium custava R$39,90/mês e entregava só o badge — não mudava nada
+   do que o editor consegue FAZER. E a lista de benefícios prometia duas coisas falsas.
+   [x] `src/lib/plans.ts` — fonte única: `FREE_PORTFOLIO_LIMIT=5`, `PREMIUM_PORTFOLIO_LIMIT=20`,
+       `portfolioLimitFor()` e `ratingBandOf()`
+   [x] Limite no `portfolio.service.create`. Vale só para itens NOVOS: quem já passou do
+       teto (publicou antes da regra, ou era premium e expirou) MANTÉM tudo — remover
+       trabalho de alguém retroativamente não é opção. Mensagem diz o caminho de saída
+   [x] `EditorProfile.ratingBand` (faixa de meia estrela) + índice
+       `[ratingBand, isPremium, avgRating]`, mantido pelo review.service junto com avgRating
+   [x] Busca: `isPremium` era o PRIMEIRO critério do orderBy — premium mediano ficava à
+       frente de gratuito excelente, pior para quem contrata e venda perdida. Agora
+       `ratingBand` vem primeiro e o plano DESEMPATA dentro da faixa
+   [x] `GET /subscriptions/me` devolve `portfolioLimit`, `portfolioUsed` e
+       `portfolioLimitPremium` — a UI avisa ANTES de bloquear (barra de progresso que fica
+       âmbar no teto), em vez de o editor descobrir por um erro
+   [x] Benefícios corrigidos para o que o produto REALMENTE faz. A lista antiga dizia
+       "Aparecer primeiro nas buscas" (deixou de ser verdade com o desempate) e "Sem limite
+       de projetos simultâneos" (nunca existiu — não há limite para ninguém). Mesma classe
+       da promo falsa removida na Fase 11.1
+   [x] Migration `20261020120000_plano_premium_limites_e_ranking` com BACKFILL:
+       `FLOOR(avgRating*2)/2`. Sem ele, editores que já têm nota cairiam todos na banda 0 e
+       perderiam a posição conquistada. O backfill foi exercitado no schema de teste contra
+       a função do código (6 casos, incluindo 0 e 5.0) ANTES de ir para o public
+   [x] Aplicada no `public`: bandas corretas (5→5, 4.5→4.5), contagens intactas
+   [x] 8 testes de integração novos (35 no total): teto grátis e premium, grandfathering de
+       quem passou do limite, remover libera espaço, premium não atropela nota melhor,
+       desempata dentro da faixa, editor novo sem avaliação
 
 ⏳ Fase 14 — Próximos (pendem decisão/credenciais do dono)
    [ ] Testes de integração dos fluxos ainda não cobertos: disputas, assinaturas, revisões,

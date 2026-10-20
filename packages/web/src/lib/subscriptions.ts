@@ -15,6 +15,12 @@ export interface MySubscription {
   premiumExpiresAt: string | null
   price: number
   subscription: SubscriptionDTO | null
+  /** Teto de publicacoes do plano atual */
+  portfolioLimit: number
+  /** Quantas ja foram publicadas */
+  portfolioUsed: number
+  /** Teto do Premium, para mostrar o ganho de assinar */
+  portfolioLimitPremium: number
 }
 
 export interface CreateSubscriptionResult {
