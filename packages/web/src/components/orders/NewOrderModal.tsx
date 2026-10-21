@@ -1,3 +1,4 @@
+import { avatarColor } from '@/components/ui/Avatar'
 import { useState } from 'react'
 import {
   IconUpload, IconX, IconFile, IconLoader2, IconCheck,
@@ -26,15 +27,6 @@ interface PendingFile {
   error?: string
 }
 
-// Paleta CATEGORICA de identidade (avatar por usuario): precisa de matizes
-// DISTINTOS entre si, entao fica fora dos tokens do tema. Os chart-* do
-// preset sao todos laranja/ambar — usa-los deixaria todo avatar igual.
-const AVATAR_PALETTE = ['var(--brand)', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
-function nameHash(name: string) {
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff
-  return Math.abs(h)
-}
 function initials(name: string) {
   return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 }
@@ -156,7 +148,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
   const fee = budgetNum > 0 ? Math.round(budgetNum * 0.1 * 100) / 100 : 0
   const net = budgetNum > 0 ? budgetNum - fee : 0
   const categoryName = categories.find((c) => c.id === categoryId)?.name ?? ''
-  const avatarBg = AVATAR_PALETTE[nameHash(editor.name) % AVATAR_PALETTE.length]
+  const avatarBg = avatarColor(editor.name)
 
   return (
     <Modal open={open} onClose={handleClose} title="" size="lg">

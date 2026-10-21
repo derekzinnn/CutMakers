@@ -1,10 +1,11 @@
 import { IconChevronLeft, IconChevronRight, IconLoader2, IconStarFilled } from '@tabler/icons-react'
+import { formatMoney } from '@/lib/format'
+export { Avatar } from '@/components/ui/Avatar'
 
 // ─── Formatação ───────────────────────────────────────────────────────────────
 
-export function fmtBRL(n: number) {
-  return `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
+// fmtBRL mantem o nome usado pelos componentes; a implementacao e a compartilhada
+export const fmtBRL = formatMoney
 
 export function budgetLabel(min: number | null, max: number | null) {
   if (min !== null && max !== null) return min === max ? fmtBRL(min) : `${fmtBRL(min)} – ${fmtBRL(max)}`
@@ -39,20 +40,7 @@ export function Pill({ label, color }: { label: string; color: string }) {
   )
 }
 
-const AVATAR_PALETTE = ['var(--brand)', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4']
 
-export function Avatar({ name, url, size = 36 }: { name: string; url: string | null; size?: number }) {
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % AVATAR_PALETTE.length
-  return (
-    <div
-      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full font-heading font-bold text-white"
-      style={{ width: size, height: size, background: AVATAR_PALETTE[h], fontSize: size * 0.38 }}
-    >
-      {url ? <img src={url} alt={name} className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
-    </div>
-  )
-}
 
 export function Stars({ rating }: { rating: number }) {
   return (

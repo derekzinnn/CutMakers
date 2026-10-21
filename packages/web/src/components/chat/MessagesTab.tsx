@@ -1,3 +1,5 @@
+import { Avatar } from '@/components/ui/Avatar'
+import { relativeDate } from '@/lib/format'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { IconMessage2, IconLoader2, IconExternalLink } from '@tabler/icons-react'
@@ -8,46 +10,6 @@ import { ChatPanel } from './ChatPanel'
 // Paleta CATEGORICA de identidade (avatar por usuario): precisa de matizes
 // DISTINTOS entre si, entao fica fora dos tokens do tema. Os chart-* do
 // preset sao todos laranja/ambar — usa-los deixaria todo avatar igual.
-const AVATAR_PALETTE = ['var(--brand)', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
-
-function nameHash(name: string) {
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff
-  return Math.abs(h)
-}
-function initials(name: string) {
-  return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-}
-
-function Avatar({ name, avatarUrl, size = 36 }: { name: string; avatarUrl: string | null; size?: number }) {
-  if (avatarUrl) {
-    return (
-      <img src={avatarUrl} alt={name}
-        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-    )
-  }
-  const bg = AVATAR_PALETTE[nameHash(name) % AVATAR_PALETTE.length]
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', background: bg,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0, fontSize: size * 0.35, fontWeight: 700,
-      color: 'white', fontFamily: "'Syne', sans-serif",
-    }}>
-      {initials(name)}
-    </div>
-  )
-}
-
-function relativeDate(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'agora'
-  if (mins < 60) return `${mins}min`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h`
-  return `${Math.floor(hrs / 24)}d`
-}
 
 interface PersonGroup {
   personId: string
@@ -200,7 +162,7 @@ export function MessagesTab() {
               onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--surface-subtle)' }}
               onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
             >
-              <Avatar name={group.personName} avatarUrl={group.personAvatar} size={38} />
+              <Avatar name={group.personName} url={group.personAvatar} size={38} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <span style={{
@@ -286,7 +248,7 @@ export function MessagesTab() {
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px',
               borderBottom: '1px solid var(--border)', background: 'var(--card)', flexShrink: 0,
             }}>
-              <Avatar name={selectedGroup.personName} avatarUrl={selectedGroup.personAvatar} size={32} />
+              <Avatar name={selectedGroup.personName} url={selectedGroup.personAvatar} size={32} />
               <p style={{ fontSize: 14, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
                 {selectedGroup.personName}
               </p>

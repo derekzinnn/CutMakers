@@ -1,4 +1,5 @@
 import { useCached } from '@/hooks/use-cached'
+import { formatMoney as money } from '@/lib/format'
 import { SkeletonTable } from '@/components/ui/Skeleton'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -63,7 +64,6 @@ type UserSection = 'feed' | 'projects' | 'account'
 
 // ─── Helpers compartilhados ───────────────────────────────────────────────────
 
-const money = (n: number) => `R$ ${n.toFixed(2).replace('.', ',')}`
 const shortId = (id: string) => id.slice(0, 8)
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 

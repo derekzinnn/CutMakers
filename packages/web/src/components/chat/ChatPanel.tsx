@@ -1,3 +1,4 @@
+import { Avatar } from '@/components/ui/Avatar'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { IconSend, IconLoader2 } from '@tabler/icons-react'
 import { getMessages, sendMessage, type MessageDTO, type ConversationDTO } from '@/lib/conversations'
@@ -8,50 +9,6 @@ import { useAuth } from '@/hooks/use-auth'
 // Paleta CATEGORICA de identidade (avatar por usuario): precisa de matizes
 // DISTINTOS entre si, entao fica fora dos tokens do tema. Os chart-* do
 // preset sao todos laranja/ambar — usa-los deixaria todo avatar igual.
-const AVATAR_PALETTE = ['var(--brand)', '#3B82F6', '#A855F7', '#22C55E', '#EAB308', '#EC4899', '#14B8A6']
-
-function nameHash(name: string) {
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff
-  return Math.abs(h)
-}
-
-function initials(name: string) {
-  return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-}
-
-function Avatar({ name, avatarUrl, size = 32 }: { name: string; avatarUrl: string | null; size?: number }) {
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name}
-        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-      />
-    )
-  }
-  const bg = AVATAR_PALETTE[nameHash(name) % AVATAR_PALETTE.length]
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        background: bg,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        fontSize: size * 0.35,
-        fontWeight: 700,
-        color: 'white',
-        fontFamily: "'Syne', sans-serif",
-      }}
-    >
-      {initials(name)}
-    </div>
-  )
-}
 
 // ─── Time format ──────────────────────────────────────────────────────────────
 
@@ -155,7 +112,7 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
             flexShrink: 0,
           }}
         >
-          <Avatar name={otherParty.name} avatarUrl={otherParty.avatarUrl} size={28} />
+          <Avatar name={otherParty.name} url={otherParty.avatarUrl} size={28} />
           <div>
             <p style={{ fontSize: 13, fontWeight: 600, color: 'white', margin: 0 }}>{otherParty.name}</p>
             <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0 }}>
@@ -208,7 +165,7 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
                 }}
               >
                 {!isMe && (
-                  <Avatar name={msg.sender.name} avatarUrl={msg.sender.avatarUrl} size={24} />
+                  <Avatar name={msg.sender.name} url={msg.sender.avatarUrl} size={24} />
                 )}
                 <div style={{ maxWidth: '72%', display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', gap: 2 }}>
                   <div

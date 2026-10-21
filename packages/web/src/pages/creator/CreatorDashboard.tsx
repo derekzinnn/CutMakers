@@ -1,3 +1,5 @@
+import { avatarColor } from '@/components/ui/Avatar'
+import { formatMoney as money } from '@/lib/format'
 import { SkeletonCards } from '@/components/ui/Skeleton'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
@@ -64,16 +66,7 @@ type SortBy = 'rating' | 'jobs' | 'price-asc' | 'price-desc'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const AVATAR_PALETTE = [
-  '#3B82F6', '#10B981', '#8B5CF6', '#EC4899',
-  '#14B8A6', '#F59E0B', 'var(--destructive)', '#06B6D4', 'var(--brand)',
-]
 
-function getAvatarColor(name: string): string {
-  let hash = 0
-  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % AVATAR_PALETTE.length
-  return AVATAR_PALETTE[Math.abs(hash)]
-}
 
 function initials(name: string): string {
   return name.split(' ').filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase()
@@ -565,7 +558,7 @@ function EditorCard({
     ? Math.min(...editor.portfolioPreview.map(p => p.basePrice))
     : null
   const thumbnail = editor.portfolioPreview[0]?.thumbnailUrl ?? null
-  const avatarColor = getAvatarColor(editor.name)
+  const avatarBg = avatarColor(editor.name)
 
   const badge = editor.isPremium
     ? 'Premium'
@@ -668,7 +661,7 @@ function EditorCard({
           <div
             style={{
               width: 36, height: 36, borderRadius: '50%',
-              background: avatarColor,
+              background: avatarBg,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0, fontSize: 12, fontWeight: 800,
               color: '#fff', fontFamily: "'Syne', sans-serif",
@@ -807,7 +800,6 @@ const TX_COLORS: Record<TransactionStatus, string> = {
   REFUNDED: 'var(--destructive)',
 }
 
-const money = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 function PaymentsSection({
   onOpenOrder,

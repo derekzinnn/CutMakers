@@ -1,3 +1,5 @@
+import { avatarColor } from '@/components/ui/Avatar'
+import { relativeDateLong } from '@/lib/format'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -55,16 +57,7 @@ interface EditorFullDTO {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const AVATAR_PALETTE = [
-  '#3B82F6', '#10B981', '#8B5CF6', '#EC4899',
-  '#14B8A6', '#F59E0B', 'var(--destructive)', '#06B6D4', 'var(--brand)',
-]
 
-function getAvatarColor(name: string): string {
-  let hash = 0
-  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % AVATAR_PALETTE.length
-  return AVATAR_PALETTE[Math.abs(hash)]
-}
 
 function initials(name: string): string {
   return name.split(' ').filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase()
@@ -295,7 +288,7 @@ export function EditorPublicProfile() {
             <div
               style={{
                 width: 34, height: 34, borderRadius: '50%',
-                background: getAvatarColor(user.name ?? ''),
+                background: avatarColor(user.name ?? ''),
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 800, color: '#fff',
                 fontFamily: "'Syne', sans-serif", overflow: 'hidden',
@@ -957,21 +950,9 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
 
 // ─── Review card ─────────────────────────────────────────────────────────────
 
-function relativeDate(iso: string): string {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
-  if (days === 0) return 'hoje'
-  if (days === 1) return 'há 1 dia'
-  if (days < 7) return `há ${days} dias`
-  const weeks = Math.floor(days / 7)
-  if (weeks === 1) return 'há 1 semana'
-  if (weeks < 5) return `há ${weeks} semanas`
-  const months = Math.floor(days / 30)
-  if (months === 1) return 'há 1 mês'
-  return `há ${months} meses`
-}
 
 function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: boolean }) {
-  const color = getAvatarColor(review.reviewer.name)
+  const color = avatarColor(review.reviewer.name)
   return (
     <div>
       <div style={{ display: 'flex', gap: 12 }}>
@@ -1002,7 +983,7 @@ function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: b
               </span>
             )}
             <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
-              · {relativeDate(review.createdAt)}
+              · {relativeDateLong(review.createdAt)}
             </span>
           </div>
 

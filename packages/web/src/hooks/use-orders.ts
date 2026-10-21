@@ -12,7 +12,7 @@ function chaveDe({ role, status, page, limit }: ListOrdersParams) {
 export function useOrders(params: ListOrdersParams = {}) {
   const { role, status, page, limit } = params
 
-  const { dado, carregando, revalidando, erro, recarregar } = useCached<{
+  const { dado, carregando, erro, recarregar } = useCached<{
     orders: OrderDTO[]
     total: number
   }>(chaveDe({ role, status, page, limit }), async () => {
@@ -24,7 +24,6 @@ export function useOrders(params: ListOrdersParams = {}) {
     orders: dado?.orders ?? [],
     total: dado?.total ?? 0,
     loading: carregando,
-    revalidating: revalidando,
     error: erro,
     refetch: recarregar,
   }

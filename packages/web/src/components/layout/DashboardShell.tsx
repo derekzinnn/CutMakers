@@ -1,3 +1,4 @@
+import { relativeDate } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { limparCache } from '@/lib/cache'
 import { useState, useEffect, useRef } from 'react'
@@ -69,15 +70,6 @@ function notificationTarget(n: NotificationDTO): string | null {
   return null
 }
 
-function relativeDate(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'agora'
-  if (mins < 60) return `${mins}min`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h`
-  return `${Math.floor(hrs / 24)}d`
-}
 
 function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => void }) {
   const [open, setOpen] = useState(false)

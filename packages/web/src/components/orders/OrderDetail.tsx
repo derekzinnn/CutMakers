@@ -1,3 +1,4 @@
+import { avatarColor } from '@/components/ui/Avatar'
 import { useEffect, useState } from 'react'
 import {
   IconFile,
@@ -60,15 +61,6 @@ function fmtBRL(n: number) {
   return `R$ ${n.toFixed(2)}`
 }
 
-function avatarBg(name: string) {
-  // Paleta CATEGORICA de identidade (avatar por usuario): precisa de matizes
-  // DISTINTOS entre si, entao fica fora dos tokens do tema. Os chart-* do
-  // preset sao todos laranja/ambar — usa-los deixaria todo avatar igual.
-  const PALETTE = ['var(--brand)', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', 'var(--destructive)', '#06B6D4']
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % PALETTE.length
-  return PALETTE[h]
-}
 
 // ─── Layout helpers ───────────────────────────────────────────────────────────
 
@@ -238,7 +230,7 @@ function ProposalCard({
         <div className="mb-2 flex items-center gap-2">
           <div
             className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-            style={{ background: avatarBg(proposal.user.name) }}
+            style={{ background: avatarColor(proposal.user.name) }}
           >
             {proposal.user.avatarUrl
               ? <img src={proposal.user.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
@@ -2004,7 +1996,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <SideCard>
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>{counterpartLabel}</p>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarColor(counterpart.name) }}>
                     {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
                   </div>
                   <p className="font-medium text-white">{counterpart.name}</p>
@@ -2061,7 +2053,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <SideCard>
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>{counterpartLabel}</p>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarColor(counterpart.name) }}>
                     {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
                   </div>
                   <p className="font-medium text-white">{counterpart.name}</p>
@@ -2202,7 +2194,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <SideCard>
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>{counterpartLabel}</p>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarBg(counterpart.name) }}>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full font-heading text-sm font-bold text-white" style={{ background: avatarColor(counterpart.name) }}>
                     {counterpart.avatarUrl ? <img src={counterpart.avatarUrl} alt={counterpart.name} className="h-full w-full object-cover" /> : counterpart.name.charAt(0).toUpperCase()}
                   </div>
                   <p className="font-medium text-white">{counterpart.name}</p>

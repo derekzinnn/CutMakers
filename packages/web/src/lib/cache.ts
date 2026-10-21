@@ -36,7 +36,7 @@ export function lerCache<T>(chave: string, ttl = TTL_PADRAO): { dado: T; fresco:
   return { dado: e.dado, fresco: Date.now() - e.gravadoEm < ttl }
 }
 
-export function gravarCache<T>(chave: string, dado: T) {
+function gravarCache<T>(chave: string, dado: T) {
   cache.set(chave, { dado, gravadoEm: Date.now() })
   inscritos.get(chave)?.forEach((fn) => fn())
 }
