@@ -8,6 +8,7 @@ export interface AuthUser {
   email: string
   role: UserRole
   avatarUrl?: string | null
+  bio?: string | null
 }
 
 export function useAuth() {
@@ -26,6 +27,16 @@ export function useAuth() {
     setUser(newUser)
   }
 
+  // Reflete edicoes de perfil (nome/avatar/bio) sem precisar relogar
+  function updateUser(patch: Partial<AuthUser>) {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...patch }
+      localStorage.setItem('user', JSON.stringify(next))
+      return next
+    })
+  }
+
   function logout() {
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
@@ -34,5 +45,5 @@ export function useAuth() {
     setUser(null)
   }
 
-  return { user, token, login, logout, isAuthenticated: !!token }
+  return { user, token, login, logout, updateUser, isAuthenticated: !!token }
 }

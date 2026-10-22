@@ -1,4 +1,4 @@
-import { avatarColor } from '@/components/ui/Avatar'
+import { Avatar, avatarColor } from '@/components/ui/Avatar'
 import { formatMoney as money } from '@/lib/format'
 import { SkeletonCards } from '@/components/ui/Skeleton'
 import { toggleFavorite, listFavoriteIds, listFavorites, type FavoriteEditor } from '@/lib/favorites'
@@ -9,6 +9,8 @@ import {
   IconBriefcase,
   IconMessage2,
   IconHeart,
+  IconEye,
+  IconEyeOff,
   IconHeartFilled,
   IconCreditCard,
   IconUser,
@@ -29,6 +31,8 @@ import {
 } from '@tabler/icons-react'
 import { DashboardShell, type NavItem } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
+import { uploadFile } from '@/lib/upload'
+import { updateMe, changePassword } from '@/lib/account'
 import { useCategories } from '@/hooks/use-categories'
 import { useOrders } from '@/hooks/use-orders'
 import { api } from '@/lib/api'
@@ -546,7 +550,7 @@ export function CreatorDashboard() {
       )}
 
       {/* ── Minha conta ── */}
-      {section === 'account' && <ComingSoon section={section} />}
+      {section === 'account' && <AccountSection />}
     </DashboardShell>
   )
 }
@@ -891,38 +895,192 @@ function FavoritesSection({
   )
 }
 
-// ─── Coming soon placeholder ──────────────────────────────────────────────────
+// ─── Minha conta ──────────────────────────────────────────────────────────────
 
-const SECTION_LABELS: Record<string, string> = {
-  messages: 'Mensagens',
-  favorites: 'Favoritos',
-  payments: 'Pagamentos',
-  account: 'Minha conta',
-}
+function AccountSection() {
+  const { user, updateUser } = useAuth()
+  const [name, setName] = useState(user?.name ?? '')
+  const [bio, setBio] = useState(user?.bio ?? '')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatarUrl ?? null)
+  const [uploading, setUploading] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileMsg, setProfileMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
-function ComingSoon({ section }: { section: Section }) {
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
+  const [savingPwd, setSavingPwd] = useState(false)
+  const [pwdMsg, setPwdMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const dirtyProfile =
+    name.trim() !== (user?.name ?? '') ||
+    (bio ?? '') !== (user?.bio ?? '') ||
+    avatarUrl !== (user?.avatarUrl ?? null)
+
+  async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setUploading(true)
+    setProfileMsg(null)
+    try {
+      const result = await uploadFile(file, 'avatars', 'image')
+      setAvatarUrl(result.secureUrl)
+    } catch (err) {
+      setProfileMsg({ ok: false, text: err instanceof Error ? err.message : 'Erro no upload' })
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function saveProfile() {
+    setSavingProfile(true)
+    setProfileMsg(null)
+    try {
+      const updated = await updateMe({ name: name.trim(), bio: bio.trim() || null, avatarUrl })
+      updateUser({ name: updated.name, bio: updated.bio, avatarUrl: updated.avatarUrl })
+      setProfileMsg({ ok: true, text: 'Perfil atualizado.' })
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setProfileMsg({ ok: false, text: e?.response?.data?.message ?? 'Não foi possível salvar.' })
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  async function savePassword() {
+    setSavingPwd(true)
+    setPwdMsg(null)
+    try {
+      await changePassword(currentPassword, newPassword)
+      setPwdMsg({ ok: true, text: 'Senha alterada.' })
+      setCurrentPassword('')
+      setNewPassword('')
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } }
+      setPwdMsg({ ok: false, text: e?.response?.data?.message ?? 'Não foi possível alterar a senha.' })
+    } finally {
+      setSavingPwd(false)
+    }
+  }
+
+  const card: React.CSSProperties = {
+    background: 'var(--surface-subtle)', border: '1px solid var(--border)',
+    borderRadius: 12, padding: 24,
+  }
+  const label: React.CSSProperties = {
+    display: 'block', fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 6,
+  }
+
   return (
-    <div
-      style={{
-        background: 'var(--surface-subtle)',
-        border: '1px solid var(--border)',
-        borderRadius: 12, padding: '80px 24px', textAlign: 'center',
-      }}
-    >
-      <h3
-        style={{
-          fontFamily: "'Syne', sans-serif", fontWeight: 700,
-          fontSize: 17, color: '#fff', margin: '0 0 8px',
-        }}
-      >
-        {SECTION_LABELS[section]} em breve
-      </h3>
-      <p style={{ color: 'var(--muted-foreground)', fontSize: 13, margin: 0 }}>
-        Esta seção está sendo construída e chegará em breve.
-      </p>
+    <div style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Perfil */}
+      <div style={card}>
+        <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 18px' }}>
+          Perfil
+        </h3>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+          <Avatar name={name || user?.name || '?'} url={avatarUrl} size={64} />
+          <label
+            style={{
+              fontSize: 13, fontWeight: 600, cursor: uploading ? 'wait' : 'pointer',
+              color: 'var(--brand)', padding: '8px 14px', borderRadius: 8,
+              background: 'var(--brand-soft)', border: '1px solid var(--brand-border)',
+            }}
+          >
+            {uploading ? 'Enviando…' : 'Trocar foto'}
+            <input type="file" accept="image/*" onChange={onAvatar} disabled={uploading} style={{ display: 'none' }} />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Nome</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} className="input-field" />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Email</label>
+          <input value={user?.email ?? ''} disabled className="input-field" style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={label}>Bio</label>
+          <textarea
+            value={bio ?? ''}
+            onChange={(e) => setBio(e.target.value)}
+            rows={3}
+            maxLength={500}
+            placeholder="Conte um pouco sobre você e seu conteúdo…"
+            className="input-field"
+            style={{ resize: 'vertical', minHeight: 72, paddingTop: 10 }}
+          />
+        </div>
+
+        {profileMsg && (
+          <p style={{ fontSize: 12, margin: '0 0 12px', color: profileMsg.ok ? 'var(--success)' : 'var(--destructive)' }}>
+            {profileMsg.text}
+          </p>
+        )}
+        <button
+          onClick={saveProfile}
+          disabled={!dirtyProfile || savingProfile || uploading}
+          className="btn-primary"
+          style={{ width: 'auto', padding: '0 20px', opacity: !dirtyProfile || savingProfile ? 0.6 : 1 }}
+        >
+          {savingProfile ? 'Salvando…' : 'Salvar alterações'}
+        </button>
+      </div>
+
+      {/* Senha */}
+      <div style={card}>
+        <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 18px' }}>
+          Senha
+        </h3>
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Senha atual</label>
+          <input
+            type={showPwd ? 'text' : 'password'}
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="input-field"
+          />
+        </div>
+        <div style={{ marginBottom: 8, position: 'relative' }}>
+          <label style={label}>Nova senha</label>
+          <input
+            type={showPwd ? 'text' : 'password'}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Mínimo 8 caracteres"
+            className="input-field pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPwd((v) => !v)}
+            aria-label={showPwd ? 'Ocultar senha' : 'Mostrar senha'}
+            style={{ position: 'absolute', right: 8, top: 32, background: 'none', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer' }}
+          >
+            {showPwd ? <IconEyeOff size={16} stroke={1.5} /> : <IconEye size={16} stroke={1.5} />}
+          </button>
+        </div>
+
+        {pwdMsg && (
+          <p style={{ fontSize: 12, margin: '8px 0 12px', color: pwdMsg.ok ? 'var(--success)' : 'var(--destructive)' }}>
+            {pwdMsg.text}
+          </p>
+        )}
+        <button
+          onClick={savePassword}
+          disabled={!currentPassword || newPassword.length < 8 || savingPwd}
+          className="btn-primary"
+          style={{ width: 'auto', padding: '0 20px', marginTop: 8, opacity: !currentPassword || newPassword.length < 8 || savingPwd ? 0.6 : 1 }}
+        >
+          {savingPwd ? 'Alterando…' : 'Alterar senha'}
+        </button>
+      </div>
     </div>
   )
 }
+
 
 // ─── Pagamentos ───────────────────────────────────────────────────────────────
 

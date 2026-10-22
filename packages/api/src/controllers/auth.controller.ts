@@ -24,7 +24,18 @@ export const registerSchema = z.object({
   }),
 })
 
-export const loginSchema = z.object({
+export const updateMeSchema = z.object({
+  name: z.string().trim().min(2, 'Nome deve ter ao menos 2 caracteres').optional(),
+  bio: z.string().trim().max(500, 'Bio muito longa').nullable().optional(),
+  avatarUrl: z.string().url('URL inválida').nullable().optional(),
+})
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Informe a senha atual'),
+  newPassword: z.string().min(8, 'A nova senha deve ter ao menos 8 caracteres'),
+})
+
+const loginSchema = z.object({
   email: emailField,
   password: z.string().min(1),
 })
@@ -157,5 +168,36 @@ export class AuthController {
     if (!user) return res.status(404).json({ message: 'Usuário não encontrado' })
 
     return res.json({ user })
+  }
+
+  // PATCH /api/auth/me — edita nome, bio e avatar da conta
+  updateMe = async (req: Request, res: Response) => {
+    const parsed = updateMeSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'Dados inválidos', errors: parsed.error.flatten().fieldErrors })
+    }
+    const user = await prisma.user.update({
+      where: { id: req.user!.sub },
+      data: parsed.data,
+      select: { id: true, name: true, email: true, role: true, avatarUrl: true, bio: true, createdAt: true },
+    })
+    return res.json({ user })
+  }
+
+  // PATCH /api/auth/password — troca a senha (exige a atual)
+  changePassword = async (req: Request, res: Response) => {
+    const parsed = changePasswordSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'Dados inválidos', errors: parsed.error.flatten().fieldErrors })
+    }
+    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } })
+    if (!user) return res.status(404).json({ message: 'Usuário não encontrado' })
+
+    const ok = await authService.comparePassword(parsed.data.currentPassword, user.passwordHash)
+    if (!ok) return res.status(400).json({ message: 'Senha atual incorreta' })
+
+    const passwordHash = await authService.hashPassword(parsed.data.newPassword)
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash } })
+    return res.json({ ok: true })
   }
 }
