@@ -19,7 +19,7 @@ export function Skeleton({
 }) {
   return (
     <div
-      className={`animate-pulse rounded-md ${className}`}
+      className={`skeleton-shimmer rounded-md ${className}`}
       style={{ background: 'var(--surface-subtle)', ...style }}
       aria-hidden="true"
     />

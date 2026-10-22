@@ -1344,7 +1344,7 @@ export function AdminPage() {
         </header>
 
         {/* Área de conteúdo */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main key={section} className="anim-fade-up flex-1 overflow-y-auto p-6">
           {viewMode === 'ADMIN' && (
             <>
               {section === 'dashboard' && <DashboardSection />}

@@ -452,6 +452,7 @@ export function CreatorDashboard() {
             </div>
           ) : (
             <div
+              className="anim-stagger"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
@@ -876,6 +877,7 @@ function FavoritesSection({
 
   return (
     <div
+      className="anim-stagger"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',

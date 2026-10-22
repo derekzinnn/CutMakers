@@ -186,3 +186,77 @@
     @apply disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none;
   }
 }
+
+/* ─── Motion ────────────────────────────────────────────────────────────────
+ * Movimento SUTIL e clean: entradas curtas (200-320ms) com easing suave, sem
+ * nada que atrase o uso. CSS puro, sem lib. Tudo some sob prefers-reduced-motion.
+ */
+@layer utilities {
+  @keyframes cm-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cm-scale-in {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes cm-shimmer {
+    100% { transform: translateX(100%); }
+  }
+
+  /* Entrada padrão de conteúdo (seções de dashboard, páginas) */
+  .anim-fade-up {
+    animation: cm-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  /* Modais e popovers */
+  .anim-scale-in {
+    animation: cm-scale-in 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Entrada em cascata para grades de cards: cada filho entra um tiquinho depois.
+     Aplicar .anim-stagger no container; os 12 primeiros filhos escalonam. */
+  .anim-stagger > * {
+    animation: cm-fade-up 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .anim-stagger > *:nth-child(1)  { animation-delay: 0.00s }
+  .anim-stagger > *:nth-child(2)  { animation-delay: 0.04s }
+  .anim-stagger > *:nth-child(3)  { animation-delay: 0.08s }
+  .anim-stagger > *:nth-child(4)  { animation-delay: 0.12s }
+  .anim-stagger > *:nth-child(5)  { animation-delay: 0.16s }
+  .anim-stagger > *:nth-child(6)  { animation-delay: 0.20s }
+  .anim-stagger > *:nth-child(7)  { animation-delay: 0.22s }
+  .anim-stagger > *:nth-child(8)  { animation-delay: 0.24s }
+  .anim-stagger > *:nth-child(n+9) { animation-delay: 0.26s }
+
+  /* Skeleton com shimmer (varredura de luz) em vez do pulse chapado */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, var(--foreground) 6%, transparent),
+      transparent
+    );
+    animation: cm-shimmer 1.4s ease-in-out infinite;
+  }
+}
+
+/* Acessibilidade: quem pediu menos movimento não vê nenhuma dessas animações */
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up,
+  .anim-scale-in,
+  .anim-stagger > *,
+  .skeleton-shimmer::after {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}

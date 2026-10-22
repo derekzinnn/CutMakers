@@ -38,11 +38,11 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="anim-fade-up fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full overflow-hidden rounded-modal"
+        className="anim-scale-in w-full overflow-hidden rounded-modal"
         style={{
           background: 'var(--card)',
           border: '1px solid var(--border)',
