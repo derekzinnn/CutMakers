@@ -12,6 +12,7 @@ import { subscriptionRoutes } from './subscription.routes'
 import { adminRoutes } from './admin.routes'
 import { paymentRoutes } from './payment.routes'
 import { projectRequestRoutes } from './project-request.routes'
+import { favoriteRoutes } from './favorite.routes'
 
 export const routes: Router = Router()
 
@@ -29,3 +30,4 @@ routes.use('/subscriptions', subscriptionRoutes)
 routes.use('/admin', adminRoutes)
 routes.use('/payments', paymentRoutes)
 routes.use('/requests', projectRequestRoutes)
+routes.use('/favorites', favoriteRoutes)

@@ -1,6 +1,7 @@
 import { avatarColor } from '@/components/ui/Avatar'
 import { formatMoney as money } from '@/lib/format'
 import { SkeletonCards } from '@/components/ui/Skeleton'
+import { toggleFavorite, listFavoriteIds, listFavorites, type FavoriteEditor } from '@/lib/favorites'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
@@ -8,6 +9,7 @@ import {
   IconBriefcase,
   IconMessage2,
   IconHeart,
+  IconHeartFilled,
   IconCreditCard,
   IconUser,
   IconPlayerPlay,
@@ -102,6 +104,30 @@ export function CreatorDashboard() {
 
   // Badge de "Minhas solicitações": propostas pendentes em solicitações abertas
   const [pendingProposals, setPendingProposals] = useState(0)
+
+  // Favoritos: Set de userId dos editores favoritados, para o coracao dos cards
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    listFavoriteIds().then((ids) => setFavoriteIds(new Set(ids))).catch(() => {})
+  }, [])
+
+  async function onToggleFavorite(editorUserId: string) {
+    // Otimista: atualiza o Set na hora, reverte se a request falhar
+    setFavoriteIds((prev) => {
+      const next = new Set(prev)
+      next.has(editorUserId) ? next.delete(editorUserId) : next.add(editorUserId)
+      return next
+    })
+    try {
+      await toggleFavorite(editorUserId)
+    } catch {
+      setFavoriteIds((prev) => {
+        const next = new Set(prev)
+        next.has(editorUserId) ? next.delete(editorUserId) : next.add(editorUserId)
+        return next
+      })
+    }
+  }
   const refreshRequestsBadge = useCallback(() => {
     listMyRequests(1)
       .then((res) => setPendingProposals(res.pendingProposalsTotal))
@@ -429,7 +455,13 @@ export function CreatorDashboard() {
               }}
             >
               {editors.map(editor => (
-                <EditorCard key={editor.id} editor={editor} onNavigate={navigate} />
+                <EditorCard
+                  key={editor.id}
+                  editor={editor}
+                  onNavigate={navigate}
+                  favorited={favoriteIds.has(editor.userId)}
+                  onToggleFavorite={() => onToggleFavorite(editor.userId)}
+                />
               ))}
             </div>
           )}
@@ -504,10 +536,17 @@ export function CreatorDashboard() {
         />
       )}
 
-      {/* ── Em breve ── */}
-      {(section === 'favorites' || section === 'account') && (
-        <ComingSoon section={section} />
+      {/* ── Favoritos ── */}
+      {section === 'favorites' && (
+        <FavoritesSection
+          onNavigate={navigate}
+          favoriteIds={favoriteIds}
+          onToggleFavorite={onToggleFavorite}
+        />
       )}
+
+      {/* ── Minha conta ── */}
+      {section === 'account' && <ComingSoon section={section} />}
     </DashboardShell>
   )
 }
@@ -550,9 +589,13 @@ function Chip({
 function EditorCard({
   editor,
   onNavigate,
+  favorited,
+  onToggleFavorite,
 }: {
   editor: EditorListItem
   onNavigate: (path: string) => void
+  favorited?: boolean
+  onToggleFavorite?: () => void
 }) {
   const minPrice = editor.portfolioPreview.length
     ? Math.min(...editor.portfolioPreview.map(p => p.basePrice))
@@ -599,6 +642,26 @@ function EditorCard({
           overflow: 'hidden',
         }}
       >
+        {onToggleFavorite && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite() }}
+            aria-label={favorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+            title={favorited ? 'Remover dos favoritos' : 'Favoritar'}
+            style={{
+              position: 'absolute', top: 10, right: 10, zIndex: 2,
+              width: 34, height: 34, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(13,27,42,0.55)', backdropFilter: 'blur(6px)',
+              border: '1px solid var(--border)',
+              color: favorited ? 'var(--destructive)' : '#fff',
+              cursor: 'pointer', transition: 'transform 0.15s, color 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.12)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+          >
+            {favorited ? <IconHeartFilled size={17} /> : <IconHeart size={17} stroke={1.8} />}
+          </button>
+        )}
         {thumbnail && (
           <img
             src={thumbnail}
@@ -754,6 +817,76 @@ function EditorCard({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── Favoritos ────────────────────────────────────────────────────────────────
+
+function FavoritesSection({
+  onNavigate,
+  favoriteIds,
+  onToggleFavorite,
+}: {
+  onNavigate: (path: string) => void
+  favoriteIds: Set<string>
+  onToggleFavorite: (editorUserId: string) => void
+}) {
+  const [editors, setEditors] = useState<FavoriteEditor[] | null>(null)
+
+  useEffect(() => {
+    listFavorites().then(setEditors).catch(() => setEditors([]))
+  }, [])
+
+  // Reflete remocoes feitas pelo coracao sem refazer a busca: some da lista na hora
+  const visiveis = (editors ?? []).filter((e) => favoriteIds.has(e.userId))
+
+  if (editors === null) return <SkeletonCards count={6} />
+
+  if (visiveis.length === 0) {
+    return (
+      <div
+        style={{
+          background: 'var(--surface-subtle)', border: '1px solid var(--border)',
+          borderRadius: 12, padding: '64px 24px', textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            width: 52, height: 52, borderRadius: '50%', margin: '0 auto 14px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--brand-soft)',
+          }}
+        >
+          <IconHeart size={24} stroke={1.5} color="var(--brand)" />
+        </div>
+        <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
+          Nenhum editor favoritado ainda
+        </h3>
+        <p style={{ color: 'var(--muted-foreground)', fontSize: 13, margin: 0 }}>
+          Toque no coracao de um editor na busca para salva-lo aqui e achar depois.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: 16,
+      }}
+    >
+      {visiveis.map((editor) => (
+        <EditorCard
+          key={editor.id}
+          editor={editor}
+          onNavigate={onNavigate}
+          favorited
+          onToggleFavorite={() => onToggleFavorite(editor.userId)}
+        />
+      ))}
     </div>
   )
 }

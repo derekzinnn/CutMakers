@@ -31,6 +31,7 @@ const INVALIDACOES: [RegExp, string[]][] = [
   [/^\/editors\/me/, ['editor-me', 'editors']],
   [/^\/admin\/users/, ['admin-users']],
   [/^\/notifications/, ['notifications']],
+  [/^\/favorites/, ['favorites', 'favorite-ids']],
 ]
 
 api.interceptors.response.use(

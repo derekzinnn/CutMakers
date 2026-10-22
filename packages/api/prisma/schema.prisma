@@ -108,6 +108,7 @@ model User {
   updatedAt       DateTime  @updatedAt
 
   editorProfile          EditorProfile?
+  favorites              Favorite[]        @relation("CreatorFavorites")
   ordersAsCreator        Order[]           @relation("CreatorOrders")
   ordersAsEditor         Order[]           @relation("EditorOrders")
   sentMessages           Message[]
@@ -146,9 +147,25 @@ model EditorProfile {
   categories     EditorCategory[]
   portfolioItems PortfolioItem[]
   subscriptions  Subscription[]
+  favoritedBy    Favorite[]
 
   // Ordenacao da busca publica de editores
   @@index([ratingBand, isPremium, avgRating])
+}
+
+model Favorite {
+  id              String        @id @default(uuid())
+  // Quem favoritou (sempre um criador)
+  userId          String
+  user            User          @relation("CreatorFavorites", fields: [userId], references: [id])
+  editorProfileId String
+  editorProfile   EditorProfile @relation(fields: [editorProfileId], references: [id])
+  createdAt       DateTime      @default(now())
+
+  // Um criador favorita um editor no maximo uma vez
+  @@unique([userId, editorProfileId])
+  // Listagem "meus favoritos", mais recentes primeiro
+  @@index([userId, createdAt])
 }
 
 model Category {
