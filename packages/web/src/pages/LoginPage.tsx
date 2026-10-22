@@ -1,3 +1,4 @@
+import { GoogleButton } from '@/components/GoogleButton'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -7,7 +8,6 @@ import {
   IconEyeOff,
   IconArrowRight,
   IconArrowLeft,
-  IconBrandGoogle,
 } from '@tabler/icons-react'
 import { api } from '@/lib/api'
 import { useAuth, type AuthUser } from '@/hooks/use-auth'
@@ -305,30 +305,8 @@ export function LoginPage() {
               <div className="h-px flex-1" style={{ background: 'var(--border)' }} />
             </div>
 
-            {/* Google (OAuth em fase futura — requer credenciais do Google Cloud) */}
-            <button
-              type="button"
-              disabled
-              title="Login com Google em breve"
-              className="flex w-full items-center justify-center gap-2 rounded-[8px] py-2.5 text-sm font-medium"
-              style={{
-                background: 'var(--surface-subtle)',
-                border: '1px solid var(--border)',
-                color: 'var(--muted-foreground)',
-                fontFamily: "'DM Sans', sans-serif",
-                cursor: 'not-allowed',
-                height: '42px',
-              }}
-            >
-              <IconBrandGoogle size={16} stroke={1.5} />
-              Continuar com Google
-              <span
-                className="rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase"
-                style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}
-              >
-                Em breve
-              </span>
-            </button>
+            {/* Login com Google — ativa com VITE_GOOGLE_CLIENT_ID */}
+            <GoogleButton />
 
             {/* Cadastrar */}
             <p className="mt-6 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>

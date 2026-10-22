@@ -97,8 +97,11 @@ model User {
   id              String    @id @default(uuid())
   name            String
   email           String    @unique
-  passwordHash    String
+  // Nullable: contas criadas por login com Google nao tem senha local
+  passwordHash    String?
   role            Role      @default(CREATOR)
+  // Preenchido quando a conta foi criada/vinculada via Google (sub do Google)
+  googleId        String?   @unique
   avatarUrl       String?
   bio             String?
   banned          Boolean   @default(false)

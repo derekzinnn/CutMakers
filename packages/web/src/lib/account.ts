@@ -17,3 +17,9 @@ export async function updateMe(payload: UpdateMePayload): Promise<AuthUser> {
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await api.patch('/auth/password', { currentPassword, newPassword })
 }
+
+/** Login/cadastro com o ID token do Google. */
+export async function loginWithGoogle(idToken: string): Promise<{ token: string; refreshToken: string; user: AuthUser }> {
+  const { data } = await api.post<{ token: string; refreshToken: string; user: AuthUser }>('/auth/google', { idToken })
+  return data
+}

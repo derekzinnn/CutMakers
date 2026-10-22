@@ -34,6 +34,29 @@ export class AuthService {
     return { token, refreshToken }
   }
 
+  /**
+   * Verifica um ID token do Google chamando o endpoint oficial de tokeninfo,
+   * que valida assinatura e expiracao. Confere que o `aud` casa com o nosso
+   * GOOGLE_CLIENT_ID (senao qualquer token Google de outro app passaria).
+   * Sem lib pesada (google-auth-library) — uma chamada HTTP basta.
+   */
+  async verifyGoogleToken(idToken: string): Promise<{ sub: string; email: string; name: string; picture: string | null }> {
+    const clientId = process.env.GOOGLE_CLIENT_ID
+    if (!clientId) {
+      throw new Error('GOOGLE_CLIENT_ID nao configurado')
+    }
+    const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`)
+    if (!res.ok) throw new Error('Token do Google invalido')
+    const data = (await res.json()) as {
+      aud?: string; sub?: string; email?: string; email_verified?: string | boolean; name?: string; picture?: string
+    }
+    if (data.aud !== clientId) throw new Error('Token do Google de outro aplicativo')
+    if (!data.sub || !data.email) throw new Error('Token do Google sem email')
+    const verified = data.email_verified === true || data.email_verified === 'true'
+    if (!verified) throw new Error('Email do Google nao verificado')
+    return { sub: data.sub, email: data.email.toLowerCase(), name: data.name ?? data.email, picture: data.picture ?? null }
+  }
+
   verifyToken(token: string): TokenPayload {
     return jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload
   }

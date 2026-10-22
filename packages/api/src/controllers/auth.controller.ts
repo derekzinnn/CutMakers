@@ -87,6 +87,9 @@ export class AuthController {
       return res.status(401).json({ message: 'Credenciais inválidas' })
     }
 
+    if (!user.passwordHash) {
+      return res.status(400).json({ message: 'Esta conta usa login com Google. Entre com o Google.' })
+    }
     const valid = await authService.comparePassword(password, user.passwordHash)
     if (!valid) {
       return res.status(401).json({ message: 'Credenciais inválidas' })
@@ -110,6 +113,56 @@ export class AuthController {
     return res.json({
       ...tokens,
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    })
+  }
+
+  // POST /api/auth/google — login/cadastro com ID token do Google.
+  // So funciona com GOOGLE_CLIENT_ID configurado (senao a verificacao recusa).
+  googleLogin = async (req: Request, res: Response) => {
+    const idToken = (req.body?.idToken ?? '') as string
+    if (!idToken) return res.status(400).json({ message: 'idToken obrigatório' })
+
+    let info
+    try {
+      info = await authService.verifyGoogleToken(idToken)
+    } catch (err) {
+      return res.status(401).json({ message: err instanceof Error ? err.message : 'Token do Google inválido' })
+    }
+
+    // Procura por googleId, depois por email (vincula conta existente criada por senha)
+    let user = await prisma.user.findFirst({
+      where: { OR: [{ googleId: info.sub }, { email: info.email }] },
+    })
+
+    if (user) {
+      if (user.banned) {
+        return res.status(401).json({ message: 'Conta suspensa. Entre em contato com o suporte.' })
+      }
+      // Primeira vez entrando por Google numa conta que existia por email: vincula
+      if (!user.googleId) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { googleId: info.sub, avatarUrl: user.avatarUrl ?? info.picture },
+        })
+      }
+    } else {
+      // Conta nova: criador por padrao, sem senha, termos aceitos no ato
+      user = await prisma.user.create({
+        data: {
+          name: info.name,
+          email: info.email,
+          googleId: info.sub,
+          avatarUrl: info.picture,
+          role: 'CREATOR',
+          termsAcceptedAt: new Date(),
+        },
+      })
+    }
+
+    const tokens = authService.generateTokens(user.id, user.role)
+    return res.json({
+      ...tokens,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl },
     })
   }
 
@@ -193,6 +246,9 @@ export class AuthController {
     const user = await prisma.user.findUnique({ where: { id: req.user!.sub } })
     if (!user) return res.status(404).json({ message: 'Usuário não encontrado' })
 
+    if (!user.passwordHash) {
+      return res.status(400).json({ message: 'Esta conta usa login com Google e não tem senha local.' })
+    }
     const ok = await authService.comparePassword(parsed.data.currentPassword, user.passwordHash)
     if (!ok) return res.status(400).json({ message: 'Senha atual incorreta' })
 

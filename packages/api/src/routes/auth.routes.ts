@@ -7,6 +7,7 @@ const ctrl = new AuthController()
 
 authRoutes.post('/register', ctrl.register)
 authRoutes.post('/login', ctrl.login)
+authRoutes.post('/google', ctrl.googleLogin)
 authRoutes.post('/refresh', ctrl.refresh)
 authRoutes.get('/me', authMiddleware, ctrl.me)
 authRoutes.patch('/me', authMiddleware, ctrl.updateMe)
