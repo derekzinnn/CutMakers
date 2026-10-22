@@ -203,6 +203,7 @@ export class EditorService {
     avatarUrl: editor.user.avatarUrl,
     bio: editor.user.bio,
     isPremium: editor.isPremium,
+    verified: editor.verified,
     avgRating: editor.avgRating,
     totalJobs: editor.totalJobs,
     categories: editor.categories.map((ec) => ({
@@ -228,6 +229,7 @@ export class EditorService {
     profile: {
       id: editor.id,
       isPremium: editor.isPremium,
+      verified: editor.verified,
       premiumExpiresAt: editor.premiumExpiresAt,
       avgRating: editor.avgRating,
       totalJobs: editor.totalJobs,

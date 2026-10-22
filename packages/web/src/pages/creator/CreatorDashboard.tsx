@@ -54,6 +54,7 @@ interface EditorListItem {
   avatarUrl: string | null
   bio: string | null
   isPremium: boolean
+  verified: boolean
   avgRating: number
   totalJobs: number
   categories: { id: string; name: string }[]
@@ -753,7 +754,14 @@ function EditorCard({
               >
                 {editor.name}
               </span>
-              <IconRosetteDiscountCheckFilled size={13} color="var(--brand)" style={{ flexShrink: 0 }} />
+              {editor.verified && (
+                <IconRosetteDiscountCheckFilled
+                  size={13}
+                  color="var(--brand)"
+                  style={{ flexShrink: 0 }}
+                  aria-label="Editor verificado"
+                />
+              )}
             </div>
             <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1 }}>
               {editor.categories.slice(0, 3).map(c => c.name).join(' · ')}

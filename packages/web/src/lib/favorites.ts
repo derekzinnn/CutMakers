@@ -8,6 +8,7 @@ export interface FavoriteEditor {
   avatarUrl: string | null
   bio: string | null
   isPremium: boolean
+  verified: boolean
   avgRating: number
   totalJobs: number
   categories: { id: string; name: string }[]

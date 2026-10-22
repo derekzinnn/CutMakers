@@ -70,6 +70,22 @@ export const adminController = {
     }
   },
 
+  async verifyEditor(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.json(await adminService.setVerified(req.params.id as string, true, req.user!.sub))
+    } catch (err) {
+      next(err)
+    }
+  },
+
+  async unverifyEditor(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.json(await adminService.setVerified(req.params.id as string, false, req.user!.sub))
+    } catch (err) {
+      next(err)
+    }
+  },
+
   async listOrders(req: Request, res: Response, next: NextFunction) {
     try {
       const query = listOrdersQuery.parse(req.query)

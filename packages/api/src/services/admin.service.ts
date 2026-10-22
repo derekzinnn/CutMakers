@@ -61,7 +61,7 @@ export class AdminService {
           role: true,
           banned: true,
           createdAt: true,
-          editorProfile: { select: { isPremium: true } },
+          editorProfile: { select: { isPremium: true, verified: true } },
         },
       }),
       prisma.user.count({ where }),
@@ -75,6 +75,7 @@ export class AdminService {
         role: u.role,
         banned: u.banned,
         isPremium: u.editorProfile?.isPremium ?? false,
+        verified: u.editorProfile?.verified ?? false,
         createdAt: u.createdAt,
       })),
       total,
@@ -106,6 +107,28 @@ export class AdminService {
     })
 
     return updated
+  }
+
+  /**
+   * Selo "verificado" curado. So vale para quem tem EditorProfile; o selo e um
+   * sinal de confianca para quem contrata, entao e decisao manual do admin.
+   */
+  async setVerified(editorUserId: string, verified: boolean, adminId: string) {
+    const profile = await prisma.editorProfile.findUnique({
+      where: { userId: editorUserId },
+      select: { id: true },
+    })
+    if (!profile) throw NotFound('Este usuário não é um editor')
+
+    await prisma.editorProfile.update({ where: { id: profile.id }, data: { verified } })
+
+    await logEvent({
+      actorId: adminId,
+      action: verified ? 'EDITOR_VERIFIED' : 'EDITOR_UNVERIFIED',
+      entityType: 'User',
+      entityId: editorUserId,
+    })
+    return { verified }
   }
 
   async listOrders(params: ListAdminOrdersParams) {

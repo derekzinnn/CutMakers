@@ -134,6 +134,9 @@ model EditorProfile {
   user             User      @relation(fields: [userId], references: [id])
   isPremium        Boolean   @default(false)
   premiumExpiresAt DateTime?
+  // Selo "verificado" CURADO pelo admin — nao e automatico. Sinal de confianca
+  // para quem contrata: a CutMakers conferiu este editor.
+  verified         Boolean   @default(false)
   avgRating        Float     @default(0)
   // Faixa de meia estrela derivada de avgRating (ver lib/plans.ratingBandOf).
   // Existe como coluna porque a ordenacao da busca precisa dela: o Premium

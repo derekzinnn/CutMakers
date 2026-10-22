@@ -14,6 +14,10 @@ adminRoutes.get('/users', adminController.listUsers)
 adminRoutes.patch('/users/:id/ban', adminController.banUser)
 adminRoutes.patch('/users/:id/unban', adminController.unbanUser)
 
+// Selo verificado (curado pelo admin)
+adminRoutes.patch('/editors/:id/verify', adminController.verifyEditor)
+adminRoutes.patch('/editors/:id/unverify', adminController.unverifyEditor)
+
 // Pedidos
 adminRoutes.get('/orders', adminController.listOrders)
 

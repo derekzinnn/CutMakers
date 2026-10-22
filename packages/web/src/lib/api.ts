@@ -30,6 +30,7 @@ const INVALIDACOES: [RegExp, string[]][] = [
   [/^\/subscriptions/, ['subscription', 'editor-me']],
   [/^\/editors\/me/, ['editor-me', 'editors']],
   [/^\/admin\/users/, ['admin-users']],
+  [/^\/admin\/editors/, ['admin-users', 'editors']],
   [/^\/notifications/, ['notifications']],
   [/^\/favorites/, ['favorites', 'favorite-ids']],
 ]

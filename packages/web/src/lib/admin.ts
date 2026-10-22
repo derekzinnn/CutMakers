@@ -12,6 +12,7 @@ export interface AdminUser {
   role: UserRole
   banned: boolean
   isPremium: boolean
+  verified: boolean
   createdAt: string
 }
 
@@ -34,6 +35,14 @@ export async function banUser(id: string): Promise<void> {
 
 export async function unbanUser(id: string): Promise<void> {
   await api.patch(`/admin/users/${id}/unban`)
+}
+
+export async function verifyEditor(id: string): Promise<void> {
+  await api.patch(`/admin/editors/${id}/verify`)
+}
+
+export async function unverifyEditor(id: string): Promise<void> {
+  await api.patch(`/admin/editors/${id}/unverify`)
 }
 
 // ─── Pedidos ───────────────────────────────────────────────────────────────────

@@ -42,6 +42,8 @@ import {
   listUsers,
   banUser,
   unbanUser,
+  verifyEditor,
+  unverifyEditor,
   listAdminOrders,
   listAdminDisputes,
   getFinancialSummary,
@@ -291,6 +293,18 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
   const [role, setRole] = useState<UserRole | 'ALL'>('ALL')
   const [page, setPage] = useState(1)
   const [target, setTarget] = useState<AdminUser | null>(null)
+  const [verifyBusy, setVerifyBusy] = useState<string | null>(null)
+
+  async function onToggleVerify(u: AdminUser) {
+    setVerifyBusy(u.id)
+    try {
+      if (u.verified) await unverifyEditor(u.id)
+      else await verifyEditor(u.id)
+      await load()
+    } finally {
+      setVerifyBusy(null)
+    }
+  }
   const [busy, setBusy] = useState(false)
 
   // Chave inclui os filtros: voltar para uma combinacao ja vista e instantaneo,
@@ -398,6 +412,24 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                     style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
                   >
                     <IconEye size={14} stroke={1.5} />
+                  </button>
+                )}
+                {(u.role === 'EDITOR' || u.role === 'BOTH') && (
+                  <button
+                    onClick={() => onToggleVerify(u)}
+                    disabled={verifyBusy === u.id}
+                    title={u.verified ? 'Remover selo verificado' : 'Verificar editor'}
+                    className="flex h-7 items-center gap-1 rounded-[6px] px-2 text-[11px] font-medium"
+                    style={{
+                      background: u.verified ? 'var(--brand-soft)' : 'var(--surface-subtle)',
+                      border: `1px solid ${u.verified ? 'var(--brand-border)' : 'var(--border)'}`,
+                      color: u.verified ? 'var(--brand)' : 'var(--muted-foreground)',
+                      cursor: verifyBusy === u.id ? 'wait' : 'pointer',
+                      opacity: verifyBusy === u.id ? 0.6 : 1,
+                    }}
+                  >
+                    <IconRosetteDiscountCheck size={13} stroke={1.8} />
+                    {u.verified ? 'Verificado' : 'Verificar'}
                   </button>
                 )}
                 {u.role !== 'ADMIN' && (

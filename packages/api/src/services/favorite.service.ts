@@ -68,6 +68,7 @@ export class FavoriteService {
         avatarUrl: e.user.avatarUrl,
         bio: e.user.bio,
         isPremium: e.isPremium,
+        verified: e.verified,
         avgRating: e.avgRating,
         totalJobs: e.totalJobs,
         categories: e.categories.map((ec) => ({ id: ec.category.id, name: ec.category.name })),

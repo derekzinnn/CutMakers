@@ -48,6 +48,7 @@ interface EditorFullDTO {
   profile: {
     id: string
     isPremium: boolean
+    verified: boolean
     avgRating: number
     totalJobs: number
     categories: { id: string; name: string }[]
@@ -356,17 +357,20 @@ export function EditorPublicProfile() {
                   initials(editor.name)
                 )}
               </div>
-              {/* Verified badge */}
-              <div
-                style={{
-                  position: 'absolute', bottom: 2, right: 2,
-                  width: 22, height: 22, borderRadius: '50%',
-                  background: 'var(--brand)', border: '2px solid var(--card)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <IconCheck size={11} stroke={3} color="#fff" />
-              </div>
+              {/* Selo verificado — curado pelo admin, so para quem foi verificado */}
+              {editor?.profile?.verified && (
+                <div
+                  title="Editor verificado pela CutMakers"
+                  style={{
+                    position: 'absolute', bottom: 2, right: 2,
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: 'var(--brand)', border: '2px solid var(--card)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <IconCheck size={11} stroke={3} color="#fff" />
+                </div>
+              )}
               {/* Camera overlay for own profile */}
               {isOwnProfile && (
                 <>
