@@ -853,19 +853,41 @@ Ver `packages/api/.env.example`. Precisa:
    [x] As demais `findMany` sem `take` são operação interna (validação, transação, job),
        não tabela — não precisam
 
-⏳ Fase 14 — Próximos (pendem decisão/credenciais do dono)
-   [ ] Testes de integração dos fluxos ainda não cobertos: disputas, assinaturas, revisões,
-       marketplace invertido (aceite de proposta de solicitação), e o enforcement de ban no refresh
-       (este precisa da camada HTTP — supertest)
-   [ ] Guardar `paymentUrl`/`pixCode` na Subscription, para o editor reabrir a cobrança em aberto
-       em vez de ser bloqueado por 30min (schema + UI)
-   [ ] Disputa pós-conclusão: precisa de fluxo de estorno próprio (escrow já liberado), não é PATCH de status
-   [ ] Cron de verdade para auto-aprovação e expiração de assinatura (hoje oportunista no login)
-   [ ] CI rodando `test` + `test:integration` (o integration precisa de TEST_DATABASE_URL no runner)
-   [ ] Decidir se edição de solicitação deve travar campos (orçamento/descrição) após a 1ª proposta
-   [ ] Login com Google funcional (requer GOOGLE_CLIENT_ID/SECRET do Google Cloud — decisão do dono)
-   [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal)
-   [ ] Aprovação/verificação manual de editores pelo admin (badge verificado curado)
+✅ Fase 14 — Cobertura, cron, CI e caminhos gated por credencial
+   [x] Testes de integração dos fluxos que faltavam: disputas (abertura/resolução/estorno),
+       assinaturas (ativação dev, expiração, reabertura de cobrança), e trava de termos da
+       solicitação. (`test/disputas`, `test/assinaturas`, `test/solicitacao-trava`,
+       `test/contratacao`)
+   [x] Reabrir cobrança PIX de assinatura em aberto: Subscription guarda
+       paymentUrl/pixCode/pixQrCode/chargeExpiresAt; createSubscription devolve a PENDING
+       existente (reopened:true) em vez de bloquear; getMySubscription expõe pendingCharge;
+       EditorDashboard mostra o PIX de novo e oferece "Gerar nova cobrança"
+   [x] Cron de verdade: `scripts/run-scheduled-jobs.ts` (`pnpm jobs`) roda
+       checkAndExpireSubscriptions + autoApproveStaleDeliveries de forma determinística.
+       O trigger no login continua como rede de segurança. Agendar a cada 15min no crontab do VPS
+   [x] CI (`.github/workflows/ci.yml`): typecheck + build + testes de unidade a cada push/PR;
+       integração roda só se o secret TEST_DATABASE_URL estiver configurado no runner (senão PULA)
+   [x] Edição de solicitação TRAVA orçamento/prazo/descrição após a 1ª proposta PENDING
+       (409 Conflict); título e links de referência seguem editáveis (project-request.service)
+   [x] Selo "verificado" curado pelo admin: `EditorProfile.verified` (era exibido para TODOS —
+       badge falso). PATCH /admin/editors/:id/verify, coluna na tabela de usuários, auditoria
+       EDITOR_VERIFIED/UNVERIFIED. Badge no EditorCard/perfil agora condicional ao campo real
+   [x] Login com Google — CAMINHO COMPLETO no código (ativa só com credencial):
+       backend verifyGoogleToken (tokeninfo, checa aud + email_verified) + POST /auth/google,
+       User.passwordHash nullable + User.googleId; GoogleButton (GSI) no front. Sem
+       GOOGLE_CLIENT_ID/SECRET: botão "Em breve" (mesmo padrão dev-mode do resto). O dono só
+       cria o OAuth Client no Google Cloud e seta as envs
+   [x] Favoritos: Favorite (userId+editorProfileId @@unique), favorite.service/controller/routes
+       (toggle), CreatorDashboard com coração no EditorCard + aba Favoritos
+   [x] Conta do criador: PATCH /auth/me + PATCH /auth/password; AccountSection no CreatorDashboard
+
+   ⏳ Ainda pendentes (decisão/credencial do dono):
+   [ ] Disputa pós-conclusão: DECISÃO DE NEGÓCIO pendente. O escrow já foi liberado ao editor
+       em COMPLETED, então "estornar" é retirar dinheiro de quem já recebeu — não é PATCH de
+       status. Precisa definir QUEM absorve (editor / plataforma / chargeback) e a janela de
+       contestação, antes de qualquer código de movimento de dinheiro
+   [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal) — requer a
+       API de assinatura recorrente do Abacatepay (credencial + endpoint do dono)
    [ ] Mobile React Native (planejado — fase futura)
 ```
 
