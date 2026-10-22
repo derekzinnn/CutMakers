@@ -47,13 +47,21 @@ describe('assinatura premium', () => {
     await expect(subscriptionService.createSubscription(user.id)).rejects.toMatchObject({ status: 400 })
   })
 
-  it('não acumula cobranças PENDING: a 2a tentativa (antes de confirmar) é barrada', async () => {
-    // Simula estado onde a confirmação dev não rodou: cria PENDING manual recente
+  it('cobrança PENDING em aberto é REABERTA, não duplicada', async () => {
+    // Simula estado onde a confirmação dev não rodou: cria PENDING manual com PIX
     const { user, profile } = await criarEditor()
     await testPrisma.subscription.create({
-      data: { editorProfileId: profile.id, status: 'PENDING', amount: PREMIUM_MONTHLY_PRICE },
+      data: {
+        editorProfileId: profile.id, status: 'PENDING', amount: PREMIUM_MONTHLY_PRICE,
+        pixCode: 'PIX-EXISTENTE-123',
+      },
     })
-    await expect(subscriptionService.createSubscription(user.id)).rejects.toThrow(/cobran[çc]a.*aberto/i)
+    const r = await subscriptionService.createSubscription(user.id)
+    // Reabre a MESMA cobrança (mesmo PIX), não cria outra
+    expect(r.reopened).toBe(true)
+    expect(r.pixCode).toBe('PIX-EXISTENTE-123')
+    const total = await testPrisma.subscription.count({ where: { editorProfileId: profile.id } })
+    expect(total).toBe(1)
   })
 
   it('checkAndExpireSubscriptions: vencida vira EXPIRED e isPremium false', async () => {

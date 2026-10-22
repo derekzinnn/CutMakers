@@ -21,6 +21,8 @@ export interface MySubscription {
   portfolioUsed: number
   /** Teto do Premium, para mostrar o ganho de assinar */
   portfolioLimitPremium: number
+  /** Cobranca PIX em aberto (PENDING recente), para a UI oferecer "reabrir" */
+  pendingCharge: { pixCode: string | null; paymentUrl: string | null; expiresAt: string | null } | null
 }
 
 export interface CreateSubscriptionResult {
@@ -29,6 +31,8 @@ export interface CreateSubscriptionResult {
   pixQrCode: string | null
   expiresAt: string | null
   devConfirmed: boolean
+  /** true quando reabriu uma cobranca ja existente em vez de criar outra */
+  reopened: boolean
 }
 
 export async function getMySubscription(): Promise<MySubscription> {

@@ -37,6 +37,8 @@ export interface MySubscriptionDTO {
   portfolioUsed: number
   /** Teto do Premium, para a UI mostrar o ganho de assinar */
   portfolioLimitPremium: number
+  /** Cobranca PIX em aberto (PENDING recente), para a UI oferecer "reabrir" */
+  pendingCharge: { pixCode: string | null; paymentUrl: string | null; expiresAt: Date | null } | null
 }
 
 // ─── Serviço ──────────────────────────────────────────────────────────────────
@@ -91,12 +93,18 @@ export class SubscriptionService {
     const openPending = await prisma.subscription.findFirst({
       where: { editorProfileId: profile.id, status: 'PENDING' },
       orderBy: { startedAt: 'desc' },
-      select: { id: true },
     })
     if (openPending) {
-      throw BadRequest(
-        `Você já tem uma cobrança de assinatura em aberto. Conclua o pagamento pelo PIX gerado ou aguarde ${PENDING_CHARGE_TTL_MIN} minutos para gerar outra.`,
-      )
+      // Reabre a cobranca existente em vez de bloquear: o editor ve o MESMO PIX
+      // de novo. Nao gera cobranca nova no gateway (que tem custo por emissao).
+      return {
+        paymentUrl: openPending.paymentUrl,
+        pixCode: openPending.pixCode,
+        pixQrCode: openPending.pixQrCode,
+        expiresAt: openPending.chargeExpiresAt ? openPending.chargeExpiresAt.toISOString() : null,
+        devConfirmed: false,
+        reopened: true,
+      }
     }
 
     // Registro inicial em PENDING — só vira ACTIVE após confirmação do pagamento
@@ -118,7 +126,13 @@ export class SubscriptionService {
 
     await prisma.subscription.update({
       where: { id: subscription.id },
-      data: { externalSubscriptionId: charge.externalPaymentId },
+      data: {
+        externalSubscriptionId: charge.externalPaymentId,
+        paymentUrl: charge.paymentUrl,
+        pixCode: charge.pixCode,
+        pixQrCode: charge.pixQrCode,
+        chargeExpiresAt: charge.expiresAt ? new Date(charge.expiresAt) : null,
+      },
     })
 
     // Em dev (sem gateway) confirmamos na hora para o fluxo de demonstração seguir
@@ -132,6 +146,7 @@ export class SubscriptionService {
       pixQrCode: charge.pixQrCode,
       expiresAt: charge.expiresAt,
       devConfirmed: charge.devMode,
+      reopened: false,
     }
   }
 
@@ -146,6 +161,7 @@ export class SubscriptionService {
         portfolioLimit: portfolioLimitFor(false),
         portfolioUsed: 0,
         portfolioLimitPremium: PREMIUM_PORTFOLIO_LIMIT,
+        pendingCharge: null,
       }
     }
 
@@ -157,6 +173,19 @@ export class SubscriptionService {
       prisma.portfolioItem.count({ where: { editorProfileId: profile.id } }),
     ])
 
+    // Cobranca em aberto so conta se for PENDING recente (dentro do TTL) e tiver PIX
+    const pendingCharge =
+      subscription &&
+      subscription.status === 'PENDING' &&
+      subscription.pixCode &&
+      Date.now() - subscription.startedAt.getTime() < PENDING_CHARGE_TTL_MIN * 60 * 1000
+        ? {
+            pixCode: subscription.pixCode,
+            paymentUrl: subscription.paymentUrl,
+            expiresAt: subscription.chargeExpiresAt,
+          }
+        : null
+
     return {
       isPremium: profile.isPremium,
       premiumExpiresAt: profile.premiumExpiresAt,
@@ -165,6 +194,7 @@ export class SubscriptionService {
       portfolioLimit: portfolioLimitFor(profile.isPremium),
       portfolioUsed,
       portfolioLimitPremium: PREMIUM_PORTFOLIO_LIMIT,
+      pendingCharge,
     }
   }
 

@@ -783,11 +783,19 @@ function PremiumSection() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [charge, setCharge] = useState<{ pixCode: string | null; paymentUrl: string | null } | null>(null)
+  // true quando o PIX exibido e uma cobranca que ja existia (reaberta), nao recem-gerada
+  const [reopened, setReopened] = useState(false)
 
   async function load() {
     setLoading(true)
     try {
-      setData(await getMySubscription())
+      const me = await getMySubscription()
+      setData(me)
+      // Cobranca em aberto: mostra o MESMO PIX de novo, sem o editor precisar reassinar
+      if (!me.isPremium && me.pendingCharge && (me.pendingCharge.pixCode || me.pendingCharge.paymentUrl)) {
+        setCharge({ pixCode: me.pendingCharge.pixCode, paymentUrl: me.pendingCharge.paymentUrl })
+        setReopened(true)
+      }
     } catch {
       setError('Não foi possível carregar sua assinatura')
     } finally {
@@ -805,6 +813,7 @@ function PremiumSection() {
       const result = await createSubscription()
       if (result.paymentUrl) window.open(result.paymentUrl, '_blank')
       setCharge({ pixCode: result.pixCode, paymentUrl: result.paymentUrl })
+      setReopened(result.reopened)
       await load()
     } catch (err) {
       const e = err as { response?: { data?: { message?: string } } }
@@ -963,12 +972,18 @@ function PremiumSection() {
           style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
         >
           {busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconCrown size={16} stroke={1.5} />}
-          {busy ? 'Gerando cobrança...' : `Assinar Premium — R$ ${price.toFixed(2).replace('.', ',')}/mês`}
+          {busy
+            ? 'Gerando cobrança...'
+            : charge
+              ? 'Gerar nova cobrança'
+              : `Assinar Premium — R$ ${price.toFixed(2).replace('.', ',')}/mês`}
         </button>
 
         {charge && (charge.pixCode || charge.paymentUrl) && (
           <div className="mt-4 rounded-[8px] px-4 py-3" style={{ background: 'var(--info-soft)', border: '1px solid rgba(59,130,246,0.2)' }}>
-            <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>Cobrança PIX gerada</p>
+            <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>
+              {reopened ? 'Você tem uma cobrança PIX em aberto' : 'Cobrança PIX gerada'}
+            </p>
             {charge.paymentUrl && (
               <a href={charge.paymentUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs underline" style={{ color: '#93C5FD' }}>
                 Abrir página de pagamento

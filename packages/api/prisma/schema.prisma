@@ -333,6 +333,12 @@ model Subscription {
   startedAt              DateTime           @default(now())
   expiresAt              DateTime?
   externalSubscriptionId String?
+  // Dados da cobranca PIX em aberto — guardados para o editor REABRIR a cobranca
+  // (ver o mesmo PIX de novo) em vez de ser bloqueado ate ela expirar
+  paymentUrl             String?
+  pixCode                String?
+  pixQrCode              String?
+  chargeExpiresAt        DateTime?
 
   @@index([editorProfileId, status])
   // Expiracao varre as ativas vencidas
