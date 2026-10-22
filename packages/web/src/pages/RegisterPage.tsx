@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { IconUser, IconMail, IconLock, IconCamera, IconMovie } from '@tabler/icons-react'
+import { IconUser, IconMail, IconLock, IconCamera, IconMovie, IconEye, IconEyeOff } from '@tabler/icons-react'
 import { api } from '@/lib/api'
 import { useAuth, type AuthUser } from '@/hooks/use-auth'
 import { Modal } from '@/components/ui/Modal'
@@ -13,6 +13,7 @@ export function RegisterPage() {
   const { login } = useAuth()
 
   const [role, setRole] = useState<Role>('CREATOR')
+  const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -172,14 +173,25 @@ export function RegisterPage() {
                 <IconLock size={16} stroke={1.5} />
               </span>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Mínimo 8 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="input-field pl-9"
+                className="input-field pl-9 pr-10"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 transition-colors"
+                style={{ color: 'var(--muted-foreground)', background: 'none', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--foreground)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted-foreground)' }}
+              >
+                {showPassword ? <IconEyeOff size={16} stroke={1.5} /> : <IconEye size={16} stroke={1.5} />}
+              </button>
             </div>
 
             {/* Aceite dos Termos de Uso */}
