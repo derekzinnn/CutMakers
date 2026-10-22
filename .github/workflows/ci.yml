@@ -1,0 +1,61 @@
+name: CI
+
+# Roda a cada push e PR. NAO e deploy (o deploy do VPS e manual, por git pull).
+# So valida: tipos, build e testes.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # O secret vira env no nivel do job para poder ser checado no `if` dos steps
+    # (secrets nao sao acessiveis direto em condicoes de step).
+    env:
+      TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Gerar Prisma Client
+        run: pnpm --filter @cutmakers/api exec prisma generate
+
+      - name: Typecheck (api + web)
+        run: |
+          pnpm --filter @cutmakers/api exec tsc --noEmit
+          pnpm --filter @cutmakers/web exec tsc --noEmit
+
+      - name: Build de producao (api + web)
+        run: |
+          pnpm --filter @cutmakers/api build
+          pnpm --filter @cutmakers/web build
+
+      - name: Testes de unidade (sem banco)
+        run: pnpm --filter @cutmakers/api test
+
+      # Integracao: so roda se o secret TEST_DATABASE_URL estiver configurado.
+      # Aponte-o para um schema isolado no mesmo Supabase (?schema=cutmakers_ci),
+      # porta 5432 (conexao direta). Sem o secret, este passo e PULADO — o CI nao
+      # falha por falta dele; unidade + build ja cobrem o essencial.
+      # DATABASE_URL/DIRECT_URL recebem o mesmo valor so para o migrate deploy;
+      # o harness de teste le TEST_DATABASE_URL diretamente.
+      - name: Testes de integracao (se houver banco de teste)
+        if: ${{ env.TEST_DATABASE_URL != '' }}
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: |
+          pnpm --filter @cutmakers/api exec prisma migrate deploy
+          pnpm --filter @cutmakers/api test:integration
