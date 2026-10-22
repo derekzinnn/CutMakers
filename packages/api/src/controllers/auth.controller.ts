@@ -35,7 +35,7 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8, 'A nova senha deve ter ao menos 8 caracteres'),
 })
 
-const loginSchema = z.object({
+export const loginSchema = z.object({
   email: emailField,
   password: z.string().min(1),
 })
