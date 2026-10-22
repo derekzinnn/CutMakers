@@ -17,6 +17,8 @@ type Editable = Pick<
 >
 
 interface Props {
+  /** true quando a solicitacao ja tem proposta: orcamento/prazo/descricao travam */
+  lockedTerms?: boolean
   open: boolean
   /** Presente = modo edição */
   initial?: Editable
@@ -32,7 +34,7 @@ const parseMoney = (v: string) => {
   return Number.isFinite(n) && n > 0 ? n : undefined
 }
 
-export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
+export function RequestFormModal({ open, initial, onClose, onSaved, lockedTerms = false }: Props) {
   const { categories } = useCategories()
   const isEdit = !!initial
 
@@ -126,6 +128,15 @@ export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
       }
     >
       <form id="request-form" onSubmit={handleSubmit} className="space-y-4">
+        {lockedTerms && (
+          <div
+            className="rounded-lg px-3 py-2.5 text-xs"
+            style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-border)', color: 'var(--warning)' }}
+          >
+            Esta solicitação já tem propostas. Orçamento, prazo e descrição estão travados —
+            você ainda pode ajustar o título e os links de referência.
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1.5 block text-xs font-medium" style={labelStyle}>Categoria</label>
@@ -148,6 +159,7 @@ export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
               type="date"
               min={today}
               value={deadline}
+              disabled={lockedTerms}
               onChange={(e) => setDeadline(e.target.value)}
               className="input-field"
               style={{ colorScheme: 'dark' }}
@@ -171,6 +183,7 @@ export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
           <label className="mb-1.5 block text-xs font-medium" style={labelStyle}>Descrição do projeto</label>
           <textarea
             value={description}
+            disabled={lockedTerms}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={5000}
             rows={5}
@@ -190,6 +203,7 @@ export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
               type="text"
               inputMode="decimal"
               value={budgetMin}
+              disabled={lockedTerms}
               onChange={(e) => setBudgetMin(e.target.value)}
               placeholder="R$ 0,00"
               className="input-field"
@@ -201,6 +215,7 @@ export function RequestFormModal({ open, initial, onClose, onSaved }: Props) {
               type="text"
               inputMode="decimal"
               value={budgetMax}
+              disabled={lockedTerms}
               onChange={(e) => setBudgetMax(e.target.value)}
               placeholder="R$ 0,00"
               className="input-field"

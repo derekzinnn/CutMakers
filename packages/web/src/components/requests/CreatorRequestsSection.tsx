@@ -361,6 +361,7 @@ function RequestDetail({
       <RequestFormModal
         open={editOpen}
         initial={request}
+        lockedTerms={(request?.proposals ?? []).some((p) => p.status === 'PENDING')}
         onClose={() => setEditOpen(false)}
         onSaved={() => { load(); onChanged() }}
       />

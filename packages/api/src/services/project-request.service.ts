@@ -240,6 +240,28 @@ export class ProjectRequestService {
     if (request.creatorId !== creatorId) throw Forbidden('Você não pode editar esta solicitação')
     if (request.status !== 'OPEN') throw closedRequestError(request.status)
 
+    // Trava de termos: uma vez que um editor mandou proposta, os campos que ele
+    // usou para precificar — orçamento, prazo e descrição (o escopo) — ficam
+    // congelados. Mudar o combinado depois do lance seria injusto com quem
+    // propôs em cima de outros números. Título e links continuam editáveis.
+    const temPropostas = (await prisma.requestProposal.count({
+      where: { requestId, status: 'PENDING' },
+    })) > 0
+    if (temPropostas) {
+      const mudouTermo =
+        (data.budgetMin !== undefined && data.budgetMin !== toNum(request.budgetMin)) ||
+        (data.budgetMax !== undefined && data.budgetMax !== toNum(request.budgetMax)) ||
+        (data.deadline !== undefined &&
+          (data.deadline?.getTime() ?? null) !== (request.deadline?.getTime() ?? null)) ||
+        (data.description !== undefined && data.description.trim() !== request.description)
+      if (mudouTermo) {
+        throw Conflict(
+          'Esta solicitação já tem propostas. Orçamento, prazo e descrição não podem mudar — ' +
+            'cancele e publique uma nova, ou edite apenas título e links de referência.',
+        )
+      }
+    }
+
     // Valida contra o estado final (valores enviados + atuais)
     const finalMin = data.budgetMin !== undefined ? data.budgetMin : toNum(request.budgetMin)
     const finalMax = data.budgetMax !== undefined ? data.budgetMax : toNum(request.budgetMax)
