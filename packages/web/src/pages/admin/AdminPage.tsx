@@ -30,6 +30,7 @@ import {
   IconChevronUp,
 } from '@tabler/icons-react'
 import { Modal } from '@/components/ui/Modal'
+import { DashboardSection } from './DashboardSection'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
 import { usePersistedState } from '@/hooks/use-persisted-state'
@@ -149,51 +150,7 @@ function TransactionBadge({ status }: { status: TransactionStatus }) {
   )
 }
 
-// ─── Dados mock (substituir por fetch na Fase 2) ──────────────────────────────
-
-const STATS = [
-  { label: 'Total de Usuários', value: '0', icon: IconUsers, delta: '+0 este mês' },
-  { label: 'Pedidos Ativos', value: '0', icon: IconBriefcase, delta: '+0 esta semana' },
-  { label: 'Pedidos Concluídos', value: '0', icon: IconCheck, delta: '+0 este mês' },
-  { label: 'Receita Total', value: 'R$ 0,00', icon: IconTrendingUp, delta: '+R$ 0 este mês' },
-]
-
 // ─── Componentes internos ─────────────────────────────────────────────────────
-
-function StatsCard({
-  label,
-  value,
-  delta,
-  Icon,
-}: {
-  label: string
-  value: string
-  delta: string
-  Icon: React.ElementType
-}) {
-  return (
-    <div
-      className="rounded-card p-5"
-      style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
-          {label}
-        </span>
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-lg"
-          style={{ background: 'var(--brand-soft)' }}
-        >
-          <Icon size={16} stroke={1.5} color="var(--brand)" />
-        </span>
-      </div>
-      <p className="font-heading text-2xl font-bold text-white">{value}</p>
-      <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-        {delta}
-      </p>
-    </div>
-  )
-}
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -222,57 +179,6 @@ function SectionHeader({ title, action }: { title: string; action?: React.ReactN
 }
 
 // ─── Seções do admin ──────────────────────────────────────────────────────────
-
-function DashboardSection() {
-  return (
-    <div className="space-y-8">
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        {STATS.map((s) => (
-          <StatsCard key={s.label} label={s.label} value={s.value} delta={s.delta} Icon={s.icon} />
-        ))}
-      </div>
-
-      {/* Últimos usuários */}
-      <div
-        className="rounded-card p-6"
-        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-      >
-        <SectionHeader
-          title="Últimos Usuários"
-          action={
-            <button
-              className="flex items-center gap-1 text-xs"
-              style={{ color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              Ver todos <IconChevronRight size={12} />
-            </button>
-          }
-        />
-        <EmptyState message="Os usuários cadastrados aparecerão aqui" />
-      </div>
-
-      {/* Últimos pedidos */}
-      <div
-        className="rounded-card p-6"
-        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-      >
-        <SectionHeader
-          title="Últimos Pedidos"
-          action={
-            <button
-              className="flex items-center gap-1 text-xs"
-              style={{ color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              Ver todos <IconChevronRight size={12} />
-            </button>
-          }
-        />
-        <EmptyState message="Os pedidos criados aparecerão aqui" />
-      </div>
-    </div>
-  )
-}
 
 const ROLE_FILTERS: { value: UserRole | 'ALL'; label: string }[] = [
   { value: 'ALL', label: 'Todos' },
@@ -1087,7 +993,7 @@ export function AdminPage() {
       }
     >
       <div key={section} className="anim-fade-up">
-        {section === 'dashboard' && <DashboardSection />}
+        {section === 'dashboard' && <DashboardSection onNavigate={setSection} />}
         {section === 'users' && <UsersSection onViewUser={handleViewUser} />}
         {section === 'orders' && <OrdersSection onOpenOrder={(id) => navigate(`/orders/${id}`)} />}
         {section === 'transactions' && <FinanceiroSection />}

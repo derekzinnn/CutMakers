@@ -24,6 +24,9 @@ adminRoutes.get('/orders', adminController.listOrders)
 // Disputas
 adminRoutes.get('/disputes', adminController.listDisputes)
 
+// Dashboard (métricas por período)
+adminRoutes.get('/dashboard', adminController.dashboard)
+
 // Financeiro
 adminRoutes.get('/financial-summary', adminController.financialSummary)
 adminRoutes.get('/transactions', adminController.listTransactions)

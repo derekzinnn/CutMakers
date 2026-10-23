@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { adminService } from '../services/admin.service'
+import { getDashboard } from '../services/admin-dashboard.service'
 
 const roleEnum = z.enum(['CREATOR', 'EDITOR', 'BOTH', 'ADMIN'])
 const orderStatusEnum = z.enum([
@@ -15,6 +16,11 @@ const orderStatusEnum = z.enum([
   'CANCELLED',
   'DISPUTED',
 ])
+
+const dashboardQuery = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
 
 const listUsersQuery = z.object({
   search: z.string().trim().min(1).optional(),
@@ -98,6 +104,15 @@ export const adminController = {
   async listDisputes(_req: Request, res: Response, next: NextFunction) {
     try {
       res.json({ disputes: await adminService.listOpenDisputes() })
+    } catch (err) {
+      next(err)
+    }
+  },
+
+  async dashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { from, to } = dashboardQuery.parse(req.query)
+      res.json(await getDashboard(from, to))
     } catch (err) {
       next(err)
     }

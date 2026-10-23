@@ -168,3 +168,43 @@ export async function listAuditLog(params: {
   const { data } = await api.get<ListAuditLogResponse>('/admin/audit-log', { params })
   return data
 }
+
+// ─── Dashboard ─────────────────────────────────────────────────────────────────
+
+export interface DashboardTotals {
+  newUsers: number
+  ordersCreated: number
+  ordersCompleted: number
+  platformRevenue: number
+  volume: number
+}
+
+export interface DashboardData {
+  range: { from: string; to: string; days: number }
+  current: DashboardTotals
+  previous: DashboardTotals
+  series: { date: string; users: number; orders: number; revenue: number }[]
+  ordersByStatus: { status: OrderStatus; count: number }[]
+  snapshot: {
+    totalUsers: number
+    activeOrders: number
+    openDisputes: number
+    heldInEscrow: number
+    activeSubscribers: number
+  }
+  recentUsers: { id: string; name: string; email: string; role: UserRole; createdAt: string }[]
+  recentOrders: {
+    id: string
+    title: string
+    status: OrderStatus
+    budget: number
+    creatorName: string
+    editorName: string
+    createdAt: string
+  }[]
+}
+
+export async function getDashboard(from: string, to: string): Promise<DashboardData> {
+  const { data } = await api.get<DashboardData>('/admin/dashboard', { params: { from, to } })
+  return data
+}

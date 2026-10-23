@@ -286,6 +286,7 @@ nasce um `Order` já com editor, em `AWAITING_PAYMENT`, que segue o pipeline nor
 - `PATCH /users/:id/ban` / `PATCH /users/:id/unban` — suspende/reativa (bloqueia banir ADMIN)
 - `GET /orders` — lista paginada (20/pág), `?status=`. Retorna id, creatorName, editorName, status, budget, createdAt
 - `GET /disputes` — disputas OPEN, mais antigas primeiro (createdAt asc), com order + partes + reason
+- `GET /dashboard?from=AAAA-MM-DD&to=AAAA-MM-DD` — métricas do período + período anterior + série diária + retrato atual (ver Fase 24)
 - `GET /financial-summary` — { totalTransacted, totalPlatformFees (RELEASED), totalHeldInEscrow (HELD), totalRefunded (REFUNDED) }
 - `GET /transactions` — lista paginada (50/pág): orderId, payerName, payeeName, amount, platformFee, status, createdAt
 - Resolução de disputa reusa `POST /api/orders/:id/dispute/resolve` (ADMIN); `GET /api/orders/:id` já aceita ADMIN
@@ -965,6 +966,19 @@ Ver `packages/api/.env.example`. Precisa:
        zera tudo — nada vaza para o próximo usuário
    [x] Auditoria: EDITOR_VERIFIED/UNVERIFIED sem rótulo (apareciam em inglês) → "Editor verificado" / "Verificação removida";
        "Creator(s)" visível → "Criador(es)"
+✅ Fase 24 — Dashboard do admin com dados reais + date-picker estilo Meta Ads
+   [x] O dashboard era 100% hardcoded (STATS com "0", listas vazias fixas). Agora `GET /api/admin/dashboard?from=&to=`
+       (`admin-dashboard.service.ts`): métricas do período (novos usuários, pedidos criados/concluídos, receita da plataforma,
+       volume), mesmas métricas do período ANTERIOR de mesmo tamanho (delta %), série diária (SQL agrupado por dia),
+       pedidos por status, retrato "agora" (usuários, pedidos em andamento, disputas abertas, escrow, assinantes) e
+       últimos usuários/pedidos do período
+   [x] Dias no fuso de Brasília (UTC-3): "1º de outubro" começa 00:00-03:00; fim exclusivo; máx. 366 dias; 4 testes unitários
+   [x] `ZodError` agora responde 400 (antes era 500 "Erro interno") — vale para todos os endpoints
+   [x] `DateRangePicker` (components/ui) no padrão do Meta Ads: atalhos (Hoje…Mês passado, "Últimos N dias" termina ontem),
+       "Usados recentemente", 2 meses lado a lado (1 em tela estreita), seletores de mês/ano, futuro desabilitado, "Comparar com o
+       período anterior", Cancelar/Atualizar (nada muda até Atualizar). Período escolhido persiste na aba; atalhos são recalculados
+   [x] Gráfico de área em SVG puro (pedidos / usuários / receita) com hover, barras por status
+   ⚠️ Aba "Assinaturas" do admin ainda é placeholder vazio (sem endpoint de listagem)
 ⏳ Próximos (futuro)
    [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
    [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)
