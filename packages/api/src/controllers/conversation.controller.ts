@@ -12,6 +12,7 @@ export const conversationController = {
       const conversation = await conversationService.getOrCreateByOrder(
         req.params.orderId as string,
         req.user!.sub,
+        req.user!.role === 'ADMIN',
       )
       res.json({ conversation })
     } catch (err) {
@@ -36,6 +37,7 @@ export const conversationController = {
       const messages = await conversationService.getMessages(
         req.params.id as string,
         req.user!.sub,
+        req.user!.role === 'ADMIN',
         page,
         limit,
       )

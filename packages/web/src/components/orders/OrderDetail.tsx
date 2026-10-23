@@ -1774,8 +1774,14 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
     try {
       const data = await getOrder(orderId)
       setOrder(data)
-      const conv = await getOrCreateConversationByOrder(orderId)
-      setConversation(conv)
+      // Chat em chamada separada: se a conversa falhar, o pedido ainda aparece
+      // (antes, um erro aqui zerava a pagina toda com "voce nao tem acesso").
+      try {
+        const conv = await getOrCreateConversationByOrder(orderId)
+        setConversation(conv)
+      } catch {
+        setConversation(null)
+      }
     } catch {
       setError('Pedido não encontrado ou você não tem acesso.')
     } finally {
@@ -2335,7 +2341,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       {currentTab === 'mensagens' && (
         <div className="overflow-hidden rounded-[12px]" style={{ border: '1px solid var(--border)', height: 'calc(100vh - 320px)', minHeight: 400 }}>
           {conversation
-            ? <ChatPanel conversation={conversation} compact={false} />
+            ? <ChatPanel conversation={conversation} compact={false} readOnly={perspective === 'admin'} />
             : <div className="flex h-full items-center justify-center text-sm" style={{ color: 'var(--muted-foreground)' }}>Carregando conversa...</div>
           }
         </div>

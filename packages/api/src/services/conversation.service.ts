@@ -27,13 +27,15 @@ type MessageWithRelations = Prisma.MessageGetPayload<{ include: typeof messageIn
 const CONVERSATIONS_PER_PAGE = 20
 
 export class ConversationService {
-  async getOrCreateByOrder(orderId: string, userId: string) {
+  async getOrCreateByOrder(orderId: string, userId: string, isAdmin = false) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       select: { id: true, creatorId: true, editorId: true },
     })
     if (!order) throw NotFound('Pedido não encontrado')
-    if (order.creatorId !== userId && order.editorId !== userId) {
+    // Admin pode abrir a conversa para MEDIAR (ler); criar/ler a linha e inofensivo
+    // — ela pertence ao creator/editor do pedido, nao a quem disparou a leitura.
+    if (!isAdmin && order.creatorId !== userId && order.editorId !== userId) {
       throw Forbidden('Você não faz parte deste pedido')
     }
 
@@ -87,10 +89,10 @@ export class ConversationService {
     }
   }
 
-  async getMessages(conversationId: string, userId: string, page = 1, limit = 50) {
+  async getMessages(conversationId: string, userId: string, isAdmin = false, page = 1, limit = 50) {
     const conv = await prisma.conversation.findUnique({ where: { id: conversationId } })
     if (!conv) throw NotFound('Conversa não encontrada')
-    if (conv.creatorId !== userId && conv.editorId !== userId) {
+    if (!isAdmin && conv.creatorId !== userId && conv.editorId !== userId) {
       throw Forbidden('Você não faz parte desta conversa')
     }
 
@@ -102,10 +104,15 @@ export class ConversationService {
       take: limit,
     })
 
-    await prisma.message.updateMany({
-      where: { conversationId, senderId: { not: userId }, readAt: null },
-      data: { readAt: new Date() },
-    })
+    // Admin apenas observa: NAO marca como lida. Senao a visualizacao do admin
+    // zeraria o "nao lida" do creator/editor (ambos tem senderId != admin), fazendo
+    // a contraparte achar que o outro ja leu uma mensagem que ninguem viu.
+    if (!isAdmin) {
+      await prisma.message.updateMany({
+        where: { conversationId, senderId: { not: userId }, readAt: null },
+        data: { readAt: new Date() },
+      })
+    }
 
     return messages.map(this.toMessageDTO)
   }

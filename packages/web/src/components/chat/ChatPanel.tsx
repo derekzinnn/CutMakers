@@ -22,9 +22,10 @@ function formatTime(iso: string) {
 interface ChatPanelProps {
   conversation: ConversationDTO
   compact?: boolean // true = inline widget in OrderDetailPage
+  readOnly?: boolean // true = admin mediando: le a conversa, nao envia mensagem
 }
 
-export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
+export function ChatPanel({ conversation, compact = false, readOnly = false }: ChatPanelProps) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<MessageDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -83,7 +84,12 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
     }
   }
 
+  // Admin observa a conversa de fora: nao e nenhuma das partes, entao o
+  // cabecalho mostra os dois nomes em vez de "a outra parte".
   const otherParty = user?.id === conversation.creator.id ? conversation.editor : conversation.creator
+  const headerName = readOnly
+    ? `${conversation.creator.name} ↔ ${conversation.editor.name}`
+    : otherParty.name
 
   const msgAreaHeight = compact ? 220 : '100%'
 
@@ -114,7 +120,7 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
         >
           <Avatar name={otherParty.name} url={otherParty.avatarUrl} size={28} />
           <div>
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'white', margin: 0 }}>{otherParty.name}</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'white', margin: 0 }}>{headerName}</p>
             <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0 }}>
               {conversation.order?.title ?? 'Conversa'}
             </p>
@@ -153,25 +159,33 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
           </div>
         ) : (
           messages.map((msg) => {
-            const isMe = msg.sender.id === user?.id
+            // Observando (admin): alinha o creator a direita e o editor a esquerda,
+            // para dar os dois lados. Participando: as minhas mensagens vao a direita.
+            const isMe = !readOnly && msg.sender.id === user?.id
+            const alignRight = readOnly ? msg.sender.id === conversation.creator.id : isMe
             return (
               <div
                 key={msg.id}
                 style={{
                   display: 'flex',
-                  flexDirection: isMe ? 'row-reverse' : 'row',
+                  flexDirection: alignRight ? 'row-reverse' : 'row',
                   alignItems: 'flex-end',
                   gap: 8,
                 }}
               >
-                {!isMe && (
+                {!alignRight && (
                   <Avatar name={msg.sender.name} url={msg.sender.avatarUrl} size={24} />
                 )}
-                <div style={{ maxWidth: '72%', display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', gap: 2 }}>
+                <div style={{ maxWidth: '72%', display: 'flex', flexDirection: 'column', alignItems: alignRight ? 'flex-end' : 'flex-start', gap: 2 }}>
+                  {readOnly && (
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted-foreground)' }}>
+                      {msg.sender.name}
+                    </span>
+                  )}
                   <div
                     style={{
                       padding: '8px 12px',
-                      borderRadius: isMe ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+                      borderRadius: alignRight ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
                       background: isMe ? 'var(--brand)' : 'var(--border)',
                       color: 'white',
                       fontSize: 13,
@@ -192,7 +206,22 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
+      {/* Input (ou aviso de somente-leitura para o admin) */}
+      {readOnly ? (
+        <div
+          style={{
+            padding: '12px 16px',
+            borderTop: '1px solid var(--border)',
+            background: 'var(--card)',
+            flexShrink: 0,
+            textAlign: 'center',
+            fontSize: 12,
+            color: 'var(--muted-foreground)',
+          }}
+        >
+          Visualização do admin — somente leitura. Você não envia mensagens nesta conversa.
+        </div>
+      ) : (
       <div
         style={{
           display: 'flex',
@@ -241,6 +270,7 @@ export function ChatPanel({ conversation, compact = false }: ChatPanelProps) {
           <IconSend size={16} stroke={2} color="white" />
         </button>
       </div>
+      )}
 
       <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
     </div>
