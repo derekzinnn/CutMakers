@@ -62,7 +62,7 @@ interface PeriodTotals {
 
 async function totalsFor(r: DateRange): Promise<PeriodTotals> {
   const [newUsers, ordersCreated, ordersCompleted, released] = await Promise.all([
-    prisma.user.count({ where: { createdAt: { gte: r.start, lt: r.end } } }),
+    prisma.user.count({ where: { personaOfId: null, createdAt: { gte: r.start, lt: r.end } } }),
     prisma.order.count({ where: { createdAt: { gte: r.start, lt: r.end } } }),
     prisma.order.count({ where: { status: 'COMPLETED', updatedAt: { gte: r.start, lt: r.end } } }),
     // RELEASED é estado terminal: updatedAt = momento da liberação
@@ -86,7 +86,7 @@ async function dailySeries(r: DateRange) {
   const [users, orders, revenue] = await Promise.all([
     prisma.$queryRaw<DayRow[]>`
       SELECT to_char(("createdAt" AT TIME ZONE ${TZ_NAME})::date, 'YYYY-MM-DD') AS d, count(*)::int AS n, NULL AS v
-      FROM "User" WHERE "createdAt" >= ${r.start} AND "createdAt" < ${r.end} GROUP BY 1`,
+      FROM "User" WHERE "personaOfId" IS NULL AND "createdAt" >= ${r.start} AND "createdAt" < ${r.end} GROUP BY 1`,
     prisma.$queryRaw<DayRow[]>`
       SELECT to_char(("createdAt" AT TIME ZONE ${TZ_NAME})::date, 'YYYY-MM-DD') AS d, count(*)::int AS n, NULL AS v
       FROM "Order" WHERE "createdAt" >= ${r.start} AND "createdAt" < ${r.end} GROUP BY 1`,
@@ -130,14 +130,14 @@ export async function getDashboard(from: string, to: string) {
       _count: { _all: true },
     }),
     Promise.all([
-      prisma.user.count(),
+      prisma.user.count({ where: { personaOfId: null } }),
       prisma.order.count({ where: { status: { in: [...ACTIVE_STATUSES] } } }),
       prisma.dispute.count({ where: { status: 'OPEN' } }),
       prisma.transaction.aggregate({ where: { status: 'HELD' }, _sum: { amount: true } }),
       prisma.subscription.count({ where: { status: 'ACTIVE' } }),
     ]),
     prisma.user.findMany({
-      where: { createdAt: { gte: range.start, lt: range.end } },
+      where: { personaOfId: null, createdAt: { gte: range.start, lt: range.end } },
       orderBy: { createdAt: 'desc' },
       take: 5,
       select: { id: true, name: true, email: true, role: true, createdAt: true },

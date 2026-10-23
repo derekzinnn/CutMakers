@@ -1,6 +1,7 @@
 import { relativeDate } from '@/lib/format'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { limparCache } from '@/lib/cache'
+import { exitPersona, inPersona } from '@/lib/persona'
 import { useState, useEffect, useRef } from 'react'
 import {
   IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck,
@@ -318,15 +319,8 @@ export function DashboardShell({
     window.setTimeout(() => setCutting(false), 640)
   }
 
-  // Admin olhando os painéis de criador/editor: aviso fixo no topo com caminho de volta
-  const viewingAs =
-    user.role === 'ADMIN'
-      ? location.pathname.startsWith('/dashboard/creator')
-        ? 'criador'
-        : location.pathname.startsWith('/dashboard/editor')
-          ? 'editor'
-          : null
-      : null
+  // Admin dentro de uma persona (criador/editor distintos da conta dele): aviso fixo com caminho de volta
+  const viewingAs = inPersona() ? (user.role === 'CREATOR' ? 'criador' : user.role === 'EDITOR' ? 'editor' : null) : null
 
   // Guarda a rolagem ao sair (ex.: abrir o perfil de um editor) e devolve ao voltar
   const scrollKey = `cm_scroll:${location.pathname}${location.search}`
@@ -381,7 +375,7 @@ export function DashboardShell({
           </span>
           <button
             type="button"
-            onClick={() => navigate('/admin')}
+            onClick={exitPersona}
             className="hover-surface rounded-full px-3 py-1.5 text-xs font-medium"
             style={{ background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--foreground)', cursor: 'pointer' }}
           >

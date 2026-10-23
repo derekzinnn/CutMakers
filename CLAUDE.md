@@ -116,7 +116,7 @@ Gráficos      --chart-1 .. --chart-5
 4. **NUNCA exibir seletor de role na tela de login** — backend identifica o role pelas credenciais
 5. **Admins só via seed**, nunca por endpoint público
 6. **Role `BOTH`** no login mostra modal de escolha de painel (Creator ou Editor)
-7. **Role `ADMIN`** redireciona para `/admin`. O popover do avatar tem "Visualizar como
+7. **Role `ADMIN`** redireciona para `/admin`. (Fase 26: "Ver como criador/editor" troca para PERSONAS distintas.) Antes: popover do avatar tinha "Visualizar como
    Creator/Editor", que NAVEGA para os dashboards reais — a conta admin também é conta de
    editor e de criador (EDITOR_ROLES / CREATOR_ROLES), com portfólio e pedidos próprios
 
@@ -985,6 +985,16 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Quadro de oportunidades (`GET /requests`) agora INCLUI as solicitações do próprio usuário com `isMine: true` — antes eram
        escondidas e parecia bug (admin/BOTH publica e não vê). O card mostra "Sua solicitação" e não oferece proposta; o envio segue
        403 (sem auto-proposta: criador = editor quebraria contrato/escrow). Para testar o fluxo, use uma 2ª conta de editor
+✅ Fase 26 — Personas do admin (criador e editor distintos)
+   Problema: "Ver como editor" usava a MESMA conta, então o admin era criador e editor ao mesmo tempo e não podia
+   propor para a própria solicitação (criador = editor quebraria contrato, escrow e avaliação).
+   [x] `User.personaOfId` (+ unique [personaOfId, role]) — migration `20261023200000_personas_do_admin` (coluna nullable, sem perda de dados)
+   [x] `POST /api/admin/personas { kind: 'CREATOR'|'EDITOR' }` (ADMIN): cria sob demanda 1 usuário REAL de cada tipo ("<Admin> (Criador|Editor)",
+       e-mail `persona-…@cutmakers.invalid`, SEM senha — só este endpoint emite token) e devolve token/refresh/user. Auditoria `PERSONA_STARTED`
+   [x] Front (`lib/persona.ts`): "Ver como criador/editor" TROCA a sessão do navegador pela da persona (guarda a do admin em `cm_admin_session`);
+       o toast "Visualizando como…" → "Voltar para admin" restaura. Logout limpa tudo. Personas ficam fora da lista de usuários e das contagens do dashboard
+   [x] Resultado: o admin envia a proposta pela persona editor e aceita pela persona criador — fluxo completo com um login só
+   ℹ️ Solicitações/pedidos antigos criados direto pela conta admin continuam pertencendo a ela (não à persona criador)
 ⏳ Próximos (futuro)
    [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
    [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)

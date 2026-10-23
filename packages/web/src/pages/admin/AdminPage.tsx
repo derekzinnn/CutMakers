@@ -34,6 +34,7 @@ import { DashboardSection } from './DashboardSection'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
 import { usePersistedState } from '@/hooks/use-persisted-state'
+import { enterPersona } from '@/lib/persona'
 import { STATUS_LABELS, STATUS_COLORS, TRANSACTION_LABELS, type OrderStatus, type TransactionStatus } from '@/lib/orders'
 import { resolveDispute } from '@/lib/disputes'
 import {
@@ -733,6 +734,7 @@ const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   USER_BANNED: { label: 'Usuário suspenso', color: 'var(--destructive)' },
   USER_UNBANNED: { label: 'Usuário reativado', color: 'var(--success)' },
   PASSWORD_CHANGED: { label: 'Senha alterada', color: 'var(--warning)' },
+  PERSONA_STARTED: { label: 'Admin entrou como criador/editor', color: 'var(--info)' },
   EDITOR_VERIFIED: { label: 'Editor verificado', color: 'var(--success)' },
   EDITOR_UNVERIFIED: { label: 'Verificação removida', color: 'var(--warning)' },
   REQUEST_CREATED: { label: 'Solicitação publicada', color: 'var(--info)' },
@@ -963,8 +965,8 @@ export function AdminPage() {
 
   if (!user) return null
 
-  // A conta admin também é conta de criador e de editor (EDITOR_ROLES / CREATOR_ROLES no
-  // backend): os atalhos levam aos dashboards REAIS, com dados de verdade.
+  // Cada atalho troca para uma PERSONA (usuário criador/editor próprio da conta admin): criador e
+  // editor são pessoas diferentes, então dá para testar o fluxo inteiro (proposta, contrato, pagamento).
   const switchBtn = {
     display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 8,
     fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-body)',
@@ -983,10 +985,10 @@ export function AdminPage() {
       pageSubtitle="Painel de administração"
       actions={
         <>
-          <button type="button" className="hover-surface" style={switchBtn} onClick={() => navigate('/dashboard/creator')}>
+          <button type="button" className="hover-surface" style={switchBtn} onClick={() => void enterPersona('CREATOR')}>
             <IconCamera size={14} stroke={1.5} /> Ver como criador
           </button>
-          <button type="button" className="hover-surface" style={switchBtn} onClick={() => navigate('/dashboard/editor')}>
+          <button type="button" className="hover-surface" style={switchBtn} onClick={() => void enterPersona('EDITOR')}>
             <IconMovie size={14} stroke={1.5} /> Ver como editor
           </button>
         </>

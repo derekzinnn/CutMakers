@@ -107,8 +107,16 @@ model User {
   banned          Boolean   @default(false)
   // Aceite dos Termos de Uso da plataforma no cadastro
   termsAcceptedAt DateTime?
+  // Persona do admin: usuário REAL (criador ou editor) que pertence a uma conta ADMIN. Existe para o admin
+  // testar/demonstrar o produto com criador e editor DISTINTOS (auto-proposta quebraria contrato e escrow).
+  // Sem senha: só é alcançada pelo endpoint de personas do admin.
+  personaOfId     String?
+  personaOf       User?     @relation("AdminPersonas", fields: [personaOfId], references: [id], onDelete: SetNull)
+  personas        User[]    @relation("AdminPersonas")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@unique([personaOfId, role])
 
   editorProfile          EditorProfile?
   favorites              Favorite[]        @relation("CreatorFavorites")

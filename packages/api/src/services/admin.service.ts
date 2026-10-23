@@ -39,7 +39,8 @@ export class AdminService {
     const page = Math.max(params.page ?? 1, 1)
     const skip = (page - 1) * USERS_PER_PAGE
 
-    const where: Prisma.UserWhereInput = {}
+    // personas do admin (criador/editor de teste) não são usuários de verdade: ficam fora da lista
+    const where: Prisma.UserWhereInput = { personaOfId: null }
     if (params.role) where.role = params.role
     if (params.search) {
       where.OR = [

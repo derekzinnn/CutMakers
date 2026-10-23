@@ -24,6 +24,9 @@ adminRoutes.get('/orders', adminController.listOrders)
 // Disputas
 adminRoutes.get('/disputes', adminController.listDisputes)
 
+// Personas: criador/editor distintos da conta admin, para testar o produto com um login só
+adminRoutes.post('/personas', adminController.startPersona)
+
 // Dashboard (métricas por período)
 adminRoutes.get('/dashboard', adminController.dashboard)
 
