@@ -33,6 +33,11 @@ export async function banUser(id: string): Promise<void> {
   await api.patch(`/admin/users/${id}/ban`)
 }
 
+/** Exclusão definitiva — só funciona fora de produção (a API recusa com 403 em produção) */
+export async function deleteUserPermanently(id: string): Promise<void> {
+  await api.delete(`/admin/users/${id}`)
+}
+
 export async function unbanUser(id: string): Promise<void> {
   await api.patch(`/admin/users/${id}/unban`)
 }

@@ -13,6 +13,8 @@ adminRoutes.use(requireRole('ADMIN'))
 adminRoutes.get('/users', adminController.listUsers)
 adminRoutes.patch('/users/:id/ban', adminController.banUser)
 adminRoutes.patch('/users/:id/unban', adminController.unbanUser)
+// Exclusão definitiva: só fora de produção (o service recusa em NODE_ENV=production)
+adminRoutes.delete('/users/:id', adminController.deleteUser)
 
 // Selo verificado (curado pelo admin)
 adminRoutes.patch('/editors/:id/verify', adminController.verifyEditor)

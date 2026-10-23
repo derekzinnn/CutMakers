@@ -995,6 +995,16 @@ Ver `packages/api/.env.example`. Precisa:
        o toast "Visualizando como…" → "Voltar para admin" restaura. Logout limpa tudo. Personas ficam fora da lista de usuários e das contagens do dashboard
    [x] Resultado: o admin envia a proposta pela persona editor e aceita pela persona criador — fluxo completo com um login só
    ℹ️ Solicitações/pedidos antigos criados direto pela conta admin continuam pertencendo a ela (não à persona criador)
+✅ Fase 27 — Exclusão definitiva de usuário (só dev) + alinhamento das ações
+   [x] `DELETE /api/admin/users/:id` (ADMIN) → `user-delete.service.ts`: apaga o usuário e TUDO que depende dele (pedidos, transações,
+       contratos, disputas, conversas/mensagens, entregas, revisões, avaliações, solicitações/propostas, portfólio, favoritos,
+       assinaturas, notificações) em ordem de FK, numa transação única. Auditoria é preservada (ator vira "Sistema") + evento `USER_DELETED`
+   [x] Travas: **recusa em NODE_ENV=production (403)**, recusa contas ADMIN e o próprio admin. Por que existe: em produção o certo é
+       Banir (pedidos/pagamentos/contratos são registro financeiro-jurídico); isto é para limpar contas de teste
+   [x] UI: ícone de lixeira na tabela de usuários, só em `import.meta.env.DEV` (o build de produção nem renderiza), modal que exige
+       digitar o e-mail do usuário para habilitar "Excluir para sempre"
+   [x] Tabela de usuários: ações em 4 slots de largura fixa (ver / verificar / banir / excluir) — antes um botão sumindo empurrava os outros
+   [x] 4 testes de integração (grafo completo sem sobras, auditoria mantida, criador com solicitações, recusas)
 ⏳ Próximos (futuro)
    [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
    [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)

@@ -28,6 +28,7 @@ import {
   IconHistory,
   IconChevronDown,
   IconChevronUp,
+  IconTrash,
 } from '@tabler/icons-react'
 import { Modal } from '@/components/ui/Modal'
 import { DashboardSection } from './DashboardSection'
@@ -41,6 +42,7 @@ import {
   listUsers,
   banUser,
   unbanUser,
+  deleteUserPermanently,
   verifyEditor,
   unverifyEditor,
   listAdminOrders,
@@ -196,6 +198,10 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
   const [page, setPage] = useState(1)
   const [target, setTarget] = useState<AdminUser | null>(null)
   const [verifyBusy, setVerifyBusy] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function onToggleVerify(u: AdminUser) {
     setVerifyBusy(u.id)
@@ -224,6 +230,32 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
   })
 
   useEffect(() => { setPage(1) }, [search, role])
+
+  const deleteConfirmed = deleteConfirm.trim().toLowerCase() === (deleteTarget?.email.toLowerCase() ?? '\u0000')
+
+  function closeDelete() {
+    if (deleteBusy) return
+    setDeleteTarget(null)
+    setDeleteConfirm('')
+    setDeleteError(null)
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleteBusy(true)
+    setDeleteError(null)
+    try {
+      await deleteUserPermanently(deleteTarget.id)
+      setDeleteTarget(null)
+      setDeleteConfirm('')
+      await load()
+    } catch (e) {
+      const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message
+      setDeleteError(msg ?? 'Não foi possível excluir o usuário.')
+    } finally {
+      setDeleteBusy(false)
+    }
+  }
 
   async function confirmBanToggle() {
     if (!target) return
@@ -274,7 +306,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
       </div>
 
       {/* Cabeçalho da tabela */}
-      <div className="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_1.2fr] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)' }}>
+      <div className="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_330px] gap-4 rounded-[8px] px-4 py-2 text-xs font-medium" style={{ color: 'var(--muted-foreground)', background: 'var(--surface-subtle)' }}>
         <span>Nome</span>
         <span>Email</span>
         <span>Role</span>
@@ -284,13 +316,13 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
       </div>
 
       {loading ? (
-        <SkeletonTable rows={6} cols={6} gridClass="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_1.2fr] items-center gap-4 px-4 py-3" />
+        <SkeletonTable rows={6} cols={6} gridClass="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_330px] items-center gap-4 px-4 py-3" />
       ) : !data || data.users.length === 0 ? (
         <EmptyState message="Nenhum usuário encontrado" />
       ) : (
         <div className="mt-1">
           {data.users.map((u) => (
-            <div key={u.id} className="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_1.2fr] items-center gap-4 border-b px-4 py-3 text-sm" style={{ borderColor: 'var(--surface-subtle)' }}>
+            <div key={u.id} className="grid grid-cols-[1.4fr_1.8fr_0.8fr_1fr_0.9fr_330px] items-center gap-4 border-b px-4 py-3 text-sm" style={{ borderColor: 'var(--surface-subtle)' }}>
               <span className="flex items-center gap-2 truncate text-white">
                 {u.name}
                 {u.isPremium && <IconRosetteDiscountCheck size={14} stroke={2} style={{ color: 'var(--brand)', flexShrink: 0 }} />}
@@ -305,23 +337,27 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                   <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>Ativo</span>
                 )}
               </span>
-              <div className="flex items-center justify-end gap-2">
-                {(u.role === 'EDITOR' || u.role === 'BOTH') && (
+              {/* 4 slots de largura FIXA: o botão de cada coluna fica sempre no mesmo x, mesmo quando outro some */}
+              <div className="grid grid-cols-[28px_104px_92px_28px] items-center justify-end justify-self-end gap-2">
+                {(u.role === 'EDITOR' || u.role === 'BOTH') ? (
                   <button
                     onClick={() => onViewUser(u)}
                     title="Ver perfil"
+                    aria-label="Ver perfil"
                     className="flex h-7 w-7 items-center justify-center rounded-[6px]"
                     style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
                   >
                     <IconEye size={14} stroke={1.5} />
                   </button>
+                ) : (
+                  <span />
                 )}
-                {(u.role === 'EDITOR' || u.role === 'BOTH') && (
+                {(u.role === 'EDITOR' || u.role === 'BOTH') ? (
                   <button
                     onClick={() => onToggleVerify(u)}
                     disabled={verifyBusy === u.id}
                     title={u.verified ? 'Remover selo verificado' : 'Verificar editor'}
-                    className="flex h-7 items-center gap-1 rounded-[6px] px-2 text-[11px] font-medium"
+                    className="flex h-7 w-full items-center justify-center gap-1 rounded-[6px] px-2 text-[11px] font-medium"
                     style={{
                       background: u.verified ? 'var(--brand-soft)' : 'var(--surface-subtle)',
                       border: `1px solid ${u.verified ? 'var(--brand-border)' : 'var(--border)'}`,
@@ -333,12 +369,14 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                     <IconRosetteDiscountCheck size={13} stroke={1.8} />
                     {u.verified ? 'Verificado' : 'Verificar'}
                   </button>
+                ) : (
+                  <span />
                 )}
-                {u.role !== 'ADMIN' && (
+                {u.role !== 'ADMIN' ? (
                   <button
                     onClick={() => setTarget(u)}
                     title={u.banned ? 'Desbanir' : 'Banir'}
-                    className="flex h-7 items-center gap-1 rounded-[6px] px-2 text-[11px] font-medium"
+                    className="flex h-7 w-full items-center justify-center gap-1 rounded-[6px] px-2 text-[11px] font-medium"
                     style={{
                       background: u.banned ? 'var(--success-soft)' : 'var(--destructive-soft)',
                       border: `1px solid ${u.banned ? 'var(--success-border)' : 'var(--destructive-border)'}`,
@@ -349,6 +387,22 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                     {u.banned ? <IconArrowBackUp size={13} stroke={1.5} /> : <IconBan size={13} stroke={1.5} />}
                     {u.banned ? 'Desbanir' : 'Banir'}
                   </button>
+                ) : (
+                  <span />
+                )}
+                {/* Exclusão definitiva: só aparece em modo de desenvolvimento (o build de produção remove) */}
+                {import.meta.env.DEV && u.role !== 'ADMIN' ? (
+                  <button
+                    onClick={() => setDeleteTarget(u)}
+                    title="Excluir definitivamente (apenas dev)"
+                    aria-label="Excluir usuário definitivamente"
+                    className="flex h-7 w-7 items-center justify-center rounded-[6px]"
+                    style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--muted-foreground)', cursor: 'pointer' }}
+                  >
+                    <IconTrash size={14} stroke={1.5} />
+                  </button>
+                ) : (
+                  <span />
                 )}
               </div>
             </div>
@@ -356,6 +410,61 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
           <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />
         </div>
       )}
+
+      {/* Modal de exclusão definitiva (dev): exige digitar o e-mail para não apagar por engano */}
+      <Modal
+        open={deleteTarget !== null}
+        onClose={closeDelete}
+        title="Excluir usuário definitivamente"
+        subtitle={deleteTarget ? `${deleteTarget.name} · ${deleteTarget.email}` : undefined}
+        footer={
+          <>
+            <button
+              onClick={closeDelete}
+              disabled={deleteBusy}
+              className="rounded-[8px] px-4 py-2 text-sm"
+              style={{ background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: deleteBusy ? 'not-allowed' : 'pointer' }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDelete}
+              disabled={deleteBusy || !deleteConfirmed}
+              className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
+              style={{
+                background: 'var(--destructive)', color: 'white', border: 'none', fontFamily: 'var(--font-heading)',
+                cursor: deleteBusy || !deleteConfirmed ? 'not-allowed' : 'pointer',
+                opacity: deleteBusy || !deleteConfirmed ? 0.5 : 1,
+              }}
+            >
+              {deleteBusy && <IconLoader2 size={14} className="animate-spin" />}
+              Excluir para sempre
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <p>
+            Apaga a conta e <strong>tudo que depende dela</strong>: pedidos, pagamentos, contratos, conversas, mensagens,
+            solicitações, propostas, portfólio e notificações. Não dá para desfazer.
+          </p>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+            Disponível só em desenvolvimento; em produção a API recusa. Para esconder uma conta sem apagar, use Banir.
+          </p>
+          <label className="block text-xs" style={{ color: 'var(--muted-foreground)' }}>
+            Digite o e-mail <strong style={{ color: 'var(--foreground)' }}>{deleteTarget?.email}</strong> para confirmar
+            <input
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              className="mt-1.5 w-full rounded-[8px] px-3 py-2 text-sm outline-none"
+              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+            />
+          </label>
+          {deleteError && <p style={{ color: 'var(--destructive)' }}>{deleteError}</p>}
+        </div>
+      </Modal>
 
       {/* Modal de confirmação de ban/unban */}
       <Modal
@@ -734,6 +843,7 @@ const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   USER_BANNED: { label: 'Usuário suspenso', color: 'var(--destructive)' },
   USER_UNBANNED: { label: 'Usuário reativado', color: 'var(--success)' },
   PASSWORD_CHANGED: { label: 'Senha alterada', color: 'var(--warning)' },
+  USER_DELETED: { label: 'Usuário excluído', color: 'var(--destructive)' },
   PERSONA_STARTED: { label: 'Admin entrou como criador/editor', color: 'var(--info)' },
   EDITOR_VERIFIED: { label: 'Editor verificado', color: 'var(--success)' },
   EDITOR_UNVERIFIED: { label: 'Verificação removida', color: 'var(--warning)' },
