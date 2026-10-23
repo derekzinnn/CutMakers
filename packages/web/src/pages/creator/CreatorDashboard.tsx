@@ -1060,7 +1060,8 @@ function AccountSection() {
             type={showPwd ? 'text' : 'password'}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Entre 8 e 72 caracteres"
+            maxLength={72}
             className="input-field pr-10"
           />
           <button

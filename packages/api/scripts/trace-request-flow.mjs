@@ -1,5 +1,6 @@
 // Trace E2E do marketplace invertido (Fase 12) contra a API local.
-// Pré-requisitos: `db:push` aplicado, API rodando (pnpm api), Abacatepay em dev mode
+// Pré-requisitos: `db:push` aplicado, API rodando com RATE_LIMIT_DISABLED=true (o script
+// cadastra vários usuários seguidos e esbarraria no limite de cadastro), Abacatepay em dev mode
 // (sem ABACATEPAY_API_KEY → pagamento auto-confirma).
 //
 //   pnpm --filter @cutmakers/api trace:requests

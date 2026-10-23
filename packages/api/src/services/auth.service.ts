@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs'
 import jwt, { Secret, SignOptions } from 'jsonwebtoken'
 
+// Hash descartável (custo 10, igual ao real), calculado uma vez sob demanda
+let dummyHash: Promise<string> | undefined
+
 interface TokenPayload {
   sub: string
   role: string
@@ -13,6 +16,16 @@ export class AuthService {
 
   async comparePassword(password: string, hash: string): Promise<boolean> {
     return bcrypt.compare(password, hash)
+  }
+
+  /**
+   * Gasta o mesmo tempo de um bcrypt.compare real. Chamado quando o e-mail não existe
+   * (ou a conta não tem senha): sem isso, e-mail inexistente responde instantaneamente e
+   * o existente demora ~100ms, e a diferença de tempo revela quais e-mails têm conta.
+   */
+  async dummyCompare(password: string): Promise<void> {
+    dummyHash ??= bcrypt.hash('cutmakers-dummy-password', 10)
+    await bcrypt.compare(password, await dummyHash)
   }
 
   generateTokens(userId: string, role: string) {

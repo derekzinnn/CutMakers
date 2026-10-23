@@ -179,6 +179,7 @@ export function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
+                maxLength={72}
                 className="input-field pl-9 pr-10"
               />
               <button

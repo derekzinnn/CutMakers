@@ -831,6 +831,7 @@ const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   SUBSCRIPTION_ACTIVATED: { label: 'Assinatura ativada', color: '#A855F7' },
   USER_BANNED: { label: 'Usuário suspenso', color: 'var(--destructive)' },
   USER_UNBANNED: { label: 'Usuário reativado', color: 'var(--success)' },
+  PASSWORD_CHANGED: { label: 'Senha alterada', color: 'var(--warning)' },
   REQUEST_CREATED: { label: 'Solicitação publicada', color: '#3B82F6' },
   REQUEST_CANCELLED: { label: 'Solicitação cancelada', color: 'var(--destructive)' },
   REQUEST_PROPOSAL_SENT: { label: 'Proposta enviada (solicitação)', color: '#EAB308' },

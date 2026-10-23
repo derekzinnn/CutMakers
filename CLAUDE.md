@@ -903,7 +903,40 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Termos de Uso: percentual removido (menção genérica de comissão já considerada no valor)
    ℹ️ Taxa continua no banco (cálculo/escrow) e na visão ADMIN (Financeiro + Auditoria) — interna, não é de usuário
 
+✅ Fase 20 — Endurecimento do auth (skills do Better Auth aplicadas ao auth próprio)
+   Skills instaladas em `.claude/skills/` (`npx skills add better-auth/skills`, travadas em
+   `skills-lock.json`): better-auth-best-practices, better-auth-security-best-practices,
+   email-and-password-best-practices, create-auth, organization-best-practices, two-factor.
+   DECISÃO: NÃO migrar para a biblioteca Better Auth. O auth do CutMakers é JWT próprio (regra nº 1
+   do briefing) com BOTH/ADMIN, refresh, ban, Google; migrar seria reescrever o login inteiro sem
+   ganho. As skills são guias de configuração DA biblioteca — aproveitamos as PRÁTICAS de segurança.
+   [x] Rate limit nas rotas de auth (`rate-limit.middleware.ts`, em memória, sem dependência):
+       login 30/min por IP + 10/15min por e-mail alvo (martelar UMA conta de vários IPs é barrado,
+       sem trancar quem divide IP por NAT), cadastro 5/10min, google 10/min, refresh 30/min,
+       troca de senha 5/15min por usuário. 429 + `Retry-After`. Desligado com NODE_ENV=test ou
+       RATE_LIMIT_DISABLED=true
+   [x] `TRUST_PROXY` (env): atrás do Caddy, sem ele o limite enxerga só o IP do proxy e um atacante
+       bloquearia TODOS os usuários. **Obrigatório em produção** (`TRUST_PROXY=1`)
+   [x] Segredos validados no boot (`lib/env-check.ts`): em produção, JWT_SECRET/JWT_REFRESH_SECRET
+       ausentes, placeholder ou IGUAIS derrubam a subida; <32 chars só avisa
+   [x] Login em tempo constante: e-mail inexistente agora gasta um bcrypt (`dummyCompare`) —
+       antes respondia instantâneo e o tempo revelava quais e-mails têm conta
+   [x] Senha: máx. 72 no cadastro/troca (bcrypt ignora o que passa de 72 bytes em silêncio; recusar é
+       mais honesto que truncar). No login o teto é 256 (guarda de CPU) para não trancar contas antigas
+   [x] Headers de segurança (`security-headers.middleware.ts`): nosniff, X-Frame DENY, CSP restritiva
+       (API só devolve JSON), Referrer-Policy, CORP, HSTS em produção; sem `X-Powered-By`
+   [x] Auditoria: `PASSWORD_CHANGED` (sem a senha) + label na aba Auditoria
+   [x] 15 testes novos (45 de unidade): limitador (janela, por IP, por rota, por e-mail, expiração,
+       desligamento) e validação de segredos. Verificado por HTTP real: 10 tentativas → 401, a 11ª → 429
+       com Retry-After; outra conta segue passando; headers presentes
+   Fora do escopo por exigir credencial/decisão do dono (ver "Próximos"): verificação de e-mail e
+   "esqueci minha senha" (precisam de um provedor de e-mail), 2FA, revogação de sessão na troca de senha
+   (JWT é stateless — precisaria de `tokenVersion` no User + migration)
+
 ⏳ Próximos (futuro)
+   [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
+   [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)
+   [ ] 2FA opcional para ADMIN e contas que movimentam dinheiro
    [ ] Mobile React Native (planejado — fase futura)
 ```
 

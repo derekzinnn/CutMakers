@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma'
 import { AuthService } from '../services/auth.service'
 import { subscriptionService } from '../services/subscription.service'
 import { orderService } from '../services/order.service'
+import { logEvent } from '../services/audit.service'
 
 const authService = new AuthService()
 
@@ -13,10 +14,22 @@ const authService = new AuthService()
 // senha certa. Normalizar no schema cobre registro e login pelo mesmo caminho.
 export const emailField = z.string().trim().toLowerCase().email('Email inválido')
 
+// bcrypt só considera os primeiros 72 bytes da senha: o resto seria ignorado em silêncio
+// (a pessoa acharia que tem uma senha de 100 caracteres e na prática valem 72). Por isso o
+// teto na CRIAÇÃO/TROCA é 72 — recusar é mais honesto que truncar. No LOGIN o teto é só
+// uma guarda contra entrada gigante (CPU), alto o bastante para não trancar contas antigas.
+export const PASSWORD_MAX = 72
+const LOGIN_PASSWORD_MAX = 256
+const newPassword = (label: string) =>
+  z
+    .string()
+    .min(8, `${label} deve ter ao menos 8 caracteres`)
+    .max(PASSWORD_MAX, `${label} deve ter no máximo ${PASSWORD_MAX} caracteres`)
+
 export const registerSchema = z.object({
   name: z.string().trim().min(2, 'Nome deve ter ao menos 2 caracteres'),
   email: emailField,
-  password: z.string().min(8, 'Senha deve ter ao menos 8 caracteres'),
+  password: newPassword('Senha'),
   role: z.enum(['CREATOR', 'EDITOR']),
   // Aceite obrigatório dos Termos de Uso da plataforma
   acceptTerms: z.literal(true, {
@@ -31,13 +44,13 @@ export const updateMeSchema = z.object({
 })
 
 const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Informe a senha atual'),
-  newPassword: z.string().min(8, 'A nova senha deve ter ao menos 8 caracteres'),
+  currentPassword: z.string().min(1, 'Informe a senha atual').max(LOGIN_PASSWORD_MAX),
+  newPassword: newPassword('A nova senha'),
 })
 
 export const loginSchema = z.object({
   email: emailField,
-  password: z.string().min(1),
+  password: z.string().min(1).max(LOGIN_PASSWORD_MAX),
 })
 
 export class AuthController {
@@ -84,6 +97,8 @@ export class AuthController {
 
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
+      // Mesmo custo de tempo de um login real — não revela se o e-mail existe
+      await authService.dummyCompare(password)
       return res.status(401).json({ message: 'Credenciais inválidas' })
     }
 
@@ -254,6 +269,8 @@ export class AuthController {
 
     const passwordHash = await authService.hashPassword(parsed.data.newPassword)
     await prisma.user.update({ where: { id: user.id }, data: { passwordHash } })
+    // Troca de credencial é evento de segurança: fica na trilha de auditoria (sem a senha)
+    await logEvent({ actorId: user.id, action: 'PASSWORD_CHANGED', entityType: 'User', entityId: user.id })
     return res.json({ ok: true })
   }
 }
