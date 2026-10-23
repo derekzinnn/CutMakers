@@ -32,6 +32,7 @@ import {
 import { Modal } from '@/components/ui/Modal'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
+import { usePersistedState } from '@/hooks/use-persisted-state'
 import { STATUS_LABELS, STATUS_COLORS, TRANSACTION_LABELS, type OrderStatus, type TransactionStatus } from '@/lib/orders'
 import { resolveDispute } from '@/lib/disputes'
 import {
@@ -64,7 +65,7 @@ const shortId = (id: string) => id.slice(0, 8)
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  CREATOR: 'Creator',
+  CREATOR: 'Criador',
   EDITOR: 'Editor',
   BOTH: 'Ambos',
   ADMIN: 'Admin',
@@ -275,7 +276,7 @@ function DashboardSection() {
 
 const ROLE_FILTERS: { value: UserRole | 'ALL'; label: string }[] = [
   { value: 'ALL', label: 'Todos' },
-  { value: 'CREATOR', label: 'Creators' },
+  { value: 'CREATOR', label: 'Criadores' },
   { value: 'EDITOR', label: 'Editores' },
   { value: 'BOTH', label: 'Ambos' },
   { value: 'ADMIN', label: 'Admins' },
@@ -826,6 +827,8 @@ const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   USER_BANNED: { label: 'Usuário suspenso', color: 'var(--destructive)' },
   USER_UNBANNED: { label: 'Usuário reativado', color: 'var(--success)' },
   PASSWORD_CHANGED: { label: 'Senha alterada', color: 'var(--warning)' },
+  EDITOR_VERIFIED: { label: 'Editor verificado', color: 'var(--success)' },
+  EDITOR_UNVERIFIED: { label: 'Verificação removida', color: 'var(--warning)' },
   REQUEST_CREATED: { label: 'Solicitação publicada', color: 'var(--info)' },
   REQUEST_CANCELLED: { label: 'Solicitação cancelada', color: 'var(--destructive)' },
   REQUEST_PROPOSAL_SENT: { label: 'Proposta enviada (solicitação)', color: '#EAB308' },
@@ -1036,7 +1039,7 @@ const NAV_ITEMS: { id: AdminSection; label: string; Icon: React.ElementType }[] 
 export function AdminPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [section, setSection] = useState<AdminSection>('dashboard')
+  const [section, setSection] = usePersistedState<AdminSection>('admin:section', 'dashboard')
 
   const sectionTitles: Record<AdminSection, string> = {
     dashboard: 'Dashboard',
@@ -1075,10 +1078,10 @@ export function AdminPage() {
       actions={
         <>
           <button type="button" className="hover-surface" style={switchBtn} onClick={() => navigate('/dashboard/creator')}>
-            <IconCamera size={14} stroke={1.5} /> Ver como Creator
+            <IconCamera size={14} stroke={1.5} /> Ver como criador
           </button>
           <button type="button" className="hover-surface" style={switchBtn} onClick={() => navigate('/dashboard/editor')}>
-            <IconMovie size={14} stroke={1.5} /> Ver como Editor
+            <IconMovie size={14} stroke={1.5} /> Ver como editor
           </button>
         </>
       }

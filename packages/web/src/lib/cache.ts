@@ -90,4 +90,12 @@ export function invalidar(prefixo: string) {
 export function limparCache() {
   cache.clear()
   emVoo.clear()
+  // estado de tela guardado por aba (filtros, seção, rolagem) não pode vazar para o próximo usuário
+  try {
+    Object.keys(sessionStorage)
+      .filter((k) => k.startsWith('cm_state:') || k.startsWith('cm_scroll:'))
+      .forEach((k) => sessionStorage.removeItem(k))
+  } catch {
+    /* sem storage */
+  }
 }

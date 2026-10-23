@@ -10,7 +10,7 @@ interface Props {
 
 export function OrderCard({ order, perspective, onClick }: Props) {
   const counterpart = perspective === 'creator' ? order.editor : order.creator
-  const counterpartLabel = perspective === 'creator' ? 'Editor' : 'Creator'
+  const counterpartLabel = perspective === 'creator' ? 'Editor' : 'Criador'
   const statusColor = STATUS_COLORS[order.status]
 
   return (

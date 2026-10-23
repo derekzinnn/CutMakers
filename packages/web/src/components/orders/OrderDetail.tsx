@@ -1810,7 +1810,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
 
   const statusColor = order ? STATUS_COLORS[order.status] : 'var(--brand)'
   const counterpart = order ? (perspective === 'creator' ? order.editor : order.creator) : null
-  const counterpartLabel = perspective === 'creator' ? 'Editor' : 'Creator'
+  const counterpartLabel = perspective === 'creator' ? 'Editor' : 'Criador'
 
   if (loading) {
     return (

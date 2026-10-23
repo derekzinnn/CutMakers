@@ -1,12 +1,11 @@
 import { relativeDate } from '@/lib/format'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { limparCache } from '@/lib/cache'
 import { useState, useEffect, useRef } from 'react'
 import {
   IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck,
   IconCoin, IconX, IconAlertCircle,
   IconSend, IconFileText, IconGavel,
-  IconArrowLeft,
 } from '@tabler/icons-react'
 import type { AuthUser } from '@/hooks/use-auth'
 import { CMCutLogo } from '@/components/ui/CMLogo'
@@ -291,6 +290,8 @@ export function DashboardShell({
   onProfileClick,
 }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const mainRef = useRef<HTMLElement>(null)
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1',
   )
@@ -317,6 +318,40 @@ export function DashboardShell({
     window.setTimeout(() => setCutting(false), 640)
   }
 
+  // Admin olhando os painéis de criador/editor: aviso fixo no topo com caminho de volta
+  const viewingAs =
+    user.role === 'ADMIN'
+      ? location.pathname.startsWith('/dashboard/creator')
+        ? 'criador'
+        : location.pathname.startsWith('/dashboard/editor')
+          ? 'editor'
+          : null
+      : null
+
+  // Guarda a rolagem ao sair (ex.: abrir o perfil de um editor) e devolve ao voltar
+  const scrollKey = `cm_scroll:${location.pathname}${location.search}`
+  useEffect(() => {
+    const el = mainRef.current
+    if (!el) return
+    let saved = 0
+    try { saved = Number(sessionStorage.getItem(scrollKey)) || 0 } catch { /* sem storage */ }
+    if (saved > 0) {
+      // o conteúdo pode chegar depois (fetch): tenta algumas vezes até caber
+      let tries = 0
+      const t = window.setInterval(() => {
+        el.scrollTop = saved
+        if (el.scrollTop >= saved - 2 || ++tries > 12) window.clearInterval(t)
+      }, 80)
+      return () => {
+        window.clearInterval(t)
+        try { sessionStorage.setItem(scrollKey, String(el.scrollTop)) } catch { /* sem storage */ }
+      }
+    }
+    return () => {
+      try { sessionStorage.setItem(scrollKey, String(el.scrollTop)) } catch { /* sem storage */ }
+    }
+  }, [scrollKey])
+
   function logout() {
     localStorage.clear()
     // Sem isto o cache em memoria sobrevive ao logout e o proximo usuario a
@@ -331,6 +366,25 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--background)' }}>
+      {viewingAs && (
+        <div
+          role="status"
+          className="anim-fade-up fixed left-1/2 top-5 z-50 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-full py-2 pl-5 pr-2 shadow-lg"
+          style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+        >
+          <span className="text-sm" style={{ color: 'var(--foreground)' }}>
+            Visualizando como <strong style={{ color: 'var(--brand)' }}>{viewingAs}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => navigate('/admin')}
+            className="hover-surface rounded-full px-3 py-1.5 text-xs font-medium"
+            style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
+          >
+            Voltar para admin
+          </button>
+        </div>
+      )}
       {/* ── Sidebar ── */}
       <aside
         className={`flex ${collapsed ? 'w-[68px]' : 'w-64'} shrink-0 flex-col`}
@@ -439,28 +493,6 @@ export function DashboardShell({
           })}
         </nav>
 
-        {/* Admin navegando nos dashboards de criador/editor: sem isto ele entra
-            pelo popover e fica sem caminho de volta a nao ser deslogar. Tambem
-            serve de lembrete de que a conta e a mesma — os dados sao DELE. */}
-        {user.role === 'ADMIN' && (
-          <div className={`pb-2 ${collapsed ? 'px-2' : 'px-3'}`}>
-            <button
-              onClick={() => navigate('/admin')}
-              title="Voltar ao painel administrativo"
-              className={`flex w-full items-center gap-2 rounded-md py-2 text-xs font-medium transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
-              style={{
-                background: 'var(--brand-soft)',
-                border: '1px solid var(--brand-border)',
-                color: 'var(--brand)',
-                cursor: 'pointer',
-              }}
-            >
-              <IconArrowLeft size={14} stroke={2} />
-              {!collapsed && 'Voltar ao admin'}
-            </button>
-          </div>
-        )}
-
         {/* Footer: perfil (clicável) + logout */}
         <div className={`py-4 ${collapsed ? 'px-2' : 'px-3'}`} style={{ borderTop: '1px solid var(--border)' }}>
           <button
@@ -553,7 +585,7 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>
   )

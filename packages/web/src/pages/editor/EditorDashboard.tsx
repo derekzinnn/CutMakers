@@ -29,6 +29,7 @@ import {
 } from '@/lib/subscriptions'
 import { DashboardShell, type NavItem } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
+import { usePersistedState } from '@/hooks/use-persisted-state'
 import { useEditorMe } from '@/hooks/use-editor-me'
 import { useOrders } from '@/hooks/use-orders'
 import { api } from '@/lib/api'
@@ -90,10 +91,10 @@ export function EditorDashboard() {
     setSection(next)
     setSearchParams(next === 'overview' ? {} : { section: next })
   }
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [selectedOrderId, setSelectedOrderId] = usePersistedState<string | null>('editor:order', null)
   const [formOpen, setFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<PortfolioItemInput | undefined>(undefined)
-  const [orderFilter, setOrderFilter] = useState<OrderStatus | 'ALL'>('ALL')
+  const [orderFilter, setOrderFilter] = usePersistedState<OrderStatus | 'ALL'>('editor:orderFilter', 'ALL')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)

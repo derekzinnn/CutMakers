@@ -956,6 +956,15 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Hover em CSS (`.hover-surface` sob `@media (hover:hover)`) começou a substituir os `onMouseEnter` (grudam no touch)
    ⚠️ Pendente: migrar os ~35 `onMouseEnter/Leave` restantes para CSS; revisar telas uma a uma (Landing, Creator, OrderDetail)
 
+✅ Fase 23 — Visão de admin sem ruído + estado que sobrevive à navegação
+   [x] Sidebar: "Voltar ao admin" saiu (aparecia até no painel admin). Agora um toast fixo no topo
+       ("Visualizando como criador/editor" + "Voltar para admin") só aparece quando o admin está
+       nos dashboards de criador/editor (DashboardShell, via pathname)
+   [x] `usePersistedState` (sessionStorage, por aba): filtros/ordenação/busca/categoria do criador, filtro e pedido aberto
+       nos dashboards, seção do admin. Rolagem do `<main>` salva/restaurada por rota. `limparCache()` (logout)
+       zera tudo — nada vaza para o próximo usuário
+   [x] Auditoria: EDITOR_VERIFIED/UNVERIFIED sem rótulo (apareciam em inglês) → "Editor verificado" / "Verificação removida";
+       "Creator(s)" visível → "Criador(es)"
 ⏳ Próximos (futuro)
    [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
    [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)

@@ -107,7 +107,7 @@ export function LoginPage() {
               className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em]"
               style={{ color: 'var(--brand)' }}
             >
-              Plataforma de Creators
+              Plataforma de criadores
             </p>
             <h1
               className="text-[40px] font-bold leading-[1.1] text-white"

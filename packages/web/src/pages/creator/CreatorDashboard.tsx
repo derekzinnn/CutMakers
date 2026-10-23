@@ -4,6 +4,7 @@ import { SkeletonCards } from '@/components/ui/Skeleton'
 import { toggleFavorite, listFavoriteIds, listFavorites, type FavoriteEditor } from '@/lib/favorites'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { usePersistedState } from '@/hooks/use-persisted-state'
 import {
   IconSearch,
   IconBriefcase,
@@ -97,15 +98,15 @@ export function CreatorDashboard() {
   const [editors, setEditors] = useState<EditorListItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [premiumOnly, setPremiumOnly] = useState(false)
-  const [sortBy, setSortBy] = useState<SortBy>('rating')
+  const [searchInput, setSearchInput] = usePersistedState('creator:searchInput', '')
+  const [search, setSearch] = usePersistedState('creator:search', '')
+  const [selectedCategory, setSelectedCategory] = usePersistedState<string | null>('creator:category', null)
+  const [premiumOnly, setPremiumOnly] = usePersistedState('creator:premium', false)
+  const [sortBy, setSortBy] = usePersistedState<SortBy>('creator:sort', 'rating')
 
   const { orders, loading: ordersLoading, error: ordersError } = useOrders({ role: 'creator' })
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-  const [orderFilter, setOrderFilter] = useState<OrderStatus | 'ALL'>('ALL')
+  const [selectedOrderId, setSelectedOrderId] = usePersistedState<string | null>('creator:order', null)
+  const [orderFilter, setOrderFilter] = usePersistedState<OrderStatus | 'ALL'>('creator:orderFilter', 'ALL')
 
   // Badge de "Minhas solicitações": propostas pendentes em solicitações abertas
   const [pendingProposals, setPendingProposals] = useState(0)
