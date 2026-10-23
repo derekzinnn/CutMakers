@@ -60,9 +60,8 @@ export function CMLockup({
 }
 
 /**
- * Marca como botão de recolher o menu. Duas cópias do ícone recortadas ao meio
- * (clip-path) + uma tira de filme + a linha do corte — ver `.cm-cut` em index.css.
- * `cutting` liga a animação; quem usa decide quando desligar (≈620ms).
+ * Marca como botão de recolher o menu. SVG animado (logo-animada-hover.svg): a animação
+ * toca no hover e também ao clicar (`cutting`) — ver `.cm-cut` em index.css.
  */
 export function CMCutLogo({
   size = 30,
@@ -85,16 +84,20 @@ export function CMCutLogo({
       aria-label={label}
       aria-expanded={expanded}
       className={`cm-cut${cutting ? ' is-cutting' : ''}`}
-      style={{ width: size, height: size }}
     >
-      <span className="cm-cut__half cm-cut__half--l" aria-hidden="true">
-        <CMLogo size={size} variant="orange" />
-      </span>
-      <span className="cm-cut__half cm-cut__half--r" aria-hidden="true">
-        <CMLogo size={size} variant="orange" />
-      </span>
-      <span className="cm-cut__strip" aria-hidden="true" />
-      <span className="cm-cut__line" aria-hidden="true" />
+      <svg width={size} height={size} viewBox="0 0 84 84" fill="none" aria-hidden="true">
+        <rect width="84" height="84" rx="18" fill="var(--brand)" />
+        <g className="slice-left">
+          <rect x="14" y="20" width="56" height="3" rx="1.5" fill="#fff" opacity="0.45" />
+          <rect x="14" y="61" width="56" height="3" rx="1.5" fill="#fff" opacity="0.45" />
+          <path className="play" d="M30 28 L58 42 L30 56 Z" fill="#fff" />
+        </g>
+        <g className="slice-right">
+          <rect className="cut-glow" x="47" y="17" width="7" height="50" rx="3.5" fill="#fff" />
+        </g>
+        <rect className="blade" x="49.5" y="14" width="2.5" height="56" rx="1.25" fill="#fff" />
+        <rect className="blade" x="46" y="11" width="9.5" height="5" rx="1.2" fill="#fff" />
+      </svg>
     </button>
   )
 }

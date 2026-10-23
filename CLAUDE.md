@@ -950,8 +950,8 @@ Ver `packages/api/.env.example`. Precisa:
        deixava o usuário verde no cabeçalho e laranja no perfil); `#3B82F6` → `var(--info)`
    [x] AdminPage migrou para `DashboardShell` (tinha sidebar própria: bolinha no lugar do logo, sem colapso, estilo diferente).
        "Ver como Creator/Editor" virou par de botões no cabeçalho; ~170 linhas de shell duplicado removidas
-   [x] Menu lateral: botão "Reduzir menu" REMOVIDO — o clique é no próprio logo (`CMCutLogo`). Animação "corte": tira de filme
-       atravessa o ícone, linha de corte, as duas metades se afastam e voltam; o menu troca no meio (280ms). Só transform/opacity;
+   [x] Menu lateral: botão "Reduzir menu" REMOVIDO — o clique é no próprio logo (`CMCutLogo`). Animação: logo-animada-hover.svg do dono (lâmina corta a timeline) no hover e no clique. [antes: tira de filme,
+       descartada por feio]; o menu troca no meio (280ms). Só transform/opacity;
        com prefers-reduced-motion troca direto. Estado persiste em localStorage
    [x] Hover em CSS (`.hover-surface` sob `@media (hover:hover)`) começou a substituir os `onMouseEnter` (grudam no touch)
    ⚠️ Pendente: migrar os ~35 `onMouseEnter/Leave` restantes para CSS; revisar telas uma a uma (Landing, Creator, OrderDetail)

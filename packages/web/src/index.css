@@ -283,88 +283,61 @@
 }
 
 
-/* ─── Logo "corte" ──────────────────────────────────────────────────────────
- * Clicar na marca recolhe/expande o menu. Metáfora de edição: uma tira de filme
- * atravessa o ícone e o ícone é CORTADO ao meio — as duas metades se afastam e
- * voltam no lugar. O menu muda no meio do gesto (≈280ms), então o corte é a
- * "transição". Só transform/opacity (barato). Sem movimento: troca direta.
+/* ─── Logo animada ──────────────────────────────────────────────────────────
+ * Clicar na marca recolhe/expande o menu; passar o mouse (ou clicar) toca a animação
+ * da logo: a lâmina desce cortando a timeline, as metades se afastam e o play dá um
+ * leve recuo. O SVG é o logo-animada-hover.svg do projeto; só transform/opacity.
  */
 .cm-cut {
-  position: relative;
   display: block;
   flex-shrink: 0;
   padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
-  border-radius: 10px;
-  overflow: visible;
-  isolation: isolate;
+  border-radius: 18px;
+  line-height: 0;
 }
-.cm-cut__half {
-  position: absolute;
-  inset: 0;
-  will-change: transform;
+.cm-cut svg { display: block; }
+.cm-cut .play, .cm-cut .blade, .cm-cut .slice-left, .cm-cut .slice-right {
+  transform-box: fill-box;
+  transform-origin: center;
 }
-.cm-cut__half--l { clip-path: inset(0 50% 0 0); }
-.cm-cut__half--r { clip-path: inset(0 0 0 50%); }
-.cm-cut__strip,
-.cm-cut__line {
-  position: absolute;
-  pointer-events: none;
-  opacity: 0;
+.cm-cut .cut-glow { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .cm-cut:hover .play, .cm-cut.is-cutting .play { animation: play-nudge .52s cubic-bezier(.2,.8,.2,1) both; }
+  .cm-cut:hover .blade, .cm-cut.is-cutting .blade { animation: blade-sweep .62s cubic-bezier(.2,.8,.2,1) both; }
+  .cm-cut:hover .slice-left, .cm-cut.is-cutting .slice-left { animation: slice-left .55s cubic-bezier(.2,.8,.2,1) both; }
+  .cm-cut:hover .slice-right, .cm-cut.is-cutting .slice-right { animation: slice-right .55s cubic-bezier(.2,.8,.2,1) both; }
+  .cm-cut:hover .cut-glow, .cm-cut.is-cutting .cut-glow { animation: cut-flash .52s ease-out both; }
 }
-/* tira de filme: faixa escura com furos de perfuração em cima e embaixo */
-.cm-cut__strip {
-  top: 22%;
-  height: 56%;
-  left: 0;
-  width: 70%;
-  background:
-    radial-gradient(circle, var(--background) 1.4px, transparent 1.6px) 0 3px / 7px 7px repeat-x,
-    radial-gradient(circle, var(--background) 1.4px, transparent 1.6px) 0 calc(100% - 3px) / 7px 7px repeat-x,
-    var(--foreground);
-  border-radius: 2px;
-  z-index: 2;
+@keyframes play-nudge {
+  0%, 100% { transform: translateX(0) scale(1); }
+  38% { transform: translateX(-2px) scale(.96); }
+  68% { transform: translateX(1px) scale(1.02); }
 }
-.cm-cut__line {
-  top: -2px;
-  bottom: -2px;
-  left: calc(50% - 1px);
-  width: 2px;
-  background: var(--foreground);
-  box-shadow: 0 0 8px 1px var(--brand);
-  z-index: 3;
+@keyframes blade-sweep {
+  0% { transform: translateY(-10px); }
+  58% { transform: translateY(9px); }
+  78% { transform: translateY(6px); }
+  100% { transform: translateY(0); }
 }
-.cm-cut.is-cutting .cm-cut__half--l { animation: cm-cut-l 0.62s cubic-bezier(0.3, 0.7, 0.2, 1) both; }
-.cm-cut.is-cutting .cm-cut__half--r { animation: cm-cut-r 0.62s cubic-bezier(0.3, 0.7, 0.2, 1) both; }
-.cm-cut.is-cutting .cm-cut__strip { animation: cm-cut-strip 0.62s cubic-bezier(0.5, 0, 0.4, 1) both; }
-.cm-cut.is-cutting .cm-cut__line { animation: cm-cut-line 0.62s ease-out both; }
-@keyframes cm-cut-strip {
-  0%   { transform: translateX(-120%); opacity: 1; }
-  55%  { transform: translateX(0%); opacity: 1; }
-  100% { transform: translateX(160%); opacity: 1; }
+@keyframes slice-left {
+  0%, 100% { transform: translateX(0); }
+  38% { transform: translateX(-2px); }
+  72% { transform: translateX(-1px); }
 }
-@keyframes cm-cut-line {
-  0%, 38% { opacity: 0; transform: scaleY(0.2); }
-  48%     { opacity: 1; transform: scaleY(1); }
-  100%    { opacity: 0; transform: scaleY(1); }
+@keyframes slice-right {
+  0%, 100% { transform: translateX(0); }
+  38% { transform: translateX(2px); }
+  72% { transform: translateX(1px); }
 }
-@keyframes cm-cut-l {
-  0%, 40% { transform: translate(0, 0) rotate(0); }
-  58%     { transform: translate(-4px, -3px) rotate(-7deg); }
-  100%    { transform: translate(0, 0) rotate(0); }
+@keyframes cut-flash {
+  0%, 100% { opacity: 0; }
+  45% { opacity: .35; }
+  72% { opacity: .12; }
 }
-@keyframes cm-cut-r {
-  0%, 40% { transform: translate(0, 0) rotate(0); }
-  58%     { transform: translate(4px, 3px) rotate(7deg); }
-  100%    { transform: translate(0, 0) rotate(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cm-cut.is-cutting .cm-cut__half,
-  .cm-cut.is-cutting .cm-cut__strip,
-  .cm-cut.is-cutting .cm-cut__line { animation: none !important; }
-}
+
 /* Acessibilidade: quem pediu menos movimento não vê nenhuma dessas animações */
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-up,
