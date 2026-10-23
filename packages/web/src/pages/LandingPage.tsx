@@ -1256,7 +1256,7 @@ export function LandingPage() {
   const onRegister = () => navigate('/register')
 
   return (
-    <div style={{ background: C.navy, color: '#fff', minHeight: '100vh', fontFamily: C.dm }}>
+    <div style={{ background: C.navy, color: '#fff', minHeight: '100dvh', fontFamily: C.dm }}>
       <Nav onLogin={onLogin} onRegister={onRegister} />
       <Hero onRegister={onRegister} />
       <Logos />

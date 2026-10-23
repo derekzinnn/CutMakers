@@ -933,6 +933,16 @@ Ver `packages/api/.env.example`. Precisa:
    "esqueci minha senha" (precisam de um provedor de e-mail), 2FA, revogação de sessão na troca de senha
    (JWT é stateless — precisaria de `tokenVersion` no User + migration)
 
+✅ Fase 21 — Skills de UI + acessibilidade/mobile
+   [x] Skills instaladas em `.claude/skills/` (Emil Kowalski: animação/design eng; Jakub Krehel: better-*,
+       interface-review, break, etc.; frontend-design da Anthropic). Invocáveis via `/nome`
+   [x] Modal: role=dialog, aria-modal, labelledby/describedby, foco preso + restaurado, Esc fecha, `dvh`
+   [x] index.css: tap-highlight off, anel de foco global (:focus-visible), inputs 16px em touch (sem zoom iOS), `.anim-fade`
+   [x] `100vh` → `100dvh` em todo o web; aria-label em 13 botões só-ícone
+   [x] frontend-design NÃO aplicada para reestilizar (conflita com o design system fixo)
+   ⚠️ Pendente: 36 handlers JS `onMouseEnter` geram hover "grudado" no touch (refatorar p/ CSS `@media (hover:hover)`);
+      sem skip-link nem gerência de foco/título na troca de rota
+
 ⏳ Próximos (futuro)
    [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
    [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)

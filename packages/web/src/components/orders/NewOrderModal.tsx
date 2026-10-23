@@ -437,7 +437,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                           ? <><IconCheck size={10} stroke={2.5} /> ok</>
                           : <><IconLoader2 size={10} style={{ animation: 'spin 1s linear infinite' }} /> {f.progress}%</>}
                       </span>
-                      <button type="button" onClick={() => setFiles((p) => p.filter((x) => x.file !== f.file))}
+                      <button aria-label="Remover arquivo" type="button" onClick={() => setFiles((p) => p.filter((x) => x.file !== f.file))}
                         style={{
                           width: 20, height: 20, borderRadius: '50%', background: 'var(--border)',
                           border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer',

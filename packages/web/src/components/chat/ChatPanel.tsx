@@ -250,7 +250,7 @@ export function ChatPanel({ conversation, compact = false, readOnly = false }: C
             fontFamily: "'DM Sans', sans-serif",
           }}
         />
-        <button
+        <button aria-label="Enviar mensagem"
           onClick={handleSend}
           disabled={!input.trim() || sending}
           style={{

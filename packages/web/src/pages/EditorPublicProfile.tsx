@@ -180,7 +180,7 @@ export function EditorPublicProfile() {
     return (
       <div
         style={{
-          minHeight: '100vh', background: 'var(--background)',
+          minHeight: '100dvh', background: 'var(--background)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--muted-foreground)', fontSize: 14,
           fontFamily: "'DM Sans', sans-serif",
@@ -195,7 +195,7 @@ export function EditorPublicProfile() {
     return (
       <div
         style={{
-          minHeight: '100vh', background: 'var(--background)',
+          minHeight: '100dvh', background: 'var(--background)',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', gap: 16,
         }}
@@ -226,7 +226,7 @@ export function EditorPublicProfile() {
     : null
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--background)', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--background)', fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* ── Top navbar ── */}
       <nav
@@ -250,7 +250,7 @@ export function EditorPublicProfile() {
         <div style={{ flex: 1 }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
+          <button aria-label="Notificações"
             style={{
               width: 34, height: 34, borderRadius: 8,
               background: 'var(--surface-subtle)',

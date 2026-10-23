@@ -122,7 +122,7 @@ export function MessagesTab() {
 
   return (
     <div style={{
-      display: 'flex', height: 'calc(100vh - 124px)', minHeight: 480,
+      display: 'flex', height: 'calc(100dvh - 124px)', minHeight: 480,
       border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden',
     }}>
       {/* ── Left: People list ── */}

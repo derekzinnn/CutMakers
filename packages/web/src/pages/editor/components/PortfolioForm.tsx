@@ -253,7 +253,7 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
                   {form.videoUrl.split('/').pop()}
                 </p>
               </div>
-              <button
+              <button aria-label="Remover vídeo"
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, videoUrl: '', thumbnailUrl: '' }))}
                 className="shrink-0 rounded-md p-1"

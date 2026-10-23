@@ -1242,7 +1242,7 @@ function PaymentsSection({
             <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: '1px solid var(--border)' }}>
               <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Página {page} de {totalPages}</span>
               <div className="flex gap-2">
-                <button
+                <button aria-label="Página anterior"
                   onClick={() => setPage((p) => p - 1)}
                   disabled={page <= 1}
                   className="flex h-8 w-8 items-center justify-center rounded-[8px]"
@@ -1250,7 +1250,7 @@ function PaymentsSection({
                 >
                   <IconChevronLeft size={15} stroke={1.5} />
                 </button>
-                <button
+                <button aria-label="Próxima página"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= totalPages}
                   className="flex h-8 w-8 items-center justify-center rounded-[8px]"

@@ -1164,7 +1164,7 @@ export function AdminPage() {
         style={{
           background: 'var(--card)',
           borderRight: '1px solid var(--border)',
-          height: '100vh',
+          height: '100dvh',
           position: 'sticky',
           top: 0,
         }}
@@ -1286,7 +1286,7 @@ export function AdminPage() {
             <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{topbarSubtitle}</p>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <button aria-label="Notificações"
               className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors"
               style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', cursor: 'pointer' }}
             >

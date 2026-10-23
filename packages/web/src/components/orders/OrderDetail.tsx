@@ -663,7 +663,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
               O creator será notificado para revisar e aprovar
             </p>
           </div>
-          <button
+          <button aria-label="Fechar"
             type="button"
             onClick={onClose}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 4 }}
@@ -818,7 +818,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
   return (
     <div style={{ display: 'flex', gap: 4 }}>
       {[1, 2, 3, 4, 5].map((star) => (
-        <button
+        <button aria-label={`${star} de 5 estrelas`}
           key={star}
           type="button"
           onClick={() => onChange(star)}
@@ -915,7 +915,7 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
               Novos arquivos de referência para este pedido
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 4 }}>
+          <button aria-label="Fechar" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 4 }}>
             <IconX size={18} stroke={1.5} />
           </button>
         </div>
@@ -963,7 +963,7 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
                       ? <><IconCheck size={10} stroke={2.5} /> ok</>
                       : <><IconLoader2 size={10} style={{ animation: 'spin 1s linear infinite' }} /> {p.progress}%</>}
                   </span>
-                  <button type="button"
+                  <button aria-label="Remover arquivo" type="button"
                     onClick={() => setPending((prev) => prev.filter((x) => x.file !== p.file))}
                     style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--border)', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <IconX size={10} stroke={2} />
@@ -2293,7 +2293,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
 
       {/* ── TAB: MENSAGENS ── */}
       {currentTab === 'mensagens' && (
-        <div className="overflow-hidden rounded-[12px]" style={{ border: '1px solid var(--border)', height: 'calc(100vh - 320px)', minHeight: 400 }}>
+        <div className="overflow-hidden rounded-[12px]" style={{ border: '1px solid var(--border)', height: 'calc(100dvh - 320px)', minHeight: 400 }}>
           {conversation
             ? <ChatPanel conversation={conversation} compact={false} readOnly={perspective === 'admin'} />
             : <div className="flex h-full items-center justify-center text-sm" style={{ color: 'var(--muted-foreground)' }}>Carregando conversa...</div>

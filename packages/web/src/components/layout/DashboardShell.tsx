@@ -322,7 +322,7 @@ export function DashboardShell({
         style={{
           background: 'var(--card)',
           borderRight: '1px solid var(--border)',
-          height: '100vh',
+          height: '100dvh',
           position: 'sticky',
           top: 0,
           transition: 'width 0.2s ease',

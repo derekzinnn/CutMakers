@@ -166,6 +166,30 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
   }
+
+  /* Celular: sem o flash cinza do navegador ao tocar (o feedback é o :active/estado do botão) */
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Foco visível só no teclado (WCAG 2.4.7/2.4.11). Os botões do app usam style inline que
+     não definem outline, então sem isto o foco depende do padrão do navegador, que some em
+     vários casos. :where() mantém especificidade zero — qualquer componente pode sobrescrever. */
+  :where(a, button, summary, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+/* Celular: o iOS dá zoom na página quando o campo focado tem fonte < 16px e NÃO desfaz o zoom.
+   A correção certa é 16px no campo (nunca `user-scalable=no`, que é falha de acessibilidade).
+   !important porque os campos do app definem fontSize inline. Só em tela de toque. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 @layer components {
@@ -196,6 +220,10 @@
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  @keyframes cm-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
   @keyframes cm-scale-in {
     from { opacity: 0; transform: scale(0.97); }
     to   { opacity: 1; transform: scale(1); }
@@ -207,6 +235,10 @@
   /* Entrada padrão de conteúdo (seções de dashboard, páginas) */
   .anim-fade-up {
     animation: cm-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  /* Fundo de modal: só opacidade — uma camada de tela cheia não deve "subir" 8px */
+  .anim-fade {
+    animation: cm-fade 0.18s ease-out both;
   }
   /* Modais e popovers */
   .anim-scale-in {
@@ -251,6 +283,7 @@
 /* Acessibilidade: quem pediu menos movimento não vê nenhuma dessas animações */
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-up,
+  .anim-fade,
   .anim-scale-in,
   .anim-stagger > *,
   .skeleton-shimmer::after {

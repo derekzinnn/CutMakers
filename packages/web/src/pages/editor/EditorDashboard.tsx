@@ -728,7 +728,7 @@ function PortfolioSection({
                 {new Date(item.createdAt).toLocaleDateString('pt-BR')}
               </span>
               <div className="flex gap-1">
-                <button
+                <button aria-label="Editar item"
                   onClick={() => onEdit(item)}
                   className="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                   style={{
@@ -740,7 +740,7 @@ function PortfolioSection({
                 >
                   <IconEdit size={13} stroke={1.5} />
                 </button>
-                <button
+                <button aria-label="Excluir item"
                   onClick={() => onDelete(item.id, item.title)}
                   className="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                   style={{
