@@ -178,7 +178,12 @@ function OpportunityCard({ request: r, onOpen }: { request: BoardRequest; onOpen
           <Avatar name={r.creator.name} url={r.creator.avatarUrl} size={22} />
           {r.creator.name}
         </span>
-        {r.myProposal ? (
+        {r.isMine ? (
+          <span className="flex flex-col items-end gap-1 text-right">
+            <Pill label="Sua solicitação" color="var(--brand)" />
+            <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>Outro editor precisa enviar a proposta</span>
+          </span>
+        ) : r.myProposal ? (
           <button onClick={onOpen} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <Pill label={`Proposta ${PROPOSAL_STATUS_LABELS[r.myProposal.status].toLowerCase()}`} color={PROPOSAL_STATUS_COLORS[r.myProposal.status]} />
           </button>

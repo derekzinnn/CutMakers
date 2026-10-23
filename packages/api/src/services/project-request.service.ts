@@ -571,8 +571,6 @@ export class ProjectRequestService {
 
     const and: Prisma.ProjectRequestWhereInput[] = [
       { status: 'OPEN' },
-      // BOTH: não mostra as solicitações que o próprio usuário publicou
-      { creatorId: { not: editorId } },
     ]
     if (params.category) and.push({ categoryId: params.category })
     if (params.search) {
@@ -609,7 +607,7 @@ export class ProjectRequestService {
     ])
 
     return {
-      requests: requests.map((r) => this.toBoardDTO(r)),
+      requests: requests.map((r) => this.toBoardDTO(r, editorId)),
       total,
       page: currentPage,
       limit: PER_PAGE,
@@ -769,13 +767,15 @@ export class ProjectRequestService {
     }
   }
 
-  private toBoardDTO(r: BoardItem) {
+  private toBoardDTO(r: BoardItem, viewerId: string) {
     const mine = r.proposals[0] ?? null
     return {
       id: r.id,
       title: r.title,
       // Lista mostra só um preview — descrição completa e links ficam no detalhe.
       // Nenhuma URL de arquivo é exposta neste DTO (arquivos só após IN_PROGRESS no pedido).
+      // Solicitação do próprio usuário (BOTH/ADMIN): aparece no quadro, mas sem proposta (403 no envio)
+      isMine: r.creator.id === viewerId,
       descriptionPreview:
         r.description.length > PREVIEW_LENGTH ? `${r.description.slice(0, PREVIEW_LENGTH).trimEnd()}…` : r.description,
       category: r.category,

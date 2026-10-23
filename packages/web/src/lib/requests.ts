@@ -95,6 +95,8 @@ export interface BoardRequest {
   id: string
   title: string
   descriptionPreview: string
+  /** Publicada pelo próprio usuário (conta BOTH/ADMIN): visível, mas sem enviar proposta */
+  isMine: boolean
   category: CategoryRef
   creator: { id: string; name: string; avatarUrl: string | null }
   budgetMin: number | null

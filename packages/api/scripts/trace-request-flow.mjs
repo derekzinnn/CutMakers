@@ -117,7 +117,7 @@ try {
     token: bothLogin.token, body: { amount: 150, deliveryDays: 3, message: 'Proposta na minha própria solicitação.' },
   })
   const bothBoard = await ok('GET', '/requests', { token: bothLogin.token })
-  check('BOTH não vê a própria solicitação no quadro', !bothBoard.requests.some((r) => r.id === ownReq.id))
+  check('BOTH vê a própria solicitação no quadro, marcada como isMine', bothBoard.requests.some((r) => r.id === ownReq.id && r.isMine === true))
 
   console.log('\n[6] Creator vê propostas ordenadas por preço')
   const detail = await ok('GET', `/requests/${request.id}?sort=amount`, { token: creator.token })

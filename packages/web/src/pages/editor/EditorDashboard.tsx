@@ -500,7 +500,7 @@ function OverviewSection({
       hint: totalItems === 0 ? 'Adicione seu primeiro!' : `+0 esta semana`,
     },
     {
-      label: 'Trabalhos concluídos',
+      label: 'Vídeos entregues',
       value: String(editor?.profile.totalJobs ?? 0),
       Icon: IconCheck,
       hint: 'Total acumulado',

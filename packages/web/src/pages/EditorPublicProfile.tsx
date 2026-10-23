@@ -584,7 +584,7 @@ export function EditorPublicProfile() {
 
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
-            <StatCard value={String(profile.totalJobs)} label="Jobs concluídos" />
+            <StatCard value={String(profile.totalJobs)} label="Vídeos entregues" />
             <StatCard
               value={profile.avgRating ? `${(profile.avgRating / 5 * 100).toFixed(0)}%` : '—'}
               label="Taxa de aprovação"

@@ -788,7 +788,7 @@ function EditorCard({
               fontFamily: "var(--font-body)",
             }}
           >
-            {editor.totalJobs} jobs
+            {editor.totalJobs} {editor.totalJobs === 1 ? 'vídeo' : 'vídeos'}
           </span>
         </div>
 

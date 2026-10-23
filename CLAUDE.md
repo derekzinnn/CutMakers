@@ -266,7 +266,7 @@ nasce um `Order` já com editor, em `AWAITING_PAYMENT`, que segue o pipeline nor
   - `POST /:id/proposals/:proposalId/reject` — recusa uma; solicitação continua OPEN
 - **Editor (EDITOR/BOTH)**
   - `GET /` — quadro só OPEN, 20/pág, filtros `?category=&budgetMin=&budgetMax=&search=&sort=recent|budget_desc`
-    (faixas por sobreposição); exclui as próprias do BOTH; item traz `descriptionPreview` (200 chars, sem links/arquivos)
+    (faixas por sobreposição); inclui as próprias com `isMine` (sem proposta); item traz `descriptionPreview` (200 chars, sem links/arquivos)
     e `myProposal: { status } | null`
   - `POST /:id/proposals` — `{ amount > 0, deliveryDays, message }`; duplicata → **409**; própria solicitação → 403;
     FILLED/CANCELLED → 400; banido → 403. Proposta WITHDRAWN pode ser reenviada (reaproveita a linha)
@@ -979,6 +979,12 @@ Ver `packages/api/.env.example`. Precisa:
        período anterior", Cancelar/Atualizar (nada muda até Atualizar). Período escolhido persiste na aba; atalhos são recalculados
    [x] Gráfico de área em SVG puro (pedidos / usuários / receita) com hover, barras por status
    ⚠️ Aba "Assinaturas" do admin ainda é placeholder vazio (sem endpoint de listagem)
+✅ Fase 25 — Ajustes de vocabulário, toast e quadro de oportunidades
+   [x] "Jobs"/"Trabalhos concluídos" → "Vídeos entregues" (perfil público, dashboard do editor, card do editor, landing)
+   [x] Toast "Visualizando como…" em laranja translúcido (brand 18% + blur)
+   [x] Quadro de oportunidades (`GET /requests`) agora INCLUI as solicitações do próprio usuário com `isMine: true` — antes eram
+       escondidas e parecia bug (admin/BOTH publica e não vê). O card mostra "Sua solicitação" e não oferece proposta; o envio segue
+       403 (sem auto-proposta: criador = editor quebraria contrato/escrow). Para testar o fluxo, use uma 2ª conta de editor
 ⏳ Próximos (futuro)
    [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
    [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)

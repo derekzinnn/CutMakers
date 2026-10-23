@@ -501,7 +501,7 @@ function Hero({ onRegister }: { onRegister: () => void }) {
                 color: '#fff',
               }}
             >
-              <IconStarFilled size={13} color={C.orange} /> 5.0 · 128 jobs
+              <IconStarFilled size={13} color={C.orange} /> 5.0 · 128 vídeos
             </div>
           </div>
         </div>
@@ -986,7 +986,7 @@ function FeaturedEditors({ onRegister }: { onRegister: () => void }) {
               <div style={{ fontFamily: C.dm, fontSize: 12, color: C.text60 }}>
                 desde <b style={{ color: '#fff', fontWeight: 600 }}>{e.rate}</b>
               </div>
-              <div style={{ fontFamily: C.dm, fontSize: 11, color: C.text40 }}>{e.jobs} jobs</div>
+              <div style={{ fontFamily: C.dm, fontSize: 11, color: C.text40 }}>{e.jobs} vídeos</div>
             </div>
           </div>
         ))}

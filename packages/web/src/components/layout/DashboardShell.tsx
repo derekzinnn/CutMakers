@@ -370,7 +370,11 @@ export function DashboardShell({
         <div
           role="status"
           className="anim-fade-up fixed left-1/2 top-5 z-50 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-full py-2 pl-5 pr-2 shadow-lg"
-          style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+          style={{
+            background: 'color-mix(in oklab, var(--brand) 18%, transparent)',
+            border: '1px solid var(--brand-border)',
+            backdropFilter: 'blur(12px)',
+          }}
         >
           <span className="text-sm" style={{ color: 'var(--foreground)' }}>
             Visualizando como <strong style={{ color: 'var(--brand)' }}>{viewingAs}</strong>
@@ -379,7 +383,7 @@ export function DashboardShell({
             type="button"
             onClick={() => navigate('/admin')}
             className="hover-surface rounded-full px-3 py-1.5 text-xs font-medium"
-            style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)', cursor: 'pointer' }}
+            style={{ background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--foreground)', cursor: 'pointer' }}
           >
             Voltar para admin
           </button>
