@@ -943,6 +943,19 @@ Ver `packages/api/.env.example`. Precisa:
    ⚠️ Pendente: 36 handlers JS `onMouseEnter` geram hover "grudado" no touch (refatorar p/ CSS `@media (hover:hover)`);
       sem skip-link nem gerência de foco/título na troca de rota
 
+✅ Fase 22 — Identidade visual única + menu com logo-corte
+   [x] Sobras do design antigo eliminadas: 150 refs a `'Syne'`/`'DM Sans'` (fontes que nem carregam mais, caíam em
+       fallback) → `var(--font-heading)` / `var(--font-body)` (definidas em index.css); navy `rgba(13,27,42,…)` → `color-mix` do `--background`
+   [x] Paleta única: neutro + 1 acento (`--brand`). `Avatar` agora é sempre cor da marca (antes paleta azul/roxo/verde…
+       deixava o usuário verde no cabeçalho e laranja no perfil); `#3B82F6` → `var(--info)`
+   [x] AdminPage migrou para `DashboardShell` (tinha sidebar própria: bolinha no lugar do logo, sem colapso, estilo diferente).
+       "Ver como Creator/Editor" virou par de botões no cabeçalho; ~170 linhas de shell duplicado removidas
+   [x] Menu lateral: botão "Reduzir menu" REMOVIDO — o clique é no próprio logo (`CMCutLogo`). Animação "corte": tira de filme
+       atravessa o ícone, linha de corte, as duas metades se afastam e voltam; o menu troca no meio (280ms). Só transform/opacity;
+       com prefers-reduced-motion troca direto. Estado persiste em localStorage
+   [x] Hover em CSS (`.hover-surface` sob `@media (hover:hover)`) começou a substituir os `onMouseEnter` (grudam no touch)
+   ⚠️ Pendente: migrar os ~35 `onMouseEnter/Leave` restantes para CSS; revisar telas uma a uma (Landing, Creator, OrderDetail)
+
 ⏳ Próximos (futuro)
    [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
    [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)
@@ -972,7 +985,7 @@ Ver `packages/api/.env.example`. Precisa:
 - Hooks customizados em `src/hooks/` para data fetching (`use-categories`, `use-editor-me`)
 - Modal genérico em `src/components/ui/Modal.tsx`
 - Layout reutilizável em `src/components/layout/DashboardShell.tsx`
-- Cores do design system **sempre como style inline** (`style={{ background: '#162436' }}`) ou classes Tailwind customizadas (`text-brand`, `bg-navy-mid`)
+- Cores **sempre por token** (`var(--card)`, `bg-brand`…), nunca hex; fontes via `var(--font-heading)`/`var(--font-body)`. Uma paleta só: neutro + `--brand`
 - Ícones: `@tabler/icons-react` (outline)
 
 ---
