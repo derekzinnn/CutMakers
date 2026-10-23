@@ -91,7 +91,7 @@ export function GoogleButton() {
           background: 'var(--surface-subtle)',
           border: '1px solid var(--border)',
           color: 'var(--muted-foreground)',
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-body)",
           cursor: 'not-allowed',
           height: '42px',
         }}

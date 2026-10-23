@@ -143,7 +143,7 @@ export function PrimaryButton({
         border: 'none',
         cursor: off ? 'not-allowed' : 'pointer',
         opacity: off ? 0.6 : 1,
-        fontFamily: "'Syne', sans-serif",
+        fontFamily: "var(--font-heading)",
       }}
     >
       {busy && <IconLoader2 size={14} className="animate-spin" />}

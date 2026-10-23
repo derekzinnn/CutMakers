@@ -167,16 +167,16 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
               <div style={{
                 width: 36, height: 36, borderRadius: '50%', background: avatarBg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontWeight: 700, color: 'white', fontFamily: "'Syne', sans-serif",
+                fontSize: 13, fontWeight: 700, color: 'white', fontFamily: "var(--font-heading)",
               }}>
                 {initials(editor.name)}
               </div>
             )}
             <div>
-              <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 1px', fontFamily: "'DM Sans', sans-serif" }}>
+              <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 1px', fontFamily: "var(--font-body)" }}>
                 Proposta para
               </p>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'white', margin: 0, fontFamily: "var(--font-heading)" }}>
                 {editor.name}
               </p>
             </div>
@@ -206,7 +206,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                     <span style={{
                       fontSize: 11, fontWeight: active ? 600 : 400,
                       color: active ? 'var(--brand)' : done ? 'var(--success)' : 'var(--muted-foreground)',
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-body)",
                     }}>
                       {s.label}
                     </span>
@@ -227,7 +227,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
           {step === 1 && (
             <>
               <div>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "'Syne', sans-serif" }}>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "var(--font-heading)" }}>
                   Qual é o projeto?
                 </h2>
                 <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: 0 }}>
@@ -249,7 +249,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                   style={{
                     width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 14, color: 'white',
                     background: 'var(--surface-subtle)', border: '1px solid var(--input)',
-                    outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box',
+                    outline: 'none', fontFamily: "var(--font-body)", boxSizing: 'border-box',
                   }}
                   onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
                   onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
@@ -272,7 +272,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                   style={{
                     width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 13, color: 'white',
                     background: 'var(--surface-subtle)', border: '1px solid var(--input)',
-                    outline: 'none', resize: 'vertical', minHeight: 140, fontFamily: "'DM Sans', sans-serif",
+                    outline: 'none', resize: 'vertical', minHeight: 140, fontFamily: "var(--font-body)",
                     lineHeight: 1.6, boxSizing: 'border-box',
                   }}
                   onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
@@ -289,7 +289,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
           {step === 2 && (
             <>
               <div>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "'Syne', sans-serif" }}>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "var(--font-heading)" }}>
                   Valores e prazo
                 </h2>
                 <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: 0 }}>
@@ -309,7 +309,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                     style={{
                       width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 13, color: 'white',
                       background: 'var(--surface-raised)', border: '1px solid var(--input)',
-                      outline: 'none', fontFamily: "'DM Sans', sans-serif', cursor: 'pointer", boxSizing: 'border-box',
+                      outline: 'none', fontFamily: 'var(--font-body)', cursor: 'pointer', boxSizing: 'border-box',
                     }}
                     onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
@@ -336,7 +336,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                     style={{
                       width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 14, color: 'white',
                       background: 'var(--surface-subtle)', border: '1px solid var(--input)',
-                      outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box',
+                      outline: 'none', fontFamily: "var(--font-body)", boxSizing: 'border-box',
                     }}
                     onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
@@ -355,7 +355,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                     style={{
                       width: '100%', padding: '12px 16px', borderRadius: 8, fontSize: 13, color: deadline ? 'white' : 'var(--muted-foreground)',
                       background: 'var(--surface-subtle)', border: '1px solid var(--input)',
-                      outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box', colorScheme: 'dark',
+                      outline: 'none', fontFamily: "var(--font-body)", boxSizing: 'border-box', colorScheme: 'dark',
                     }}
                     onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
@@ -369,7 +369,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
           {step === 3 && (
             <>
               <div>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "'Syne', sans-serif" }}>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px', fontFamily: "var(--font-heading)" }}>
                   Arquivos de referência
                 </h2>
                 <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: 0 }}>
@@ -455,7 +455,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 borderRadius: 10, padding: '16px 20px', marginTop: 4,
                 background: 'var(--surface-subtle)', border: '1px solid var(--border)',
               }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'Syne', sans-serif" }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "var(--font-heading)" }}>
                   Resumo da proposta
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -501,7 +501,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
               display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px',
               borderRadius: 8, fontSize: 13, cursor: 'pointer',
               background: 'transparent', color: 'var(--muted-foreground)',
-              border: '1px solid var(--border)', fontFamily: "'DM Sans', sans-serif",
+              border: '1px solid var(--border)', fontFamily: "var(--font-body)",
             }}
           >
             {step > 1 && <IconArrowLeft size={14} stroke={1.5} />}
@@ -516,7 +516,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 display: 'flex', alignItems: 'center', gap: 8, padding: '9px 22px',
                 borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
                 background: 'var(--brand)', color: 'white', border: 'none',
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               Próximo
@@ -532,7 +532,7 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                 borderRadius: 8, fontSize: 13, fontWeight: 600,
                 cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1,
                 background: 'var(--brand)', color: 'white', border: 'none',
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               {submitting ? <IconLoader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <IconSend size={14} stroke={1.5} />}

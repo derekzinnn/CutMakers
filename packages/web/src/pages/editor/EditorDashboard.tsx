@@ -187,7 +187,7 @@ export function EditorDashboard() {
                 color: 'white',
                 border: 'none',
                 cursor: 'pointer',
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               <IconPlus size={16} stroke={2} />
@@ -371,7 +371,7 @@ export function EditorDashboard() {
                 border: 'none',
                 cursor: deleting ? 'not-allowed' : 'pointer',
                 opacity: deleting ? 0.7 : 1,
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               {deleting ? 'Removendo...' : 'Remover'}
@@ -459,7 +459,7 @@ function UpcomingDeadlines({ orders }: { orders: OrderDTO[] }) {
       {upcoming.map(({ order, daysLeft }) => {
         const overdue = daysLeft < 0
         const urgent = daysLeft <= 2
-        const color = overdue ? 'var(--destructive)' : urgent ? '#EAB308' : '#3B82F6'
+        const color = overdue ? 'var(--destructive)' : urgent ? '#EAB308' : 'var(--info)'
         return (
           <li
             key={order.id}
@@ -635,7 +635,7 @@ function PortfolioSection({
             color: 'white',
             border: 'none',
             cursor: 'pointer',
-            fontFamily: "'Syne', sans-serif",
+            fontFamily: "var(--font-heading)",
           }}
         >
           <IconPlus size={16} stroke={2} />
@@ -886,7 +886,7 @@ function PremiumSection() {
                 border: renewable ? 'none' : '1px solid var(--input)',
                 cursor: busy || !renewable ? 'not-allowed' : 'pointer',
                 opacity: busy ? 0.7 : 1,
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               {busy ? <IconLoader2 size={15} className="animate-spin" /> : <IconCrown size={15} stroke={1.5} />}
@@ -969,7 +969,7 @@ function PremiumSection() {
           onClick={handleSubscribe}
           disabled={busy}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-semibold transition-all"
-          style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+          style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "var(--font-heading)" }}
         >
           {busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconCrown size={16} stroke={1.5} />}
           {busy
@@ -981,7 +981,7 @@ function PremiumSection() {
 
         {charge && (charge.pixCode || charge.paymentUrl) && (
           <div className="mt-4 rounded-[8px] px-4 py-3" style={{ background: 'var(--info-soft)', border: '1px solid rgba(59,130,246,0.2)' }}>
-            <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>
+            <p className="text-sm font-medium" style={{ color: 'var(--info)' }}>
               {reopened ? 'Você tem uma cobrança PIX em aberto' : 'Cobrança PIX gerada'}
             </p>
             {charge.paymentUrl && (

@@ -4,12 +4,12 @@ import { limparCache } from '@/lib/cache'
 import { useState, useEffect, useRef } from 'react'
 import {
   IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck,
-  IconCoin, IconX, IconAlertCircle, IconChevronsLeft, IconChevronsRight,
+  IconCoin, IconX, IconAlertCircle,
   IconSend, IconFileText, IconGavel,
   IconArrowLeft,
 } from '@tabler/icons-react'
 import type { AuthUser } from '@/hooks/use-auth'
-import { CMLogo, CMLockup } from '@/components/ui/CMLogo'
+import { CMCutLogo } from '@/components/ui/CMLogo'
 import { fetchNotifications, markAllRead, markOneRead, type NotificationDTO } from '@/lib/notifications'
 
 const SIDEBAR_COLLAPSED_KEY = 'cm_sidebar_collapsed'
@@ -148,7 +148,7 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
               alignItems: 'center',
               justifyContent: 'center',
               padding: '0 3px',
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-heading)",
             }}
           >
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -181,7 +181,7 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
               borderBottom: '1px solid var(--border)',
             }}
           >
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'white', fontFamily: "'Syne', sans-serif" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'white', fontFamily: "var(--font-heading)" }}>
               Notificações {unreadCount > 0 && <span style={{ color: 'var(--brand)' }}>({unreadCount})</span>}
             </span>
             {unreadCount > 0 && (
@@ -193,7 +193,7 @@ function NotificationBell({ onNavigateTo }: { onNavigateTo: (path: string) => vo
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-body)",
                   padding: 0,
                 }}
               >
@@ -295,11 +295,26 @@ export function DashboardShell({
     () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1',
   )
 
-  function toggleCollapsed() {
+  const [cutting, setCutting] = useState(false)
+
+  function applyCollapsed() {
     setCollapsed((v) => {
       localStorage.setItem(SIDEBAR_COLLAPSED_KEY, v ? '0' : '1')
       return !v
     })
+  }
+
+  // Clique na marca: o ícone é "cortado" (ver .cm-cut) e o menu troca no meio do gesto.
+  // Sem animação (prefers-reduced-motion) ou durante uma já em curso, o comportamento é direto.
+  function toggleCollapsed() {
+    if (cutting) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      applyCollapsed()
+      return
+    }
+    setCutting(true)
+    window.setTimeout(applyCollapsed, 280)
+    window.setTimeout(() => setCutting(false), 640)
   }
 
   function logout() {
@@ -328,23 +343,36 @@ export function DashboardShell({
           transition: 'width 0.2s ease',
         }}
       >
-        {/* Logo + badge + toggle */}
+        {/* Marca (clicável: recolhe/expande o menu) + badge */}
         <div
-          className={`flex items-center gap-2 py-4 ${collapsed ? 'justify-center px-2' : 'px-5'}`}
-          style={{ borderBottom: '1px solid var(--border)' }}
+          className={`flex items-center gap-2.5 py-4 ${collapsed ? 'justify-center px-2' : 'px-5'}`}
+          style={{ borderBottom: '1px solid var(--border)', minHeight: 69 }}
         >
-          {collapsed ? (
-            <CMLogo size={30} variant="orange" />
-          ) : (
+          <CMCutLogo
+            size={32}
+            cutting={cutting}
+            onClick={toggleCollapsed}
+            expanded={!collapsed}
+            label={collapsed ? 'Expandir menu' : 'Reduzir menu'}
+          />
+          {!collapsed && (
             <>
-              <CMLockup size={30} wordSize={16} color="var(--foreground)" variant="orange" gap={8} />
+              <span
+                className="anim-fade"
+                style={{
+                  fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 17,
+                  letterSpacing: '-0.02em', color: 'var(--foreground)', whiteSpace: 'nowrap',
+                }}
+              >
+                Cut<span style={{ fontWeight: 500 }}>Makers</span>
+              </span>
               {badgeLabel && (
                 <span
                   className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
                   style={{
                     background: 'var(--brand-soft)',
                     color: 'var(--brand)',
-                    fontFamily: "'Syne', sans-serif",
+                    fontFamily: 'var(--font-heading)',
                   }}
                 >
                   {badgeLabel}
@@ -354,26 +382,6 @@ export function DashboardShell({
           )}
         </div>
 
-        {/* Toggle de colapso */}
-        <button
-          onClick={toggleCollapsed}
-          title={collapsed ? 'Expandir menu' : 'Reduzir menu'}
-          aria-label={collapsed ? 'Expandir menu' : 'Reduzir menu'}
-          className={`mx-3 mt-3 flex items-center gap-3 rounded-[8px] px-3 py-2 text-xs transition-colors ${collapsed ? 'justify-center' : ''}`}
-          style={{
-            color: 'var(--muted-foreground)',
-            background: 'var(--surface-subtle)',
-            border: '1px solid var(--border)',
-            cursor: 'pointer',
-            fontFamily: "'DM Sans', sans-serif",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--foreground)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted-foreground)' }}
-        >
-          {collapsed ? <IconChevronsRight size={15} stroke={1.5} /> : <IconChevronsLeft size={15} stroke={1.5} />}
-          {!collapsed && 'Reduzir menu'}
-        </button>
-
         {/* Nav */}
         <nav className={`flex-1 overflow-y-auto py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
           {navLabel && !collapsed && (
@@ -382,7 +390,7 @@ export function DashboardShell({
                 fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)',
                 padding: '0 12px', marginBottom: 8,
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               {navLabel}
@@ -400,7 +408,7 @@ export function DashboardShell({
                   background: active ? 'var(--brand)' : 'transparent',
                   color: active ? 'var(--foreground)' : 'var(--foreground)',
                   border: '1px solid transparent',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontWeight: active ? 600 : 400,
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -505,7 +513,7 @@ export function DashboardShell({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-body)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'var(--destructive)'

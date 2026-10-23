@@ -110,7 +110,7 @@ export function MessagesTab() {
         }}>
           <IconMessage2 size={28} stroke={1.5} color="var(--brand)" />
         </div>
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: 'white', margin: '0 0 8px', fontFamily: "'Syne', sans-serif" }}>
+        <h3 style={{ fontSize: 18, fontWeight: 700, color: 'white', margin: '0 0 8px', fontFamily: "var(--font-heading)" }}>
           Nenhuma conversa
         </h3>
         <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: 0, maxWidth: 320 }}>
@@ -135,7 +135,7 @@ export function MessagesTab() {
         }}>
           <span style={{
             fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)',
-            fontFamily: "'Syne', sans-serif", textTransform: 'uppercase', letterSpacing: '0.1em',
+            fontFamily: "var(--font-heading)", textTransform: 'uppercase', letterSpacing: '0.1em',
           }}>
             Mensagens
           </span>
@@ -169,7 +169,7 @@ export function MessagesTab() {
                     fontSize: 13, fontWeight: isSelected ? 700 : 500,
                     color: isSelected ? 'white' : 'var(--foreground)',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    fontFamily: "'Syne', sans-serif",
+                    fontFamily: "var(--font-heading)",
                   }}>
                     {group.personName}
                   </span>
@@ -249,7 +249,7 @@ export function MessagesTab() {
               borderBottom: '1px solid var(--border)', background: 'var(--card)', flexShrink: 0,
             }}>
               <Avatar name={selectedGroup.personName} url={selectedGroup.personAvatar} size={32} />
-              <p style={{ fontSize: 14, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'white', margin: 0, fontFamily: "var(--font-heading)" }}>
                 {selectedGroup.personName}
               </p>
               {selectedConv.order && (
@@ -259,7 +259,7 @@ export function MessagesTab() {
                     marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5,
                     padding: '5px 10px', borderRadius: 6, fontSize: 11,
                     background: 'var(--border)', border: '1px solid var(--border)',
-                    color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+                    color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: "var(--font-body)",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'var(--brand-soft)'
@@ -295,7 +295,7 @@ export function MessagesTab() {
                         color: isActive ? 'white' : 'var(--muted-foreground)',
                         border: isActive ? 'none' : '1px solid var(--input)',
                         cursor: 'pointer', transition: 'all 0.15s',
-                        fontFamily: "'DM Sans', sans-serif",
+                        fontFamily: "var(--font-body)",
                       }}
                     >
                       {conv.order?.title ?? 'Conversa direta'}

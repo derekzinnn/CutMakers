@@ -172,7 +172,7 @@ export function PortfolioForm({ open, initial, onClose, onSaved }: Props) {
               border: 'none',
               cursor: saving || uploading ? 'not-allowed' : 'pointer',
               opacity: saving || uploading ? 0.6 : 1,
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-heading)",
             }}
           >
             {saving ? 'Salvando...' : isEditing ? 'Salvar' : 'Adicionar ao portfólio'}

@@ -62,13 +62,13 @@ export function RegisterPage() {
       >
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full" style={{ background: 'var(--brand)' }} />
-          <span className="text-[22px] font-extrabold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <span className="text-[22px] font-extrabold text-white" style={{ fontFamily: "var(--font-heading)" }}>
             CutMakers
           </span>
         </div>
 
         <div>
-          <h1 className="text-[30px] font-bold leading-tight text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <h1 className="text-[30px] font-bold leading-tight text-white" style={{ fontFamily: "var(--font-heading)" }}>
             Comece sua jornada na <span style={{ color: 'var(--brand)' }}>edição profissional</span>
           </h1>
           <p className="mt-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
@@ -83,7 +83,7 @@ export function RegisterPage() {
             { value: '5★', label: 'Avaliação média' },
           ].map((stat) => (
             <div key={stat.label}>
-              <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+              <p className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-heading)" }}>
                 {stat.value}
               </p>
               <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
@@ -97,7 +97,7 @@ export function RegisterPage() {
       {/* Painel direito — formulário */}
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 lg:px-12">
         <div className="w-full max-w-sm">
-          <h2 className="mb-1 text-2xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <h2 className="mb-1 text-2xl font-bold text-white" style={{ fontFamily: "var(--font-heading)" }}>
             Criar conta
           </h2>
           <p className="mb-8 text-sm" style={{ color: 'var(--muted-foreground)' }}>
@@ -127,7 +127,7 @@ export function RegisterPage() {
                 />
                 <span
                   className="text-sm font-semibold"
-                  style={{ color: role === value ? 'var(--brand)' : 'var(--foreground)', fontFamily: "'Syne', sans-serif" }}
+                  style={{ color: role === value ? 'var(--brand)' : 'var(--foreground)', fontFamily: "var(--font-heading)" }}
                 >
                   {label}
                 </span>
@@ -260,7 +260,7 @@ export function RegisterPage() {
           <button
             onClick={() => { setAcceptTerms(true); setTermsOpen(false) }}
             className="rounded-[8px] px-5 py-2 text-sm font-semibold"
-            style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "var(--font-heading)" }}
           >
             Li e aceito
           </button>
@@ -268,7 +268,7 @@ export function RegisterPage() {
       >
         <pre
           className="whitespace-pre-wrap text-xs leading-relaxed"
-          style={{ color: 'var(--foreground)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}
+          style={{ color: 'var(--foreground)', fontFamily: "var(--font-body)", margin: 0 }}
         >
           {PLATFORM_TERMS}
         </pre>

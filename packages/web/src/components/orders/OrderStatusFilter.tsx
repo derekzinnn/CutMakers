@@ -47,7 +47,7 @@ export function OrderStatusFilter({ orders, active, onChange }: Props) {
           color: isActive ? 'var(--brand)' : 'var(--foreground)',
           border: `1px solid ${isActive ? 'var(--brand-border)' : 'var(--border)'}`,
           cursor: 'pointer',
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-body)",
         }}
       >
         {label}

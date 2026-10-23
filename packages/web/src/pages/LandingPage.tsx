@@ -32,8 +32,8 @@ const C = {
   text60:   'rgba(255,255,255,0.60)',
   text40:   'rgba(255,255,255,0.40)',
   orangeSoft: 'var(--brand-soft)',
-  syne: "'Syne', sans-serif",
-  dm:   "'DM Sans', sans-serif",
+  syne: "var(--font-heading)",
+  dm:   "var(--font-body)",
 }
 
 // ─── Hero video thumbnail placeholder ────────────────────────────────────────
@@ -118,7 +118,7 @@ function Thumb({
             fontFamily: C.dm,
             fontSize: 11,
             fontWeight: 600,
-            background: 'rgba(13,27,42,0.7)',
+            background: 'color-mix(in oklab, var(--background) 75%, transparent)',
             color: '#fff',
             padding: '4px 8px',
             borderRadius: 6,
@@ -175,7 +175,7 @@ function Nav({ onLogin, onRegister }: { onLogin: () => void; onRegister: () => v
         justifyContent: 'space-between',
         padding: '22px 56px',
         borderBottom: `1px solid ${C.border}`,
-        background: 'rgba(13,27,42,0.6)',
+        background: 'color-mix(in oklab, var(--background) 65%, transparent)',
         backdropFilter: 'blur(8px)',
         position: 'sticky',
         top: 0,

@@ -247,7 +247,7 @@ export function ChatPanel({ conversation, compact = false, readOnly = false }: C
             color: 'white',
             fontSize: 13,
             outline: 'none',
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-body)",
           }}
         />
         <button aria-label="Enviar mensagem"

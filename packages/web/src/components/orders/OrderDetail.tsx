@@ -272,7 +272,7 @@ function ProposalCard({
                 background: 'var(--brand)', color: 'white', border: 'none',
                 cursor: busy ? 'not-allowed' : 'pointer',
                 opacity: busy ? 0.6 : 1,
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               {busy === 'accept' ? <IconLoader2 size={12} className="animate-spin" /> : <IconCircleCheck size={12} stroke={2} />}
@@ -287,7 +287,7 @@ function ProposalCard({
                 border: '1px solid var(--destructive-border)',
                 cursor: busy ? 'not-allowed' : 'pointer',
                 opacity: busy ? 0.6 : 1,
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               {busy === 'reject' ? <IconLoader2 size={12} className="animate-spin" /> : <IconCircleX size={12} stroke={2} />}
@@ -362,7 +362,7 @@ function ProposalForm({
             color: isCounter ? 'var(--foreground)' : 'white',
             border: isCounter ? '1px solid var(--input)' : 'none',
             cursor: 'pointer',
-            fontFamily: "'Syne', sans-serif",
+            fontFamily: "var(--font-heading)",
           }}
         >
           <IconArrowRight size={14} stroke={2} />
@@ -397,7 +397,7 @@ function ProposalForm({
               rows={2}
               maxLength={2000}
               className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "var(--font-body)" }}
               disabled={submitting}
             />
           </div>
@@ -419,7 +419,7 @@ function ProposalForm({
                 background: 'var(--brand)', color: 'white', border: 'none',
                 cursor: submitting ? 'not-allowed' : 'pointer',
                 opacity: submitting ? 0.6 : 1,
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               {submitting && <IconLoader2 size={12} className="animate-spin" />}
@@ -567,7 +567,7 @@ function AwaitingPaymentSection({
               background: 'var(--brand)', color: 'white', border: 'none',
               cursor: busy ? 'not-allowed' : 'pointer',
               opacity: busy ? 0.7 : 1,
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-heading)",
             }}
           >
             {busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconCreditCard size={16} stroke={1.5} />}
@@ -575,7 +575,7 @@ function AwaitingPaymentSection({
           </button>
         ) : (
           <div className="rounded-[8px] px-4 py-3 text-center" style={{ background: 'var(--info-soft)', border: '1px solid rgba(59,130,246,0.2)' }}>
-            <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>Pagamento iniciado</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--info)' }}>Pagamento iniciado</p>
             <p className="mt-0.5 text-xs" style={{ color: 'var(--muted-foreground)' }}>
               Aguardando confirmação do PIX...
             </p>
@@ -656,7 +656,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
           <div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'white', margin: 0, fontFamily: "var(--font-heading)" }}>
               Enviar entrega
             </h3>
             <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '3px 0 0' }}>
@@ -686,7 +686,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
                   background: useUpload === v ? 'var(--brand-soft)' : 'var(--surface-subtle)',
                   color: useUpload === v ? 'var(--brand)' : 'var(--muted-foreground)',
                   border: useUpload === v ? '1px solid var(--brand-border)' : '1px solid var(--border)',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-body)",
                 }}
               >
                 {l}
@@ -748,7 +748,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
               style={{
                 width: '100%', padding: '12px 14px', borderRadius: 8, fontSize: 13, color: 'white',
                 background: 'var(--surface-subtle)', border: '1px solid var(--input)',
-                outline: 'none', fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box',
+                outline: 'none', fontFamily: "var(--font-body)", boxSizing: 'border-box',
               }}
               onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
               onBlur={(e) => { e.target.style.borderColor = 'var(--input)' }}
@@ -766,7 +766,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
             style={{
               width: '100%', padding: '12px 14px', borderRadius: 8, fontSize: 13, color: 'white',
               background: 'var(--surface-subtle)', border: '1px solid var(--input)',
-              outline: 'none', resize: 'vertical', fontFamily: "'DM Sans', sans-serif",
+              outline: 'none', resize: 'vertical', fontFamily: "var(--font-body)",
               lineHeight: 1.6, boxSizing: 'border-box',
             }}
             onFocus={(e) => { e.target.style.borderColor = 'var(--brand-border)' }}
@@ -785,7 +785,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
             <button
               type="button"
               onClick={onClose}
-              style={{ padding: '9px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+              style={{ padding: '9px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: "var(--font-body)" }}
             >
               Cancelar
             </button>
@@ -794,7 +794,7 @@ function DeliveryForm({ orderId, onDone, onClose }: { orderId: string; onDone: (
               disabled={submitting || uploading || !videoUrl}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '9px 20px',
-                borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "'Syne', sans-serif",
+                borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "var(--font-heading)",
                 background: 'var(--brand)', color: 'white', border: 'none',
                 cursor: submitting || uploading || !videoUrl ? 'not-allowed' : 'pointer',
                 opacity: submitting || uploading || !videoUrl ? 0.6 : 1,
@@ -908,7 +908,7 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
           <div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'white', margin: 0, fontFamily: "'Syne', sans-serif" }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'white', margin: 0, fontFamily: "var(--font-heading)" }}>
               Adicionar arquivos
             </h3>
             <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '3px 0 0' }}>
@@ -982,7 +982,7 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
 
         {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '14px 22px', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.1)' }}>
-          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: "var(--font-body)" }}>
             Cancelar
           </button>
           <button
@@ -990,7 +990,7 @@ function AddFilesModal({ orderId, onDone, onClose }: { orderId: string; onDone: 
             disabled={submitting || pending.length === 0}
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px',
-              borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "'Syne', sans-serif",
+              borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "var(--font-heading)",
               background: pending.length > 0 && !submitting ? 'var(--brand)' : 'var(--brand-border)',
               color: 'white', border: 'none', cursor: submitting || pending.length === 0 ? 'not-allowed' : 'pointer',
             }}
@@ -1050,7 +1050,7 @@ function ReviewFormSection({ orderId, onDone }: { orderId: string; onDone: () =>
           rows={3}
           maxLength={2000}
           className="mb-3 w-full rounded-[8px] px-3 py-2.5 text-sm text-white outline-none"
-          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', resize: 'vertical', fontFamily: "var(--font-body)" }}
           disabled={submitting}
         />
         {error && <p className="mb-3 text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
@@ -1062,7 +1062,7 @@ function ReviewFormSection({ orderId, onDone }: { orderId: string; onDone: () =>
             background: 'var(--brand)', color: '#fff', border: 'none',
             cursor: submitting || !rating ? 'not-allowed' : 'pointer',
             opacity: submitting || !rating ? 0.6 : 1,
-            fontFamily: "'Syne', sans-serif",
+            fontFamily: "var(--font-heading)",
           }}
         >
           {submitting && <IconLoader2 size={14} className="animate-spin" />}
@@ -1195,7 +1195,7 @@ function ContractSection({
       {expanded && (
         <pre
           className="mt-3 max-h-[380px] overflow-y-auto whitespace-pre-wrap rounded-[8px] p-4 text-xs leading-relaxed"
-          style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', color: 'var(--foreground)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}
+          style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', color: 'var(--foreground)', fontFamily: "var(--font-body)", margin: 0 }}
         >
           {agreement.content}
         </pre>
@@ -1212,7 +1212,7 @@ function ContractSection({
               background: 'var(--brand)', color: 'white', border: 'none',
               cursor: accepting ? 'not-allowed' : 'pointer',
               opacity: accepting ? 0.7 : 1,
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-heading)",
             }}
           >
             {accepting ? <IconLoader2 size={14} className="animate-spin" /> : <IconCircleCheck size={14} stroke={2} />}
@@ -1272,7 +1272,7 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
       <button
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
-        style={{ background: 'var(--border)', color: 'var(--foreground)', border: '1px solid var(--input)', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+        style={{ background: 'var(--border)', color: 'var(--foreground)', border: '1px solid var(--input)', cursor: 'pointer', fontFamily: "var(--font-heading)" }}
       >
         <IconRefresh size={14} stroke={1.5} />
         Solicitar revisão
@@ -1292,7 +1292,7 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
           maxLength={2000}
           autoFocus
           className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "var(--font-body)" }}
           disabled={submitting}
         />
         {error && <p className="text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
@@ -1309,7 +1309,7 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
             type="submit"
             disabled={submitting || !description.trim()}
             className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
-            style={{ background: '#EAB308', color: '#1a1400', border: 'none', cursor: submitting || !description.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !description.trim() ? 0.6 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: '#EAB308', color: '#1a1400', border: 'none', cursor: submitting || !description.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !description.trim() ? 0.6 : 1, fontFamily: "var(--font-heading)" }}
           >
             {submitting && <IconLoader2 size={12} className="animate-spin" />}
             Enviar solicitação
@@ -1338,7 +1338,7 @@ function RevisionRequestForm({ order, onDone }: { order: OrderDetailDTO; onDone:
               onClick={confirmSubmit}
               disabled={submitting}
               className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
-              style={{ background: '#EAB308', color: '#1a1400', border: 'none', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+              style={{ background: '#EAB308', color: '#1a1400', border: 'none', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontFamily: "var(--font-heading)" }}
             >
               {submitting && <IconLoader2 size={14} className="animate-spin" />}
               Solicitar revisão
@@ -1390,7 +1390,7 @@ function DisputeForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => P
       <button
         onClick={() => setOpen(true)}
         className="flex items-center gap-1.5 text-xs font-medium transition-all"
-        style={{ background: 'none', border: 'none', color: 'rgba(239,68,68,0.7)', cursor: 'pointer', padding: '4px 0', fontFamily: "'DM Sans', sans-serif" }}
+        style={{ background: 'none', border: 'none', color: 'rgba(239,68,68,0.7)', cursor: 'pointer', padding: '4px 0', fontFamily: "var(--font-body)" }}
       >
         <IconGavel size={13} stroke={1.5} />
         Abrir disputa
@@ -1415,7 +1415,7 @@ function DisputeForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => P
         maxLength={2000}
         autoFocus
         className="w-full rounded-[8px] px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none"
-        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--input)', resize: 'vertical', fontFamily: "var(--font-body)" }}
         disabled={submitting}
       />
       {error && <p className="text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
@@ -1432,7 +1432,7 @@ function DisputeForm({ order, onDone }: { order: OrderDetailDTO; onDone: () => P
           type="submit"
           disabled={submitting || !reason.trim()}
           className="flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-semibold"
-          style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: submitting || !reason.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !reason.trim() ? 0.6 : 1, fontFamily: "'Syne', sans-serif" }}
+          style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: submitting || !reason.trim() ? 'not-allowed' : 'pointer', opacity: submitting || !reason.trim() ? 0.6 : 1, fontFamily: "var(--font-heading)" }}
         >
           {submitting && <IconLoader2 size={12} className="animate-spin" />}
           Confirmar disputa
@@ -1532,7 +1532,7 @@ function DisputeBanner({
             onClick={() => onResolve('RELEASE')}
             disabled={resolving !== null}
             className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
-            style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "var(--font-heading)" }}
           >
             {resolving === 'RELEASE' ? <IconLoader2 size={14} className="animate-spin" /> : <IconCircleCheck size={14} stroke={2} />}
             Liberar ao editor
@@ -1541,7 +1541,7 @@ function DisputeBanner({
             onClick={() => onResolve('REFUND')}
             disabled={resolving !== null}
             className="flex items-center gap-2 rounded-[8px] px-4 py-2.5 text-sm font-semibold transition-all"
-            style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: resolving ? 'not-allowed' : 'pointer', opacity: resolving ? 0.7 : 1, fontFamily: "var(--font-heading)" }}
           >
             {resolving === 'REFUND' ? <IconLoader2 size={14} className="animate-spin" /> : <IconArrowLeft size={14} stroke={2} />}
             Reembolsar creator
@@ -1594,7 +1594,7 @@ function ActionButtons({
         border: variant === 'primary' ? 'none' : variant === 'danger' ? '1px solid var(--destructive-border)' : '1px solid var(--input)',
         cursor: busy !== null ? 'not-allowed' : 'pointer',
         opacity: busy !== null ? 0.7 : 1,
-        fontFamily: "'Syne', sans-serif",
+        fontFamily: "var(--font-heading)",
       }}
     >
       {busy === key ? <IconLoader2 size={14} className="animate-spin" /> : icon}
@@ -1678,7 +1678,7 @@ function ActionButtons({
                   onClick={async () => { await doAction('COMPLETED'); setConfirmApprove(false) }}
                   disabled={busy !== null}
                   className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
-                  style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+                  style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "var(--font-heading)" }}
                 >
                   {busy === 'COMPLETED' ? <IconLoader2 size={14} className="animate-spin" /> : <IconCheck size={14} stroke={2} />}
                   Confirmar aprovação
@@ -1920,7 +1920,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                 padding: '10px 20px', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer',
                 background: 'none', border: 'none', borderBottom: active ? '2px solid var(--brand)' : '2px solid transparent',
                 color: active ? 'var(--brand)' : 'var(--muted-foreground)',
-                fontFamily: "'DM Sans', sans-serif", marginBottom: -1, transition: 'all 0.15s',
+                fontFamily: "var(--font-body)", marginBottom: -1, transition: 'all 0.15s',
               }}
             >
               {tab.label}
@@ -1987,7 +1987,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               {order.transaction ? (
                 <span className="inline-block rounded-full px-2.5 py-1 text-[11px] font-medium" style={{
                   background: order.transaction.status === 'RELEASED' ? 'var(--success-soft)' : order.transaction.status === 'HELD' ? 'var(--info-soft)' : 'var(--brand-soft)',
-                  color: order.transaction.status === 'RELEASED' ? 'var(--success)' : order.transaction.status === 'HELD' ? '#3B82F6' : 'var(--brand)',
+                  color: order.transaction.status === 'RELEASED' ? 'var(--success)' : order.transaction.status === 'HELD' ? 'var(--info)' : 'var(--brand)',
                 }}>
                   {TRANSACTION_LABELS[order.transaction.status]}
                 </span>
@@ -2063,7 +2063,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             action={
               <button
                 onClick={() => setAddFilesOpen(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--brand)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--brand)', cursor: 'pointer', fontFamily: "var(--font-body)" }}
               >
                 <IconUpload size={11} stroke={2} />
                 Novos arquivos
@@ -2177,7 +2177,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               {order.transaction ? (
                 <span className="inline-block rounded-full px-2.5 py-1 text-[11px] font-medium" style={{
                   background: order.transaction.status === 'RELEASED' ? 'var(--success-soft)' : order.transaction.status === 'HELD' ? 'var(--info-soft)' : 'var(--brand-soft)',
-                  color: order.transaction.status === 'RELEASED' ? 'var(--success)' : order.transaction.status === 'HELD' ? '#3B82F6' : 'var(--brand)',
+                  color: order.transaction.status === 'RELEASED' ? 'var(--success)' : order.transaction.status === 'HELD' ? 'var(--info)' : 'var(--brand)',
                 }}>
                   {TRANSACTION_LABELS[order.transaction.status]}
                 </span>
@@ -2198,7 +2198,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               order.status !== 'COMPLETED' && order.status !== 'CANCELLED' ? (
                 <button
                   onClick={() => setAddFilesOpen(true)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--brand)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'var(--brand-soft)', border: '1px solid var(--brand-border)', color: 'var(--brand)', cursor: 'pointer', fontFamily: "var(--font-body)" }}
                 >
                   <IconUpload size={11} stroke={2} />
                   Novos arquivos

@@ -95,7 +95,7 @@ export function LoginPage() {
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--brand)' }} />
             <span
               className="text-[22px] font-extrabold text-white"
-              style={{ fontFamily: "'Syne', sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               CutMakers
             </span>
@@ -111,7 +111,7 @@ export function LoginPage() {
             </p>
             <h1
               className="text-[40px] font-bold leading-[1.1] text-white"
-              style={{ fontFamily: "'Syne', sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               O match perfeito entre{' '}
               <span style={{ color: 'var(--brand)' }}>criador</span> e{' '}
@@ -135,7 +135,7 @@ export function LoginPage() {
               <div key={stat.label}>
                 <p
                   className="text-[26px] font-bold text-white"
-                  style={{ fontFamily: "'Syne', sans-serif" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {stat.value}
                 </p>
@@ -177,7 +177,7 @@ export function LoginPage() {
             <span className="h-2 w-2 rounded-full" style={{ background: 'var(--brand)' }} />
             <span
               className="text-xl font-extrabold text-white"
-              style={{ fontFamily: "'Syne', sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               CutMakers
             </span>
@@ -186,7 +186,7 @@ export function LoginPage() {
           <div className="w-full max-w-[400px]">
             <h2
               className="text-[28px] font-bold text-white"
-              style={{ fontFamily: "'Syne', sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               Entrar na conta
             </h2>

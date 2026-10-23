@@ -283,7 +283,7 @@ export function CreatorDashboard() {
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'var(--brand)', color: '#fff', border: 'none',
               borderRadius: 8, padding: '8px 14px', fontSize: 13,
-              fontWeight: 700, cursor: 'pointer', fontFamily: "'Syne', sans-serif",
+              fontWeight: 700, cursor: 'pointer', fontFamily: "var(--font-heading)",
             }}
           >
             <IconPlus size={14} stroke={2.5} />
@@ -327,7 +327,7 @@ export function CreatorDashboard() {
                 onChange={e => setSearchInput(e.target.value)}
                 style={{
                   flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                  fontSize: 13, color: '#fff', fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 13, color: '#fff', fontFamily: "var(--font-body)",
                 }}
               />
             </div>
@@ -343,7 +343,7 @@ export function CreatorDashboard() {
                   border: '1px solid var(--input)',
                   borderRadius: 8, padding: '9px 36px 9px 12px',
                   fontSize: 13, color: selectedCategory ? '#fff' : 'var(--muted-foreground)',
-                  cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", outline: 'none',
+                  cursor: 'pointer', fontFamily: "var(--font-body)", outline: 'none',
                   minWidth: 130, colorScheme: 'dark',
                 }}
               >
@@ -372,7 +372,7 @@ export function CreatorDashboard() {
                   border: '1px solid var(--input)',
                   borderRadius: 8, padding: '9px 36px 9px 12px',
                   fontSize: 13, color: '#fff', cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif", outline: 'none',
+                  fontFamily: "var(--font-body)", outline: 'none',
                   minWidth: 150, colorScheme: 'dark',
                 }}
               >
@@ -396,7 +396,7 @@ export function CreatorDashboard() {
               style={{
                 background: 'var(--brand)', color: '#fff', border: 'none',
                 borderRadius: 8, padding: '9px 20px', fontSize: 13,
-                fontWeight: 700, cursor: 'pointer', fontFamily: "'Syne', sans-serif",
+                fontWeight: 700, cursor: 'pointer', fontFamily: "var(--font-heading)",
                 flexShrink: 0,
               }}
             >
@@ -444,7 +444,7 @@ export function CreatorDashboard() {
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--surface-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <IconSearch size={24} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
               </div>
-              <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
+              <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
                 Nenhum editor encontrado
               </h3>
               <p style={{ color: 'var(--muted-foreground)', fontSize: 13, margin: 0 }}>
@@ -491,7 +491,7 @@ export function CreatorDashboard() {
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--brand-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
               <IconBriefcase size={24} stroke={1.5} color="var(--brand)" />
             </div>
-            <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
+            <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
               Sem pedidos ainda
             </h3>
             <p style={{ color: 'var(--muted-foreground)', fontSize: 13, margin: '0 0 20px' }}>
@@ -499,7 +499,7 @@ export function CreatorDashboard() {
             </p>
             <button
               onClick={() => changeSection('feed')}
-              style={{ background: 'var(--brand)', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+              style={{ background: 'var(--brand)', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "var(--font-heading)" }}
             >
               Explorar editores
             </button>
@@ -578,7 +578,7 @@ function Chip({
         padding: '6px 12px', borderRadius: 20,
         fontSize: 12, fontWeight: active ? 600 : 400,
         cursor: 'pointer', border: 'none', transition: 'all 0.15s',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-body)",
         background: active
           ? accent ? 'var(--brand)' : 'var(--brand)'
           : 'var(--border)',
@@ -657,7 +657,7 @@ function EditorCard({
               position: 'absolute', top: 10, right: 10, zIndex: 2,
               width: 34, height: 34, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(13,27,42,0.55)', backdropFilter: 'blur(6px)',
+              background: 'color-mix(in oklab, var(--background) 60%, transparent)', backdropFilter: 'blur(6px)',
               border: '1px solid var(--border)',
               color: favorited ? 'var(--destructive)' : '#fff',
               cursor: 'pointer', transition: 'transform 0.15s, color 0.15s',
@@ -702,7 +702,7 @@ function EditorCard({
               background: 'rgba(255,255,255,0.92)',
               color: 'var(--background)', fontSize: 11, fontWeight: 700,
               padding: '3px 9px', borderRadius: 20,
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-body)",
               backdropFilter: 'blur(4px)',
             }}
           >
@@ -718,7 +718,7 @@ function EditorCard({
           style={{
             fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
             color: 'var(--muted-foreground)', textTransform: 'uppercase',
-            marginBottom: 12, fontFamily: "'DM Sans', sans-serif",
+            marginBottom: 12, fontFamily: "var(--font-body)",
           }}
         >
           Highlight Reel
@@ -733,7 +733,7 @@ function EditorCard({
               background: avatarBg,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0, fontSize: 12, fontWeight: 800,
-              color: '#fff', fontFamily: "'Syne', sans-serif",
+              color: '#fff', fontFamily: "var(--font-heading)",
               overflow: 'hidden',
             }}
           >
@@ -748,7 +748,7 @@ function EditorCard({
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
               <span
                 style={{
-                  fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14,
+                  fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14,
                   color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}
               >
@@ -771,7 +771,7 @@ function EditorCard({
           {/* Rating */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
             <IconStarFilled size={11} color="var(--brand)" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "'Syne', sans-serif" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "var(--font-heading)" }}>
               {editor.avgRating ? editor.avgRating.toFixed(1) : '—'}
             </span>
           </div>
@@ -784,7 +784,7 @@ function EditorCard({
               fontSize: 11, color: 'var(--foreground)',
               background: 'var(--border)',
               borderRadius: 20, padding: '3px 10px',
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-body)",
             }}
           >
             {editor.totalJobs} jobs
@@ -798,14 +798,14 @@ function EditorCard({
               style={{
                 fontSize: 10, color: 'var(--muted-foreground)',
                 textTransform: 'uppercase', letterSpacing: '0.06em',
-                margin: '0 0 3px', fontFamily: "'DM Sans', sans-serif",
+                margin: '0 0 3px', fontFamily: "var(--font-body)",
               }}
             >
               A partir de
             </p>
             <p
               style={{
-                fontFamily: "'Syne', sans-serif", fontWeight: 800,
+                fontFamily: "var(--font-heading)", fontWeight: 800,
                 fontSize: 22, color: '#fff', lineHeight: 1, margin: 0,
               }}
             >
@@ -820,7 +820,7 @@ function EditorCard({
               background: 'var(--brand)', color: '#fff', border: 'none',
               borderRadius: 8, padding: '9px 16px',
               fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-heading)",
             }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-hover)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--brand)')}
@@ -873,7 +873,7 @@ function FavoritesSection({
         >
           <IconHeart size={24} stroke={1.5} color="var(--brand)" />
         </div>
-        <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
+        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 8px' }}>
           Nenhum editor favoritado ainda
         </h3>
         <p style={{ color: 'var(--muted-foreground)', fontSize: 13, margin: 0 }}>
@@ -986,7 +986,7 @@ function AccountSection() {
     <div style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Perfil */}
       <div style={card}>
-        <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 18px' }}>
+        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 18px' }}>
           Perfil
         </h3>
 
@@ -1042,7 +1042,7 @@ function AccountSection() {
 
       {/* Senha */}
       <div style={card}>
-        <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 18px' }}>
+        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 18px' }}>
           Senha
         </h3>
         <div style={{ marginBottom: 14 }}>
@@ -1097,7 +1097,7 @@ function AccountSection() {
 
 const TX_COLORS: Record<TransactionStatus, string> = {
   PENDING: 'var(--brand)',
-  HELD: '#3B82F6',
+  HELD: 'var(--info)',
   RELEASED: 'var(--success)',
   REFUNDED: 'var(--destructive)',
 }
@@ -1133,7 +1133,7 @@ function PaymentsSection({
 
   const cards = [
     { label: 'Total pago', value: summary?.totalPaid ?? 0, Icon: IconCreditCard, color: 'var(--brand)' },
-    { label: 'Em custódia (escrow)', value: summary?.totalHeld ?? 0, Icon: IconLock, color: '#3B82F6' },
+    { label: 'Em custódia (escrow)', value: summary?.totalHeld ?? 0, Icon: IconLock, color: 'var(--info)' },
     { label: 'Total concluído', value: summary?.totalCompleted ?? 0, Icon: IconCircleCheck, color: 'var(--success)' },
   ]
 
@@ -1182,7 +1182,7 @@ function PaymentsSection({
           <button
             onClick={onBrowse}
             className="mt-6 inline-flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-semibold"
-            style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "var(--font-heading)" }}
           >
             <IconSearch size={15} stroke={2} />
             Explorar editores

@@ -183,7 +183,7 @@ export function EditorPublicProfile() {
           minHeight: '100dvh', background: 'var(--background)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--muted-foreground)', fontSize: 14,
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-body)",
         }}
       >
         Carregando perfil...
@@ -200,7 +200,7 @@ export function EditorPublicProfile() {
           justifyContent: 'center', gap: 16,
         }}
       >
-        <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 20, color: '#fff', margin: 0 }}>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 20, color: '#fff', margin: 0 }}>
           {error ?? 'Editor não encontrado'}
         </h1>
         <button onClick={() => navigate(-1)} style={ghostBtn}>
@@ -226,13 +226,13 @@ export function EditorPublicProfile() {
     : null
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--background)', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--background)', fontFamily: "var(--font-body)" }}>
 
       {/* ── Top navbar ── */}
       <nav
         style={{
           position: 'sticky', top: 0, zIndex: 50,
-          background: 'rgba(13,27,42,0.92)', backdropFilter: 'blur(12px)',
+          background: 'color-mix(in oklab, var(--background) 88%, transparent)', backdropFilter: 'blur(12px)',
           borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', gap: 16,
           padding: '0 24px', height: 56,
@@ -267,7 +267,7 @@ export function EditorPublicProfile() {
                 background: avatarColor(user.name ?? ''),
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 800, color: '#fff',
-                fontFamily: "'Syne', sans-serif", overflow: 'hidden',
+                fontFamily: "var(--font-heading)", overflow: 'hidden',
               }}
             >
               {initials(user.name ?? '')}
@@ -286,7 +286,7 @@ export function EditorPublicProfile() {
       >
         <button
           onClick={() => navigate('/dashboard/creator')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', fontSize: 12, fontFamily: "'DM Sans', sans-serif', padding: 0" }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', fontSize: 12, fontFamily: "var(--font-body)", padding: 0 }}
         >
           Buscar editores
         </button>
@@ -322,7 +322,7 @@ export function EditorPublicProfile() {
                   background: 'var(--brand)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 28, fontWeight: 800, color: '#fff',
-                  fontFamily: "'Syne', sans-serif", overflow: 'hidden',
+                  fontFamily: "var(--font-heading)", overflow: 'hidden',
                   border: '3px solid var(--input)',
                 }}
               >
@@ -386,7 +386,7 @@ export function EditorPublicProfile() {
                         border: '1px solid var(--brand-border)',
                         borderRadius: 8, padding: '6px 12px',
                         fontSize: 22, fontWeight: 800, color: '#fff',
-                        fontFamily: "'Syne', sans-serif",
+                        fontFamily: "var(--font-heading)",
                         outline: 'none', width: 220,
                       }}
                     />
@@ -396,7 +396,7 @@ export function EditorPublicProfile() {
                   <>
                     <h1
                       style={{
-                        fontFamily: "'Syne', sans-serif", fontWeight: 800,
+                        fontFamily: "var(--font-heading)", fontWeight: 800,
                         fontSize: 26, color: '#fff', margin: 0, lineHeight: 1.1,
                       }}
                     >
@@ -409,7 +409,7 @@ export function EditorPublicProfile() {
                           display: 'flex', alignItems: 'center', gap: 4,
                           background: 'var(--brand-soft)', color: 'var(--brand)',
                           fontSize: 11, fontWeight: 700, padding: '3px 9px',
-                          borderRadius: 20, fontFamily: "'Syne', sans-serif",
+                          borderRadius: 20, fontFamily: "var(--font-heading)",
                           border: '1px solid var(--brand-border)',
                         }}
                       >
@@ -425,7 +425,7 @@ export function EditorPublicProfile() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <IconStarFilled size={13} color="var(--brand)" />
-                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, color: '#fff' }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, color: '#fff' }}>
                     {profile.avgRating ? profile.avgRating.toFixed(1) : '—'}
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
@@ -450,7 +450,7 @@ export function EditorPublicProfile() {
                           )}
                           style={{
                             padding: '4px 10px', borderRadius: 6, fontSize: 12,
-                            fontFamily: "'DM Sans', sans-serif",
+                            fontFamily: "var(--font-body)",
                             background: active ? 'var(--brand-border)' : 'var(--border)',
                             color: active ? 'var(--brand)' : 'var(--foreground)',
                             border: `1px solid ${active ? 'var(--brand-border)' : 'var(--border)'}`,
@@ -489,7 +489,7 @@ export function EditorPublicProfile() {
                 <p style={{ fontSize: 11, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 3px' }}>
                   A partir de
                 </p>
-                <p style={{ fontFamily: "'Syne', sans-serif", fontWeight: 900, fontSize: 36, color: '#fff', lineHeight: 1, margin: 0 }}>
+                <p style={{ fontFamily: "var(--font-heading)", fontWeight: 900, fontSize: 36, color: '#fff', lineHeight: 1, margin: 0 }}>
                   R$ {formatPrice(minPrice)}
                 </p>
               </div>
@@ -504,7 +504,7 @@ export function EditorPublicProfile() {
                   border: '1px solid rgba(255,255,255,0.14)',
                   borderRadius: 8, padding: '10px 18px',
                   fontSize: 13, fontWeight: 600, color: 'var(--muted-foreground)',
-                  cursor: 'not-allowed', fontFamily: "'DM Sans', sans-serif",
+                  cursor: 'not-allowed', fontFamily: "var(--font-body)",
                 }}
               >
                 <IconMessage2 size={15} stroke={1.5} />
@@ -518,7 +518,7 @@ export function EditorPublicProfile() {
                     background: 'var(--brand)', color: '#fff', border: 'none',
                     borderRadius: 8, padding: '10px 20px',
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    fontFamily: "'Syne', sans-serif",
+                    fontFamily: "var(--font-heading)",
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-hover)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'var(--brand)')}
@@ -560,7 +560,7 @@ export function EditorPublicProfile() {
                       border: '1px solid var(--brand-border)',
                       borderRadius: 8, padding: '10px 12px',
                       fontSize: 14, color: 'var(--foreground)',
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-body)",
                       lineHeight: 1.6, outline: 'none', resize: 'vertical', minHeight: 80,
                       width: '100%', boxSizing: 'border-box',
                     }}
@@ -633,7 +633,7 @@ export function EditorPublicProfile() {
               {reviewsTotal > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <IconStarFilled size={14} color="var(--brand)" />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "'Syne', sans-serif" }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "var(--font-heading)" }}>
                     {profile.avgRating.toFixed(1)}
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
@@ -669,7 +669,7 @@ export function EditorPublicProfile() {
                       borderRadius: 8, padding: '9px 0', width: '100%',
                       fontSize: 13, color: 'var(--foreground)',
                       cursor: reviewsLoading ? 'not-allowed' : 'pointer',
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-body)",
                     }}
                   >
                     {reviewsLoading ? 'Carregando...' : `Ver mais avaliações (${reviewsTotal - reviews.length} restantes)`}
@@ -699,7 +699,7 @@ export function EditorPublicProfile() {
                 <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 4px' }}>
                   Vídeos {activeCategory !== 'all' ? `de ${activeCategory} ` : ''}a partir de
                 </p>
-                <p style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20, color: '#fff', margin: 0 }}>
+                <p style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20, color: '#fff', margin: 0 }}>
                   R$ {formatPrice(referencePrice)}
                 </p>
               </div>
@@ -711,7 +711,7 @@ export function EditorPublicProfile() {
                     width: '100%', background: 'var(--brand)', color: '#fff',
                     border: 'none', borderRadius: 9, padding: '11px 0',
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    fontFamily: "'Syne', sans-serif",
+                    fontFamily: "var(--font-heading)",
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-hover)')}
@@ -763,7 +763,7 @@ function StatCard({ value, label }: { value: string; label: string }) {
     >
       <p
         style={{
-          fontFamily: "'Syne', sans-serif", fontWeight: 800,
+          fontFamily: "var(--font-heading)", fontWeight: 800,
           fontSize: 20, color: '#fff', margin: '0 0 4px',
         }}
       >
@@ -791,7 +791,7 @@ function FilterTab({
       style={{
         padding: '5px 12px', borderRadius: 20, fontSize: 12,
         fontWeight: active ? 700 : 400, cursor: 'pointer', border: 'none',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-body)",
         background: active ? 'var(--brand)' : 'var(--border)',
         color: active ? '#fff' : 'var(--muted-foreground)',
         transition: 'all 0.15s',
@@ -860,7 +860,7 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
           position: 'absolute', top: 7, right: 7,
           background: 'var(--foreground)', color: 'var(--background)',
           fontSize: 9, fontWeight: 700, padding: '2px 7px',
-          borderRadius: 20, fontFamily: "'DM Sans', sans-serif",
+          borderRadius: 20, fontFamily: "var(--font-body)",
           backdropFilter: 'blur(4px)',
         }}
       >
@@ -901,7 +901,7 @@ function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: b
             width: 38, height: 38, borderRadius: '50%', background: color,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0, fontSize: 13, fontWeight: 800, color: '#fff',
-            fontFamily: "'Syne', sans-serif", overflow: 'hidden',
+            fontFamily: "var(--font-heading)", overflow: 'hidden',
           }}
         >
           {review.reviewer.avatarUrl
@@ -913,7 +913,7 @@ function ReviewCard({ review, showDivider }: { review: ReviewDTO; showDivider: b
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Header row */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-            <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, color: '#fff' }}>
+            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, color: '#fff' }}>
               {review.reviewer.name}
             </span>
             {review.orderCategory && (
@@ -991,7 +991,7 @@ function SaveCancelButtons({
           background: 'var(--border)',
           border: '1px solid var(--input)',
           color: 'var(--foreground)', cursor: 'pointer',
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-body)",
         }}
       >
         <IconX size={12} stroke={2} />
@@ -1004,7 +1004,7 @@ function SaveCancelButtons({
           padding: '5px 12px', borderRadius: 6, fontSize: 12,
           background: 'var(--brand)', border: 'none',
           color: '#fff', cursor: saving ? 'not-allowed' : 'pointer',
-          fontFamily: "'Syne', sans-serif", fontWeight: 700,
+          fontFamily: "var(--font-heading)", fontWeight: 700,
           opacity: saving ? 0.7 : 1,
         }}
       >
@@ -1021,7 +1021,7 @@ const ghostBtn: React.CSSProperties = {
   border: '1px solid var(--input)',
   borderRadius: 8, padding: '8px 14px',
   fontSize: 13, color: 'var(--foreground)',
-  cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+  cursor: 'pointer', fontFamily: "var(--font-body)",
 }
 
 const tagStyle: React.CSSProperties = {
@@ -1029,7 +1029,7 @@ const tagStyle: React.CSSProperties = {
   color: 'var(--foreground)',
   border: '1px solid var(--border)',
   borderRadius: 6, padding: '4px 10px',
-  fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+  fontSize: 12, fontFamily: "var(--font-body)",
 }
 
 const sectionCard: React.CSSProperties = {
@@ -1039,7 +1039,7 @@ const sectionCard: React.CSSProperties = {
 }
 
 const sectionTitle: React.CSSProperties = {
-  fontFamily: "'Syne', sans-serif", fontWeight: 700,
+  fontFamily: "var(--font-heading)", fontWeight: 700,
   fontSize: 17, color: '#fff', margin: '0 0 14px',
 }
 
@@ -1050,6 +1050,6 @@ const sideCard: React.CSSProperties = {
 }
 
 const sideTitle: React.CSSProperties = {
-  fontFamily: "'Syne', sans-serif", fontWeight: 700,
+  fontFamily: "var(--font-heading)", fontWeight: 700,
   fontSize: 14, color: '#fff', margin: '0 0 12px',
 }

@@ -228,7 +228,7 @@ export function ProfileForm({ editor, userName, onSaved }: Props) {
             border: 'none',
             cursor: saving ? 'not-allowed' : 'pointer',
             opacity: saving ? 0.6 : 1,
-            fontFamily: "'Syne', sans-serif",
+            fontFamily: "var(--font-heading)",
           }}
         >
           {saving ? 'Salvando...' : 'Salvar alterações'}

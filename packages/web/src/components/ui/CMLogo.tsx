@@ -44,7 +44,7 @@ export function CMLockup({
       <CMLogo size={size} variant={variant} />
       <div
         style={{
-          fontFamily: "'Syne', sans-serif",
+          fontFamily: "var(--font-heading)",
           fontWeight: 800,
           fontSize: ws,
           color,
@@ -56,5 +56,45 @@ export function CMLockup({
         Cut<span style={{ fontWeight: 500 }}>Makers</span>
       </div>
     </div>
+  )
+}
+
+/**
+ * Marca como botão de recolher o menu. Duas cópias do ícone recortadas ao meio
+ * (clip-path) + uma tira de filme + a linha do corte — ver `.cm-cut` em index.css.
+ * `cutting` liga a animação; quem usa decide quando desligar (≈620ms).
+ */
+export function CMCutLogo({
+  size = 30,
+  cutting,
+  onClick,
+  label,
+  expanded,
+}: {
+  size?: number
+  cutting: boolean
+  onClick: () => void
+  label: string
+  expanded: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      aria-expanded={expanded}
+      className={`cm-cut${cutting ? ' is-cutting' : ''}`}
+      style={{ width: size, height: size }}
+    >
+      <span className="cm-cut__half cm-cut__half--l" aria-hidden="true">
+        <CMLogo size={size} variant="orange" />
+      </span>
+      <span className="cm-cut__half cm-cut__half--r" aria-hidden="true">
+        <CMLogo size={size} variant="orange" />
+      </span>
+      <span className="cm-cut__strip" aria-hidden="true" />
+      <span className="cm-cut__line" aria-hidden="true" />
+    </button>
   )
 }

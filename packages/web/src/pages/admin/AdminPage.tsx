@@ -1,7 +1,7 @@
 import { useCached } from '@/hooks/use-cached'
 import { formatMoney as money } from '@/lib/format'
 import { SkeletonTable } from '@/components/ui/Skeleton'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard,
@@ -11,19 +11,13 @@ import {
   IconCrown,
   IconCamera,
   IconMovie,
-  IconLogout,
-  IconX,
   IconTrendingUp,
   IconCheck,
   IconClock,
   IconDots,
   IconSearch,
-  IconBell,
   IconChevronRight,
   IconChevronLeft,
-  IconRss,
-  IconFolder,
-  IconUserCircle,
   IconLoader2,
   IconBan,
   IconArrowBackUp,
@@ -36,6 +30,8 @@ import {
   IconChevronUp,
 } from '@tabler/icons-react'
 import { Modal } from '@/components/ui/Modal'
+import { DashboardShell } from '@/components/layout/DashboardShell'
+import { useAuth } from '@/hooks/use-auth'
 import { STATUS_LABELS, STATUS_COLORS, TRANSACTION_LABELS, type OrderStatus, type TransactionStatus } from '@/lib/orders'
 import { resolveDispute } from '@/lib/disputes'
 import {
@@ -60,9 +56,7 @@ import {
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
-type ViewMode = 'ADMIN' | 'CREATOR' | 'EDITOR'
 type AdminSection = 'dashboard' | 'users' | 'orders' | 'transactions' | 'subscriptions' | 'audit'
-type UserSection = 'feed' | 'projects' | 'account'
 
 // ─── Helpers compartilhados ───────────────────────────────────────────────────
 
@@ -78,7 +72,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 const TRANSACTION_COLORS: Record<TransactionStatus, string> = {
   PENDING: 'var(--brand)',
-  HELD: '#3B82F6',
+  HELD: 'var(--info)',
   RELEASED: 'var(--success)',
   REFUNDED: 'var(--destructive)',
 }
@@ -478,7 +472,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
               style={{
                 background: target?.banned ? 'var(--success)' : 'var(--destructive)',
                 color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1,
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-heading)",
               }}
             >
               {busy && <IconLoader2 size={14} className="animate-spin" />}
@@ -663,7 +657,7 @@ function ResolveDisputeModal({
             onClick={() => handle('REFUND')}
             disabled={busy !== null}
             className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
-            style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--destructive-soft)', color: 'var(--destructive)', border: '1px solid var(--destructive-border)', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "var(--font-heading)" }}
           >
             {busy === 'REFUND' ? <IconLoader2 size={14} className="animate-spin" /> : <IconArrowBackUp size={14} stroke={1.5} />}
             Reembolsar criador
@@ -672,7 +666,7 @@ function ResolveDisputeModal({
             onClick={() => handle('RELEASE')}
             disabled={busy !== null}
             className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
-            style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "'Syne', sans-serif" }}
+            style={{ background: 'var(--success)', color: 'white', border: 'none', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: "var(--font-heading)" }}
           >
             {busy === 'RELEASE' ? <IconLoader2 size={14} className="animate-spin" /> : <IconCheck size={14} stroke={2} />}
             Liberar para editor
@@ -731,7 +725,7 @@ function FinanceiroSection() {
   const cards: { label: string; value: number; Icon: React.ElementType; color: string }[] = [
     { label: 'Total transacionado', value: summary?.totalTransacted ?? 0, Icon: IconTrendingUp, color: 'var(--success)' },
     { label: 'Taxas da plataforma', value: summary?.totalPlatformFees ?? 0, Icon: IconCreditCard, color: 'var(--brand)' },
-    { label: 'Em custódia (escrow)', value: summary?.totalHeldInEscrow ?? 0, Icon: IconClock, color: '#3B82F6' },
+    { label: 'Em custódia (escrow)', value: summary?.totalHeldInEscrow ?? 0, Icon: IconClock, color: 'var(--info)' },
     { label: 'Total reembolsado', value: summary?.totalRefunded ?? 0, Icon: IconArrowBackUp, color: 'var(--destructive)' },
   ]
 
@@ -818,9 +812,9 @@ function SubscriptionsSection() {
 // ─── Auditoria ────────────────────────────────────────────────────────────────
 
 const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
-  ORDER_CREATED: { label: 'Pedido criado', color: '#3B82F6' },
+  ORDER_CREATED: { label: 'Pedido criado', color: 'var(--info)' },
   ORDER_CANCELLED: { label: 'Pedido cancelado', color: 'var(--destructive)' },
-  PROPOSAL_ACCEPTED: { label: 'Proposta aceita', color: '#3B82F6' },
+  PROPOSAL_ACCEPTED: { label: 'Proposta aceita', color: 'var(--info)' },
   PAYMENT_INITIATED: { label: 'Pagamento iniciado', color: 'var(--brand)' },
   PAYMENT_CONFIRMED: { label: 'Pagamento confirmado', color: 'var(--success)' },
   PAYMENT_RELEASED: { label: 'Pagamento liberado', color: 'var(--success)' },
@@ -832,7 +826,7 @@ const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   USER_BANNED: { label: 'Usuário suspenso', color: 'var(--destructive)' },
   USER_UNBANNED: { label: 'Usuário reativado', color: 'var(--success)' },
   PASSWORD_CHANGED: { label: 'Senha alterada', color: 'var(--warning)' },
-  REQUEST_CREATED: { label: 'Solicitação publicada', color: '#3B82F6' },
+  REQUEST_CREATED: { label: 'Solicitação publicada', color: 'var(--info)' },
   REQUEST_CANCELLED: { label: 'Solicitação cancelada', color: 'var(--destructive)' },
   REQUEST_PROPOSAL_SENT: { label: 'Proposta enviada (solicitação)', color: '#EAB308' },
   REQUEST_PROPOSAL_ACCEPTED: { label: 'Proposta aceita (solicitação)', color: 'var(--success)' },
@@ -1037,59 +1031,12 @@ const NAV_ITEMS: { id: AdminSection; label: string; Icon: React.ElementType }[] 
   { id: 'audit', label: 'Auditoria', Icon: IconHistory },
 ]
 
-const USER_NAV_ITEMS: { id: UserSection; label: string; Icon: React.ElementType }[] = [
-  { id: 'feed', label: 'Feed de Projetos', Icon: IconRss },
-  { id: 'projects', label: 'Meus Projetos', Icon: IconFolder },
-  { id: 'account', label: 'Conta', Icon: IconUserCircle },
-]
-
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export function AdminPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [section, setSection] = useState<AdminSection>('dashboard')
-  const [userSection, setUserSection] = useState<UserSection>('feed')
-  const [viewMode, setViewMode] = useState<ViewMode>('ADMIN')
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const profileMenuRef = useRef<HTMLDivElement>(null)
-
-  /**
-   * Leva aos dashboards REAIS, em vez de trocar para secoes simuladas.
-   *
-   * Antes isto so setava viewMode e renderizava FeedSection/MyProjectsSection/
-   * AccountSection — mockups com dados inventados e "Em construcao". Nao
-   * mostravam editor disponivel nenhum nem pedido real, mas pareciam a visao
-   * do usuario.
-   *
-   * A conta admin TAMBEM e conta de editor e de criador (EDITOR_ROLES /
-   * CREATOR_ROLES no backend), entao estas telas carregam dados de verdade:
-   * todos os editores disponiveis no modo criador, o quadro de solicitacoes no
-   * modo editor, portfolio proprio e assinatura. E o que permite demonstrar o
-   * produto inteiro com um login so.
-   */
-  function enterViewMode(mode: 'CREATOR' | 'EDITOR') {
-    setProfileMenuOpen(false)
-    navigate(mode === 'CREATOR' ? '/dashboard/creator' : '/dashboard/editor')
-  }
-
-  const storedUser = localStorage.getItem('user')
-  const user = storedUser ? JSON.parse(storedUser) : { name: 'Admin' }
-
-  useEffect(() => {
-    if (!profileMenuOpen) return
-    function handleClickOutside(e: MouseEvent) {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
-        setProfileMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [profileMenuOpen])
-
-  function handleLogout() {
-    localStorage.clear()
-    navigate('/login')
-  }
 
   const sectionTitles: Record<AdminSection, string> = {
     dashboard: 'Dashboard',
@@ -1105,291 +1052,45 @@ export function AdminPage() {
     if (u.role === 'EDITOR' || u.role === 'BOTH') navigate(`/editors/${u.id}`)
   }
 
-  const userSectionTitles: Record<UserSection, string> = {
-    feed: 'Feed de Projetos',
-    projects: 'Meus Projetos',
-    account: 'Conta',
-  }
+  if (!user) return null
 
-  const sidebarBadge =
-    viewMode === 'ADMIN' ? 'ADMIN' : viewMode === 'CREATOR' ? 'CREATOR' : 'EDITOR'
-
-  const topbarTitle =
-    viewMode === 'ADMIN' ? sectionTitles[section] : userSectionTitles[userSection]
-
-  const topbarSubtitle =
-    viewMode === 'ADMIN'
-      ? 'Painel de administração'
-      : `Visualização de ${viewMode === 'CREATOR' ? 'creator' : 'editor'}`
+  // A conta admin também é conta de criador e de editor (EDITOR_ROLES / CREATOR_ROLES no
+  // backend): os atalhos levam aos dashboards REAIS, com dados de verdade.
+  const switchBtn = {
+    display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 8,
+    fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-body)',
+    background: 'var(--surface-subtle)', color: 'var(--foreground)', border: '1px solid var(--border)',
+  } as const
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--background)' }}>
-      {/* ── Toast flutuante de modo de visualização ── */}
-      {viewMode !== 'ADMIN' && (
-        <div
-          className="fixed left-1/2 top-4 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full px-4 py-2 shadow-lg"
-          style={{
-            background: 'var(--brand-soft)',
-            border: '1px solid var(--brand-border)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          {viewMode === 'CREATOR'
-            ? <IconCamera size={14} color="var(--brand)" stroke={1.5} />
-            : <IconMovie size={14} color="var(--brand)" stroke={1.5} />}
-          <span className="text-xs" style={{ color: 'var(--brand)' }}>
-            Visualizando como <strong>{viewMode === 'CREATOR' ? 'Creator' : 'Editor'}</strong>
-          </span>
-          <button
-            onClick={() => setViewMode('ADMIN')}
-            aria-label="Sair do modo de visualização"
-            className="flex h-5 w-5 items-center justify-center rounded-full transition-colors"
-            style={{
-              background: 'var(--brand-border)',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--brand)',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--brand-border)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand-border)' }}
-          >
-            <IconX size={12} stroke={2} />
+    <DashboardShell
+      badgeLabel="ADMIN"
+      navLabel="Gerenciamento"
+      navItems={NAV_ITEMS.map(({ id, label, Icon }) => ({ id, label, Icon }))}
+      activeId={section}
+      onNavigate={(id) => setSection(id as AdminSection)}
+      user={user}
+      pageTitle={sectionTitles[section]}
+      pageSubtitle="Painel de administração"
+      actions={
+        <>
+          <button type="button" className="hover-surface" style={switchBtn} onClick={() => navigate('/dashboard/creator')}>
+            <IconCamera size={14} stroke={1.5} /> Ver como Creator
           </button>
-        </div>
-      )}
-
-      {/* ── Sidebar ── */}
-      <aside
-        className="flex w-64 shrink-0 flex-col"
-        style={{
-          background: 'var(--card)',
-          borderRight: '1px solid var(--border)',
-          height: '100dvh',
-          position: 'sticky',
-          top: 0,
-        }}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-2 px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
-          <span className="h-2 w-2 rounded-full" style={{ background: 'var(--brand)' }} />
-          <span className="font-heading text-[18px] font-extrabold text-white">CutMakers</span>
-          <span
-            className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
-            style={{ background: 'var(--brand-soft)', color: 'var(--brand)', fontFamily: "'Syne', sans-serif" }}
-          >
-            {sidebarBadge}
-          </span>
-        </div>
-
-        {/* Nav principal */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)' }}>
-            {viewMode === 'ADMIN' ? 'Gerenciamento' : 'Navegação'}
-          </p>
-
-          {viewMode === 'ADMIN'
-            ? NAV_ITEMS.map(({ id, label, Icon }) => {
-                const active = section === id
-                return (
-                  <button
-                    key={id}
-                    onClick={() => setSection(id)}
-                    className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
-                    style={{
-                      background: active ? 'var(--brand-soft)' : 'transparent',
-                      color: active ? 'var(--brand)' : 'var(--foreground)',
-                      border: active ? '1px solid var(--brand-border)' : '1px solid transparent',
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontWeight: active ? 500 : 400,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <Icon size={16} stroke={1.5} />
-                    {label}
-                  </button>
-                )
-              })
-            : USER_NAV_ITEMS.map(({ id, label, Icon }) => {
-                const active = userSection === id
-                return (
-                  <button
-                    key={id}
-                    onClick={() => setUserSection(id)}
-                    className="mb-1 flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
-                    style={{
-                      background: active ? 'var(--brand-soft)' : 'transparent',
-                      color: active ? 'var(--brand)' : 'var(--foreground)',
-                      border: active ? '1px solid var(--brand-border)' : '1px solid transparent',
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontWeight: active ? 500 : 400,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <Icon size={16} stroke={1.5} />
-                    {label}
-                  </button>
-                )
-              })}
-        </nav>
-
-        {/* Footer: usuário + logout */}
-        <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }}>
-          <div className="mb-2 flex items-center gap-3 rounded-[8px] px-3 py-2">
-            <div
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-heading text-xs font-bold text-white"
-              style={{ background: 'var(--brand)' }}
-            >
-              {user.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">{user.name}</p>
-              <p className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
-                {viewMode === 'ADMIN'
-                  ? 'Administrador'
-                  : viewMode === 'CREATOR'
-                  ? 'Vendo como Creator'
-                  : 'Vendo como Editor'}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors"
-            style={{
-              color: 'var(--muted-foreground)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--destructive)'; e.currentTarget.style.background = 'var(--destructive-soft)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted-foreground)'; e.currentTarget.style.background = 'none' }}
-          >
-            <IconLogout size={16} stroke={1.5} />
-            Sair
+          <button type="button" className="hover-surface" style={switchBtn} onClick={() => navigate('/dashboard/editor')}>
+            <IconMovie size={14} stroke={1.5} /> Ver como Editor
           </button>
-        </div>
-      </aside>
-
-      {/* ── Conteúdo principal ── */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-
-        {/* Top bar */}
-        <header
-          className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: '1px solid var(--border)' }}
-        >
-          <div>
-            <h1 className="font-heading text-lg font-bold text-white">{topbarTitle}</h1>
-            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{topbarSubtitle}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button aria-label="Notificações"
-              className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors"
-              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', cursor: 'pointer' }}
-            >
-              <IconBell size={16} stroke={1.5} style={{ color: 'var(--foreground)' }} />
-            </button>
-            <div className="relative" ref={profileMenuRef}>
-              <button
-                onClick={() => setProfileMenuOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={profileMenuOpen}
-                className="flex h-9 w-9 items-center justify-center rounded-full font-heading text-sm font-bold text-white transition-transform"
-                style={{ background: 'var(--brand)', border: 'none', cursor: 'pointer' }}
-              >
-                {user.name?.charAt(0).toUpperCase()}
-              </button>
-
-              {profileMenuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-[12px] shadow-xl"
-                  style={{
-                    background: 'var(--card)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <div
-                    className="px-4 py-3"
-                    style={{ borderBottom: '1px solid var(--border)' }}
-                  >
-                    <p className="truncate text-sm font-medium text-white">{user.name}</p>
-                    <p
-                      className="text-[10px] uppercase tracking-widest"
-                      style={{ color: 'var(--muted-foreground)' }}
-                    >
-                      Administrador
-                    </p>
-                  </div>
-
-                  <button
-                    role="menuitem"
-                    onClick={() => enterViewMode('CREATOR')}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                    style={{
-                      background: viewMode === 'CREATOR' ? 'var(--brand-soft)' : 'transparent',
-                      color: viewMode === 'CREATOR' ? 'var(--brand)' : 'var(--foreground)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontFamily: "'DM Sans', sans-serif",
-                      textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (viewMode !== 'CREATOR') e.currentTarget.style.background = 'var(--surface-subtle)'
-                    }}
-                    onMouseLeave={(e) => {
-                      if (viewMode !== 'CREATOR') e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
-                    <IconCamera size={16} stroke={1.5} />
-                    Visualizar como Creator
-                  </button>
-
-                  <button
-                    role="menuitem"
-                    onClick={() => enterViewMode('EDITOR')}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                    style={{
-                      background: viewMode === 'EDITOR' ? 'var(--brand-soft)' : 'transparent',
-                      color: viewMode === 'EDITOR' ? 'var(--brand)' : 'var(--foreground)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontFamily: "'DM Sans', sans-serif",
-                      textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (viewMode !== 'EDITOR') e.currentTarget.style.background = 'var(--surface-subtle)'
-                    }}
-                    onMouseLeave={(e) => {
-                      if (viewMode !== 'EDITOR') e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
-                    <IconMovie size={16} stroke={1.5} />
-                    Visualizar como Editor
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Área de conteúdo */}
-        <main key={section} className="anim-fade-up flex-1 overflow-y-auto p-6">
-          {viewMode === 'ADMIN' && (
-            <>
-              {section === 'dashboard' && <DashboardSection />}
-              {section === 'users' && <UsersSection onViewUser={handleViewUser} />}
-              {section === 'orders' && <OrdersSection onOpenOrder={(id) => navigate(`/orders/${id}`)} />}
-              {section === 'transactions' && <FinanceiroSection />}
-              {section === 'subscriptions' && <SubscriptionsSection />}
-              {section === 'audit' && <AuditSection />}
-            </>
-          )}
-        </main>
+        </>
+      }
+    >
+      <div key={section} className="anim-fade-up">
+        {section === 'dashboard' && <DashboardSection />}
+        {section === 'users' && <UsersSection onViewUser={handleViewUser} />}
+        {section === 'orders' && <OrdersSection onOpenOrder={(id) => navigate(`/orders/${id}`)} />}
+        {section === 'transactions' && <FinanceiroSection />}
+        {section === 'subscriptions' && <SubscriptionsSection />}
+        {section === 'audit' && <AuditSection />}
       </div>
-    </div>
+    </DashboardShell>
   )
 }
