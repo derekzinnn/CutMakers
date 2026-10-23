@@ -1,12 +1,12 @@
 import { OrderAgreement, Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
-import { PLATFORM_FEE_LABEL } from '../lib/fees'
 
 // ─── Regras do contrato (mantenha em sincronia com o template abaixo) ─────────
 
 // v1.1: número de revisões inclusas passa a vir do pedido (Order.revisionsIncluded)
-export const TERMS_VERSION = '1.1'
+// v1.2: termo não exibe mais taxa da plataforma nem valor líquido (só o valor acordado)
+export const TERMS_VERSION = '1.2'
 /** Padrão de revisões inclusas (pedidos de contratação direta e default de solicitações) */
 export const INCLUDED_REVISIONS = 2
 export const AUTO_APPROVE_DAYS = 7
@@ -38,7 +38,6 @@ interface AgreementData {
   editorName: string
   editorEmail: string
   amount: number
-  platformFee: number
   deadline: Date | null
   revisionsIncluded: number
 }
@@ -46,7 +45,6 @@ interface AgreementData {
 const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 function buildAgreementContent(d: AgreementData): string {
-  const net = d.amount - d.platformFee
   const deadline = d.deadline ? d.deadline.toLocaleDateString('pt-BR') : 'a combinar entre as partes'
   const today = new Date().toLocaleDateString('pt-BR')
 
@@ -55,7 +53,7 @@ function buildAgreementContent(d: AgreementData): string {
 Pedido: ${d.orderTitle} · nº ${d.orderId}
 Contratante (Criador): ${d.creatorName} · ${d.creatorEmail}
 Contratado (Editor): ${d.editorName} · ${d.editorEmail}
-Valor acordado: R$ ${brl(d.amount)} · Taxa da plataforma (${PLATFORM_FEE_LABEL}): R$ ${brl(d.platformFee)} · Valor líquido ao Editor: R$ ${brl(net)}
+Valor acordado: R$ ${brl(d.amount)}
 Prazo de entrega: ${deadline} · Data do acordo: ${today}
 
 1. OBJETO. O Editor produzirá a edição de vídeo descrita no briefing do pedido e na proposta aceita, que definem o ESCOPO deste contrato. O que não está no briefing/proposta não faz parte do escopo.
@@ -68,7 +66,7 @@ b) O Criador tem direito a até ${d.revisionsIncluded} ${d.revisionsIncluded ===
 c) Cada solicitação de revisão deve descrever objetivamente o que deve ser alterado.
 
 4. APROVAÇÃO.
-a) Aprovada a entrega, o pagamento é liberado ao Editor (descontada a taxa) e os direitos da cláusula 8 se transferem.
+a) Aprovada a entrega, o pagamento é liberado ao Editor e os direitos da cláusula 8 se transferem.
 b) APROVAÇÃO AUTOMÁTICA: se o Criador não aprovar, solicitar revisão ou abrir disputa em até ${AUTO_APPROVE_DAYS} (sete) dias corridos após uma entrega, ela é considerada aprovada e o pagamento é liberado ao Editor.
 
 5. DISPUTA E FISCALIZAÇÃO.
@@ -116,7 +114,6 @@ export class AgreementService {
         id: true,
         title: true,
         budget: true,
-        platformFee: true,
         deadline: true,
         revisionsIncluded: true,
         creator: { select: { name: true, email: true } },
@@ -133,7 +130,6 @@ export class AgreementService {
       editorName: order.editor.name,
       editorEmail: order.editor.email,
       amount: Number(order.budget),
-      platformFee: Number(order.platformFee),
       deadline: order.deadline,
       revisionsIncluded: order.revisionsIncluded,
     })

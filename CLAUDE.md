@@ -888,6 +888,22 @@ Ver `packages/api/.env.example`. Precisa:
        contestação, antes de qualquer código de movimento de dinheiro
    [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal) — requer a
        API de assinatura recorrente do Abacatepay (credencial + endpoint do dono)
+
+✅ Fase 19 — Sem planos e sem taxa visível ao usuário
+   Decisões de produto: (1) contratação NÃO é por planos/pacotes — 1 projeto = edição de 1 vídeo;
+   (2) usuários (creator/editor) nunca veem taxa da plataforma nem valor líquido — só o valor cheio.
+   [x] EditorPublicProfile: lista Express/Pro/Studio removida → card "Contratar este editor" com
+       "Vídeos [da categoria] a partir de R$ X" (preço de referência acompanha a aba de categoria) + botão Contratar
+   [x] Removidos "Taxa (10%)" / "Editor recebe" / "Você recebe" / "Plataforma retém": NewOrderModal,
+       ProposalFormModal, OrderDetail (proposta, form de contraproposta, aguardando pagamento, pagamento,
+       confirmação de aprovação, 3 sidebars "Financeiro" → "Valor do projeto"), aceite de proposta de solicitação
+   [x] API: DTOs de usuário não retornam mais platformFee/netAmount (proposalToDTO, Order list/detail,
+       Order.transaction, GET /payments/me, resposta do accept de solicitação) — nem na aba Network
+   [x] Contrato TERMS_VERSION 1.2: cabeçalho só "Valor acordado" (contratos já gerados mantêm o texto antigo — snapshot imutável)
+   [x] Termos de Uso: percentual removido (menção genérica de comissão já considerada no valor)
+   ℹ️ Taxa continua no banco (cálculo/escrow) e na visão ADMIN (Financeiro + Auditoria) — interna, não é de usuário
+
+⏳ Próximos (futuro)
    [ ] Mobile React Native (planejado — fase futura)
 ```
 

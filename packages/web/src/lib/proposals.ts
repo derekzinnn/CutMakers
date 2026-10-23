@@ -16,8 +16,6 @@ export interface ProposalDTO {
   proposedBy: string
   user: ProposalUserRef
   amount: number
-  platformFee: number
-  netAmount: number
   message: string | null
   status: ProposalStatus
   createdAt: string

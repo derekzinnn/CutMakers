@@ -19,14 +19,14 @@ d) A CutMakers não se responsabiliza por acordos, promessas ou pagamentos feito
 
 4. PAGAMENTOS E TAXA.
 a) Os pagamentos de pedidos são feitos via PIX e ficam RETIDOS EM CUSTÓDIA (escrow) até a aprovação da entrega, conforme o contrato de cada pedido.
-b) A CutMakers cobra taxa de 10% (dez por cento) sobre o valor de cada trabalho concluído, descontada do repasse ao editor.
+b) A CutMakers é remunerada por uma comissão sobre cada trabalho concluído, já considerada no valor acordado. O valor exibido na plataforma é o valor total do projeto.
 c) É proibido negociar ou receber pagamentos por serviços da plataforma fora dela (não circunvenção).
 
 5. CONTRATO POR PEDIDO. Cada pedido gera um Termo de Prestação de Serviço específico, que deve ser aceito eletronicamente por AMBAS as partes antes do pagamento. Esse termo define escopo, revisões, prazos, aprovação e regras de reembolso.
 
 6. DISPUTAS. Em caso de conflito sobre uma entrega, a equipe CutMakers analisará a conformidade com o briefing e a proposta aceita, com base exclusivamente nos registros da plataforma. A decisão (liberação ao editor ou reembolso ao criador) encerra a disputa.
 
-7. CONDUTA. São proibidos: conteúdo ilegal ou ofensivo, assédio, spam, manipulação de avaliações, uso de material de terceiros sem autorização e qualquer tentativa de burlar o escrow ou a taxa da plataforma.
+7. CONDUTA. São proibidos: conteúdo ilegal ou ofensivo, assédio, spam, manipulação de avaliações, uso de material de terceiros sem autorização e qualquer tentativa de burlar o escrow ou a remuneração da plataforma.
 
 8. PROPRIEDADE INTELECTUAL. Os direitos sobre cada vídeo entregue seguem o contrato do respectivo pedido. A marca, o design e o software CutMakers pertencem à plataforma.
 

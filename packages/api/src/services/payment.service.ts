@@ -348,7 +348,6 @@ export class PaymentService {
         select: {
           id: true,
           amount: true,
-          platformFee: true,
           status: true,
           externalPaymentId: true,
           createdAt: true,
@@ -376,7 +375,6 @@ export class PaymentService {
       payments: transactions.map((t) => ({
         id: t.id,
         amount: Number(t.amount),
-        platformFee: Number(t.platformFee),
         status: t.status,
         externalPaymentId: t.externalPaymentId,
         createdAt: t.createdAt,

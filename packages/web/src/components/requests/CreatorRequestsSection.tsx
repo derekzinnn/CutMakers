@@ -26,7 +26,6 @@ import {
   REQUEST_STATUS_COLORS,
   PROPOSAL_STATUS_LABELS,
   PROPOSAL_STATUS_COLORS,
-  PLATFORM_FEE_RATE,
   type MyRequest,
   type CreatorRequestDetail,
   type CreatorProposal,
@@ -428,15 +427,8 @@ function RequestDetail({
         {acceptTarget && (
           <div className="space-y-3">
             <div className="space-y-1.5 rounded-[8px] px-4 py-3" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)' }}>
-              <SummaryRow label="Você paga" value={fmtBRL(acceptTarget.amount)} strong />
-              <SummaryRow
-                label="Plataforma retém (10%)"
-                value={fmtBRL(Math.round(acceptTarget.amount * PLATFORM_FEE_RATE * 100) / 100)}
-              />
-              <SummaryRow
-                label="Editor recebe"
-                value={fmtBRL(acceptTarget.amount - Math.round(acceptTarget.amount * PLATFORM_FEE_RATE * 100) / 100)}
-              />
+              <SummaryRow label="Valor do projeto" value={fmtBRL(acceptTarget.amount)} strong />
+              <SummaryRow label="Prazo de entrega" value={`${acceptTarget.deliveryDays} dia${acceptTarget.deliveryDays !== 1 ? 's' : ''}`} />
             </div>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
               O pedido é criado já com o preço acordado. Em seguida, você e o editor aceitam o

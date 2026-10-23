@@ -40,8 +40,6 @@ export interface OrderTransaction {
   id: string
   status: TransactionStatus
   amount: number
-  platformFee: number
-  netAmount: number
   externalPaymentId: string | null
   createdAt: string
 }
@@ -58,7 +56,6 @@ export interface OrderDTO {
   description: string
   status: OrderStatus
   budget: number
-  platformFee: number
   deadline: string | null
   category: { id: string; name: string }
   creator: OrderUserRef

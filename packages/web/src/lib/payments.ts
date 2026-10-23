@@ -4,7 +4,6 @@ import type { OrderStatus, TransactionStatus } from './orders'
 export interface MyPayment {
   id: string
   amount: number
-  platformFee: number
   status: TransactionStatus
   externalPaymentId: string | null
   createdAt: string

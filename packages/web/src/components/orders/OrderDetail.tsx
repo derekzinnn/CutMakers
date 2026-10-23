@@ -254,22 +254,6 @@ function ProposalCard({
           </span>
         </div>
 
-        {/* Fee breakdown */}
-        <div className="mb-2 space-y-0.5">
-          {perspective === 'editor' && (
-            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Você recebe: <span style={{ color: 'var(--success)', fontWeight: 600 }}>{fmtBRL(proposal.netAmount)}</span>
-              <span style={{ color: 'var(--muted-foreground)' }}> · taxa 10%: {fmtBRL(proposal.platformFee)}</span>
-            </p>
-          )}
-          {perspective === 'creator' && (
-            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Você paga: <span className="font-medium text-white">{fmtBRL(proposal.amount)}</span>
-              <span style={{ color: 'var(--muted-foreground)' }}> · editor recebe: {fmtBRL(proposal.netAmount)}</span>
-            </p>
-          )}
-        </div>
-
         {/* Message */}
         {proposal.message && (
           <p className="mb-3 text-xs leading-relaxed" style={{ color: 'var(--foreground)' }}>
@@ -417,18 +401,6 @@ function ProposalForm({
               disabled={submitting}
             />
           </div>
-          {amount && !isNaN(parseFloat(amount.replace(',', '.'))) && parseFloat(amount.replace(',', '.')) > 0 && (
-            <div className="rounded-[8px] px-3 py-2 text-xs space-y-0.5" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
-              <div className="flex justify-between">
-                <span style={{ color: 'var(--muted-foreground)' }}>Taxa plataforma (10%)</span>
-                <span style={{ color: 'var(--muted-foreground)' }}>{fmtBRL(Math.round(parseFloat(amount.replace(',', '.')) * 0.1 * 100) / 100)}</span>
-              </div>
-              <div className="flex justify-between font-medium">
-                <span style={{ color: 'var(--foreground)' }}>Editor recebe</span>
-                <span style={{ color: 'var(--success)' }}>{fmtBRL(Math.round(parseFloat(amount.replace(',', '.')) * 0.9 * 100) / 100)}</span>
-              </div>
-            </div>
-          )}
           {error && <p className="text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
           <div className="flex gap-2 justify-end">
             <button
@@ -548,7 +520,6 @@ function AwaitingPaymentSection({
             <div className="mt-2 rounded-[10px] px-5 py-3 text-center" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
               <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Valor acordado</p>
               <p className="font-heading text-lg font-bold text-white">{fmtBRL(order.budget)}</p>
-              <p className="text-xs" style={{ color: 'var(--success)' }}>Você recebe {fmtBRL(order.budget - order.platformFee)}</p>
             </div>
           )}
         </div>
@@ -574,11 +545,6 @@ function AwaitingPaymentSection({
           <div className="mt-2 flex items-baseline gap-2">
             <span className="font-heading text-2xl font-bold text-white">{fmtBRL(order.budget)}</span>
             <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>via PIX</span>
-          </div>
-          <div className="mt-1 space-y-0.5">
-            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Taxa plataforma (10%): {fmtBRL(order.platformFee)} · Editor recebe: {fmtBRL(order.budget - order.platformFee)}
-            </p>
           </div>
         </div>
 
@@ -1722,7 +1688,7 @@ function ActionButtons({
           >
             <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>
               Ao aprovar, o pagamento de{' '}
-              <strong style={{ color: 'var(--success)' }}>{fmtBRL(order.budget - order.platformFee)}</strong>{' '}
+              <strong style={{ color: 'var(--success)' }}>{fmtBRL(order.budget)}</strong>{' '}
               será liberado ao editor e o pedido será concluído.
             </p>
             <p className="mt-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
@@ -2012,11 +1978,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             <SideCard>
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Financeiro</p>
               <div className="space-y-2">
-                <Row label="Orçamento" value={fmtBRL(order.budget)} />
-                <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-                  <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
-                </div>
+                <Row label="Valor do projeto" value={fmtBRL(order.budget)} highlight />
                 {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
               </div>
             </SideCard>
@@ -2069,11 +2031,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             <SideCard>
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Financeiro</p>
               <div className="space-y-2">
-                <Row label="Orçamento" value={fmtBRL(order.budget)} />
-                <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-                  <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
-                </div>
+                <Row label="Valor do projeto" value={fmtBRL(order.budget)} highlight />
                 {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
               </div>
             </SideCard>
@@ -2210,11 +2168,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             <SideCard>
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>Financeiro</p>
               <div className="space-y-2">
-                <Row label="Orçamento" value={fmtBRL(order.budget)} />
-                <Row label="Taxa (10%)" value={fmtBRL(order.platformFee)} muted />
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-                  <Row label="Editor recebe" value={fmtBRL(order.budget - order.platformFee)} highlight />
-                </div>
+                <Row label="Valor do projeto" value={fmtBRL(order.budget)} highlight />
                 {order.deadline && <Row label="Prazo" value={new Date(order.deadline).toLocaleDateString('pt-BR')} />}
               </div>
             </SideCard>

@@ -4,10 +4,9 @@ import {
   sendRequestProposal,
   updateMyRequestProposal,
   errorMessage,
-  PLATFORM_FEE_RATE,
   type RequestProposal,
 } from '@/lib/requests'
-import { ErrorBox, GhostButton, PrimaryButton, budgetLabel, fmtBRL, labelStyle } from './shared'
+import { ErrorBox, GhostButton, PrimaryButton, budgetLabel, labelStyle } from './shared'
 
 interface Props {
   open: boolean
@@ -48,8 +47,6 @@ export function ProposalFormModal({
 
   const parsedAmount = parseFloat(amount.replace(',', '.'))
   const validAmount = Number.isFinite(parsedAmount) && parsedAmount > 0
-  const fee = validAmount ? Math.round(parsedAmount * PLATFORM_FEE_RATE * 100) / 100 : 0
-  const net = validAmount ? Math.round((parsedAmount - fee) * 100) / 100 : 0
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -118,21 +115,6 @@ export function ProposalFormModal({
               placeholder="Ex: 5"
               className="input-field"
             />
-          </div>
-        </div>
-
-        {/* Preview ao vivo — mesmo padrão do ProposalForm da negociação */}
-        <div
-          className="space-y-1 rounded-[8px] px-3 py-2.5 text-xs"
-          style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-        >
-          <div className="flex justify-between">
-            <span style={{ color: 'var(--muted-foreground)' }}>Taxa da plataforma (10%)</span>
-            <span style={{ color: 'var(--muted-foreground)' }}>{validAmount ? fmtBRL(fee) : '—'}</span>
-          </div>
-          <div className="flex justify-between font-medium">
-            <span style={{ color: 'var(--foreground)' }}>Você recebe</span>
-            <span style={{ color: 'var(--success)' }}>{validAmount ? fmtBRL(net) : '—'}</span>
           </div>
         </div>
 

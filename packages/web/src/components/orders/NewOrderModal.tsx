@@ -145,8 +145,6 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
   }
 
   const budgetNum = Number(budget)
-  const fee = budgetNum > 0 ? Math.round(budgetNum * 0.1 * 100) / 100 : 0
-  const net = budgetNum > 0 ? budgetNum - fee : 0
   const categoryName = categories.find((c) => c.id === categoryId)?.name ?? ''
   const avatarBg = avatarColor(editor.name)
 
@@ -364,32 +362,6 @@ export function NewOrderModal({ open, onClose, editor, defaultCategoryId, defaul
                   />
                 </div>
               </div>
-
-              {/* Live fee preview */}
-              {budgetNum > 0 && (
-                <div style={{
-                  borderRadius: 10, padding: '16px 20px',
-                  background: 'var(--brand-soft)', border: '1px solid var(--brand-soft)',
-                  display: 'grid', gridTemplateColumns: '1fr 1px 1fr 1px 1fr', gap: 12, alignItems: 'center',
-                }}>
-                  {[
-                    { label: 'Valor total', value: `R$ ${budgetNum.toFixed(2)}`, color: 'white' },
-                    null,
-                    { label: 'Taxa plataforma (10%)', value: `R$ ${fee.toFixed(2)}`, color: 'var(--muted-foreground)' },
-                    null,
-                    { label: 'Editor recebe', value: `R$ ${net.toFixed(2)}`, color: 'var(--success)' },
-                  ].map((item, i) =>
-                    item === null ? (
-                      <div key={i} style={{ width: 1, height: 32, background: 'var(--border)', margin: '0 auto' }} />
-                    ) : (
-                      <div key={i} style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 4px' }}>{item.label}</p>
-                        <p style={{ fontSize: 16, fontWeight: 700, color: item.color, margin: 0, fontFamily: "'Syne', sans-serif" }}>{item.value}</p>
-                      </div>
-                    ),
-                  )}
-                </div>
-              )}
             </>
           )}
 

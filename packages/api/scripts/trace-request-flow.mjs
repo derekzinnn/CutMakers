@@ -137,7 +137,9 @@ try {
 
   const { order } = await ok('GET', `/orders/${accepted.orderId}`, { token: creator.token })
   check('Order em AWAITING_PAYMENT', order.status === 'AWAITING_PAYMENT', order.status)
-  check('budget = 180 / platformFee = 18', order.budget === 180 && order.platformFee === 18, `${order.budget}/${order.platformFee}`)
+  check('budget = 180', order.budget === 180, String(order.budget))
+  check('taxa NÃO vaza na API de usuário', !('platformFee' in order) && !('platformFee' in (order.transaction ?? {})))
+  check('contrato não exibe taxa nem líquido', !!order.agreement && !/Taxa da plataforma|líquido/i.test(order.agreement.content))
   check('editor do pedido = Editor B', order.editor.id === editorB.user.id)
   check('requestId vinculado', order.requestId === request.id)
   check('revisionsIncluded herdado (3)', order.revisionsIncluded === 3)

@@ -472,7 +472,8 @@ export class ProjectRequestService {
       metadata: { requestId, amount: result.amount },
     })
 
-    return result
+    // A taxa fica só na auditoria (admin) — nunca na resposta ao usuário
+    return { orderId: result.orderId, rejectedCount: result.rejectedCount }
   }
 
   async rejectProposal(requestId: string, proposalId: string, creatorId: string) {

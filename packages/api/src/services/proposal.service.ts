@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest, Conflict } from '../lib/errors'
 import { agreementService } from './agreement.service'
-import { platformFeeOf, platformFeeAsNumber, netAmountAsNumber } from '../lib/fees'
+import { platformFeeOf, platformFeeAsNumber } from '../lib/fees'
 import { logEvent } from './audit.service'
 
 
@@ -13,17 +13,13 @@ const proposalInclude = {
 type ProposalWithUser = Prisma.OrderProposalGetPayload<{ include: typeof proposalInclude }>
 
 export function proposalToDTO(p: ProposalWithUser) {
-  const amount = Number(p.amount)
-  const platformFee = platformFeeAsNumber(p.amount)
-  const netAmount = netAmountAsNumber(p.amount)
   return {
     id: p.id,
     orderId: p.orderId,
     proposedBy: p.proposedBy,
     user: { id: p.user.id, name: p.user.name, avatarUrl: p.user.avatarUrl },
-    amount,
-    platformFee,
-    netAmount,
+    // Taxa da plataforma nunca sai nos DTOs de usuário — só o valor cheio
+    amount: Number(p.amount),
     message: p.message,
     status: p.status,
     createdAt: p.createdAt,

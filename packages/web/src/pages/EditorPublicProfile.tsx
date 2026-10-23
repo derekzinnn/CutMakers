@@ -10,7 +10,6 @@ import {
   IconMessage2,
   IconCheck,
   IconChevronRight,
-  IconClock,
   IconBell,
   IconStar,
   IconPencil,
@@ -66,31 +65,6 @@ function initials(name: string): string {
 
 function formatPrice(value: number): string {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-}
-
-// ─── Package derivation from portfolio items ──────────────────────────────────
-
-interface DerivedPackage {
-  name: string
-  categoryName: string
-  description: string
-  price: number
-  highlighted: boolean
-  portfolioItemId: string
-}
-
-function derivePackages(items: PortfolioItem[]): DerivedPackage[] {
-  if (items.length === 0) return []
-  const sorted = [...items].sort((a, b) => a.basePrice - b.basePrice)
-  const tiers = ['Express', 'Pro', 'Studio']
-  return sorted.slice(0, 3).map((item, i) => ({
-    name: tiers[i] ?? `Opção ${i + 1}`,
-    categoryName: item.category.name,
-    description: item.description ?? item.title,
-    price: item.basePrice,
-    highlighted: i === 1,
-    portfolioItemId: item.id,
-  }))
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -246,9 +220,10 @@ export function EditorPublicProfile() {
     activeCategory === 'all'
       ? profile.portfolioItems
       : profile.portfolioItems.filter(i => i.category.name === activeCategory)
-  // Contratação acompanha a categoria selecionada nas tabs do portfólio:
-  // preços de Reels aparecem quando "Reels" está ativo, e assim por diante.
-  const packages = derivePackages(filteredPortfolio)
+  // Preço de referência acompanha a categoria selecionada nas tabs do portfólio
+  const referencePrice = filteredPortfolio.length
+    ? Math.min(...filteredPortfolio.map(p => p.basePrice))
+    : null
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--background)', fontFamily: "'DM Sans', sans-serif" }}>
@@ -708,65 +683,25 @@ export function EditorPublicProfile() {
         {/* ── Right sidebar ── */}
         <div style={{ flexShrink: 0, width: 280, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Contratação (preços acompanham a categoria selecionada no portfólio) */}
-          {packages.length > 0 && (
+          {/* Contratação — 1 projeto = 1 vídeo. Preço de referência acompanha a categoria ativa */}
+          {referencePrice != null && (
             <div style={sideCard}>
-              <h3 style={sideTitle}>Contratação</h3>
-              {activeCategory !== 'all' && (
-                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '-6px 0 10px' }}>
-                  Valores para <span style={{ color: 'var(--brand)', fontWeight: 600 }}>{activeCategory}</span>
+              <h3 style={sideTitle}>Contratar este editor</h3>
+              <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '-6px 0 12px', lineHeight: 1.5 }}>
+                Cada projeto é a edição de 1 vídeo. Você descreve o que precisa e combina o valor com o editor.
+              </p>
+              <div
+                style={{
+                  borderRadius: 9, padding: '12px 14px', marginBottom: 14,
+                  background: 'var(--surface-subtle)', border: '1px solid var(--border)',
+                }}
+              >
+                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 4px' }}>
+                  Vídeos {activeCategory !== 'all' ? `de ${activeCategory} ` : ''}a partir de
                 </p>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-                {packages.map(pkg => (
-                  <div
-                    key={pkg.portfolioItemId}
-                    style={{
-                      borderRadius: 9,
-                      padding: '10px 12px',
-                      background: pkg.highlighted ? 'var(--brand-soft)' : 'var(--surface-subtle)',
-                      border: `1px solid ${pkg.highlighted ? 'var(--brand-border)' : 'var(--border)'}`,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                      <span
-                        style={{
-                          fontFamily: "'Syne', sans-serif", fontWeight: 700,
-                          fontSize: 13, color: pkg.highlighted ? 'var(--brand)' : '#fff',
-                        }}
-                      >
-                        {pkg.name}
-                        <span
-                          style={{
-                            marginLeft: 6, fontSize: 9, fontWeight: 600,
-                            padding: '2px 6px', borderRadius: 10,
-                            background: 'var(--border)',
-                            color: 'var(--muted-foreground)',
-                            fontFamily: "'DM Sans', sans-serif",
-                            verticalAlign: 'middle',
-                          }}
-                        >
-                          {pkg.categoryName}
-                        </span>
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "'Syne', sans-serif", fontWeight: 800,
-                          fontSize: 13, color: pkg.highlighted ? 'var(--brand)' : '#fff',
-                        }}
-                      >
-                        R$ {formatPrice(pkg.price)}
-                      </span>
-                    </div>
-                    <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 5px', lineHeight: 1.4 }}>
-                      {pkg.description}
-                    </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <IconClock size={11} stroke={1.5} style={{ color: 'var(--muted-foreground)' }} />
-                      <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Prazo a combinar</span>
-                    </div>
-                  </div>
-                ))}
+                <p style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20, color: '#fff', margin: 0 }}>
+                  R$ {formatPrice(referencePrice)}
+                </p>
               </div>
 
               {canHire && (
@@ -782,7 +717,7 @@ export function EditorPublicProfile() {
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-hover)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'var(--brand)')}
                 >
-                  Contratar {packages[1] ? packages[1].name : packages[0].name}
+                  Contratar
                   <IconChevronRight size={14} stroke={2.5} />
                 </button>
               )}

@@ -178,7 +178,7 @@ export async function cancelRequest(id: string) {
 }
 
 export async function acceptRequestProposal(requestId: string, proposalId: string) {
-  const { data } = await api.post<{ orderId: string; amount: number; platformFee: number; rejectedCount: number }>(
+  const { data } = await api.post<{ orderId: string; rejectedCount: number }>(
     `/requests/${requestId}/proposals/${proposalId}/accept`,
   )
   return data
@@ -261,8 +261,6 @@ export const PROPOSAL_STATUS_COLORS: Record<RequestProposalStatus, string> = {
   REJECTED: 'var(--destructive)',
   WITHDRAWN: 'var(--muted-foreground)',
 }
-
-export const PLATFORM_FEE_RATE = 0.1
 
 export function errorMessage(err: unknown, fallback: string): string {
   const e = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
