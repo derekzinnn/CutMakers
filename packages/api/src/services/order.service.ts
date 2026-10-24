@@ -437,7 +437,13 @@ export class OrderService {
       } catch (err) {
         const perdeuCorrida =
           err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
-        if (perdeuCorrida && attempt < MAX_DELIVERY_ATTEMPTS) continue
+        if (perdeuCorrida && attempt < MAX_DELIVERY_ATTEMPTS) {
+          // Sem pausa, os N perdedores refazem a tentativa no MESMO instante e
+          // colidem de novo, rodada após rodada, até esgotar as tentativas.
+          // Backoff curto com jitter espalha as retentativas no tempo.
+          await new Promise((r) => setTimeout(r, Math.random() * 25 * attempt))
+          continue
+        }
         if (perdeuCorrida) {
           throw Conflict('Não foi possível registrar a entrega. Tente novamente.')
         }

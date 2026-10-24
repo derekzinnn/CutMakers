@@ -811,11 +811,12 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Verificado por HTTP: os 6 endpoints dos 3 papéis respondem 200 para o admin
        (eram 403), e POST /portfolio devolve 400 de validação — ou seja, auth passou
 
-⚠️ Teste de integração FLAKY: `corridas.integration.test.ts` ("cinco entregas simultâneas"
-   e "o banco recusa versão duplicada") falhou numa rodada e passou na seguinte, e passa
-   sempre isolado. É contenção contra o Supabase REMOTO: a latência varia e o teste de 5
-   escritores concorrentes às vezes esgota o orçamento de retry. Não é regressão de código.
-   Resolver com Postgres local para testes, ou subir MAX_DELIVERY_ATTEMPTS.
+✅ Flaky dos 5 escritores resolvido (Fase 14.1)
+   [x] `corridas.integration.test.ts` ("cinco entregas simultâneas") falhava de forma
+       intermitente: o retry de `createDelivery` refazia a tentativa NA HORA, então os N
+       perdedores colidiam de novo na mesma rodada até esgotar as tentativas (agravado pela
+       latência do Supabase remoto). Agora há backoff curto com jitter entre tentativas;
+       66/66 em duas rodadas seguidas
 
 ✅ Fase 18 — Cache, skeletons e paginação
    **Cache** (`src/lib/cache.ts` + `hooks/use-cached.ts`)
@@ -881,6 +882,17 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Favoritos: Favorite (userId+editorProfileId @@unique), favorite.service/controller/routes
        (toggle), CreatorDashboard com coração no EditorCard + aba Favoritos
    [x] Conta do criador: PATCH /auth/me + PATCH /auth/password; AccountSection no CreatorDashboard
+
+   [x] Admin LÊ a conversa do pedido (mediação): antes `getOrCreateConversationByOrder` dava 403
+       para o admin e o catch do OrderDetail derrubava a página inteira ("sem acesso"), então
+       mensagens e arquivos eram inacessíveis. `conversation.service` aceita `isAdmin` em
+       getOrCreateByOrder/getMessages; a leitura do admin NÃO marca como lida; `sendMessage`
+       segue só para participantes (admin é somente-leitura — mensagem de admin viraria prova
+       na disputa que ele mesmo julga). ChatPanel `readOnly`: cabeçalho com as 2 partes,
+       remetente rotulado, rodapé "somente leitura"
+   [x] Banimento encerra a sessão — teste por HTTP (supertest): `/auth/refresh` e `/auth/login`
+       recusam banido (401), desbanir restabelece, access token não serve como refresh.
+       Validado por mutação (remover a checagem derruba 3 testes). `test/sessao-ban`
 
    ⏳ Ainda pendentes (decisão/credencial do dono):
    [ ] Disputa pós-conclusão: DECISÃO DE NEGÓCIO pendente. O escrow já foi liberado ao editor
