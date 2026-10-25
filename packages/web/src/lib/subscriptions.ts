@@ -8,6 +8,8 @@ export interface SubscriptionDTO {
   amount: number
   startedAt: string
   expiresAt: string | null
+  /** Renova sozinha todo mês no cartão — não há "Renovar" manual */
+  recurring: boolean
 }
 
 export interface MySubscription {

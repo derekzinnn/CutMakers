@@ -840,6 +840,8 @@ const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   DISPUTE_OPENED: { label: 'Disputa aberta', color: 'var(--brand)' },
   DISPUTE_RESOLVED: { label: 'Disputa resolvida', color: 'var(--brand)' },
   SUBSCRIPTION_ACTIVATED: { label: 'Assinatura ativada', color: '#A855F7' },
+  SUBSCRIPTION_RENEWED: { label: 'Assinatura renovada', color: '#A855F7' },
+  SUBSCRIPTION_CANCELLED: { label: 'Assinatura cancelada', color: '#EF4444' },
   USER_BANNED: { label: 'Usuário suspenso', color: 'var(--destructive)' },
   USER_UNBANNED: { label: 'Usuário reativado', color: 'var(--success)' },
   PASSWORD_CHANGED: { label: 'Senha alterada', color: 'var(--warning)' },

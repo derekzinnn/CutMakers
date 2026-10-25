@@ -1,7 +1,7 @@
 import { Subscription } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { BadRequest, NotFound } from '../lib/errors'
-import { paymentService } from './payment.service'
+import * as gateway from '../lib/abacatepay'
 import { logEvent } from './audit.service'
 import { portfolioLimitFor, PREMIUM_PORTFOLIO_LIMIT } from '../lib/plans'
 
@@ -23,6 +23,8 @@ export function subscriptionToDTO(s: Subscription) {
     amount: Number(s.amount),
     startedAt: s.startedAt,
     expiresAt: s.expiresAt,
+    /** Renova sozinha todo ciclo no cartão — a UI não oferece "Renovar" nesses casos */
+    recurring: s.recurring,
   }
 }
 
@@ -67,6 +69,10 @@ export class SubscriptionService {
     const active = await prisma.subscription.findFirst({
       where: { editorProfileId: profile.id, status: 'ACTIVE' },
     })
+    if (active?.recurring) {
+      // Uma 2a assinatura recorrente cobraria o editor em DOBRO todo mês
+      throw BadRequest('Sua assinatura Premium renova automaticamente todo mês no cartão.')
+    }
     if (active) {
       const daysLeft = active.expiresAt ? (active.expiresAt.getTime() - Date.now()) / DAY_MS : Infinity
       if (daysLeft > RENEW_WINDOW_DAYS) {
@@ -116,36 +122,57 @@ export class SubscriptionService {
       },
     })
 
-    const charge = await paymentService.createPixCharge({
-      amount: PREMIUM_MONTHLY_PRICE,
-      externalId: subscription.id,
-      productName: 'CutMakers Premium (mensal)',
-      customer: { name: profile.user.name, email: profile.user.email },
-      returnPath: '/dashboard/editor',
-    })
+    // Sem gateway (dev) confirmamos na hora para o fluxo de demonstração seguir
+    if (!gateway.gatewayEnabled()) {
+      await this.confirmSubscriptionPayment(subscription.id)
+      return {
+        paymentUrl: null,
+        pixCode: null,
+        pixQrCode: null,
+        expiresAt: null,
+        devConfirmed: true,
+        reopened: false,
+      }
+    }
+
+    // Se algo falhar daqui em diante, a linha PENDING sem dados de cobrança seria
+    // "reaberta" vazia pelo próximo clique. Cancelamos para o editor poder tentar de novo.
+    const abandon = () =>
+      prisma.subscription.update({ where: { id: subscription.id }, data: { status: 'CANCELLED' } })
+
+    const productId = process.env.ABACATEPAY_PREMIUM_PRODUCT_ID
+    if (!productId) {
+      await abandon()
+      throw BadRequest('Assinatura Premium indisponível no momento. Tente mais tarde.')
+    }
+
+    const backUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/dashboard/editor?section=premium`
+    let checkout: gateway.SubscriptionCheckout
+    try {
+      // Recorrência por cartão, em checkout hospedado do produto com ciclo mensal.
+      // externalId = nosso id, para o evento do webhook poder ser reconciliado.
+      checkout = await gateway.createSubscriptionCheckout({
+        productId,
+        externalId: subscription.id,
+        returnUrl: backUrl,
+        completionUrl: backUrl,
+      })
+    } catch (err) {
+      await abandon()
+      throw err
+    }
 
     await prisma.subscription.update({
       where: { id: subscription.id },
-      data: {
-        externalSubscriptionId: charge.externalPaymentId,
-        paymentUrl: charge.paymentUrl,
-        pixCode: charge.pixCode,
-        pixQrCode: charge.pixQrCode,
-        chargeExpiresAt: charge.expiresAt ? new Date(charge.expiresAt) : null,
-      },
+      data: { externalSubscriptionId: checkout.id, paymentUrl: checkout.url, recurring: true },
     })
 
-    // Em dev (sem gateway) confirmamos na hora para o fluxo de demonstração seguir
-    if (charge.devMode) {
-      await this.confirmSubscriptionPayment(subscription.id)
-    }
-
     return {
-      paymentUrl: charge.paymentUrl,
-      pixCode: charge.pixCode,
-      pixQrCode: charge.pixQrCode,
-      expiresAt: charge.expiresAt,
-      devConfirmed: charge.devMode,
+      paymentUrl: checkout.url,
+      pixCode: null,
+      pixQrCode: null,
+      expiresAt: null,
+      devConfirmed: false,
       reopened: false,
     }
   }
@@ -173,11 +200,17 @@ export class SubscriptionService {
       prisma.portfolioItem.count({ where: { editorProfileId: profile.id } }),
     ])
 
+    // O editor volta do checkout hospedado ANTES do webhook chegar, e veria "pendente".
+    // Perguntamos ao gateway agora; se já foi pago, ativa e relê o estado.
+    if (subscription?.status === 'PENDING' && (await this.reconcileOne(subscription))) {
+      return this.getMySubscription(userId)
+    }
+
     // Cobranca em aberto so conta se for PENDING recente (dentro do TTL) e tiver PIX
     const pendingCharge =
       subscription &&
       subscription.status === 'PENDING' &&
-      subscription.pixCode &&
+      (subscription.pixCode || subscription.paymentUrl) &&
       Date.now() - subscription.startedAt.getTime() < PENDING_CHARGE_TTL_MIN * 60 * 1000
         ? {
             pixCode: subscription.pixCode,
@@ -237,6 +270,141 @@ export class SubscriptionService {
     })
 
     return subscriptionToDTO(updated)
+  }
+
+  /**
+   * Pergunta ao gateway se o checkout de uma assinatura pendente já foi pago e, se
+   * sim, ativa. Devolve true quando ativou. Não depende do formato do webhook.
+   */
+  private async reconcileOne(sub: Subscription): Promise<boolean> {
+    if (!gateway.gatewayEnabled() || !sub.externalSubscriptionId) return false
+    try {
+      const checkout = await gateway.getSubscriptionCheckout(sub.externalSubscriptionId)
+      if (checkout.status !== 'PAID') return false
+      await this.confirmSubscriptionPayment(sub.id)
+      return true
+    } catch {
+      return false // gateway fora do ar não pode derrubar a tela; a próxima leitura tenta de novo
+    }
+  }
+
+  /** Rede de segurança para webhook perdido — roda no cron. */
+  async reconcilePendingSubscriptions() {
+    if (!gateway.gatewayEnabled()) return { checked: 0, confirmed: 0 }
+    // Janela de 24h: um checkout hospedado pode ser pago bem depois dos 30min em que a
+    // linha é considerada abandonada (CANCELLED), então ela entra na busca também.
+    const since = new Date(Date.now() - DAY_MS)
+    const candidates = await prisma.subscription.findMany({
+      where: {
+        status: { in: ['PENDING', 'CANCELLED'] },
+        externalSubscriptionId: { not: null },
+        startedAt: { gt: since },
+      },
+      take: 100,
+    })
+    let confirmed = 0
+    for (const sub of candidates) {
+      if (await this.reconcileOne(sub)) confirmed++
+    }
+    return { checked: candidates.length, confirmed }
+  }
+
+  /**
+   * Eventos de assinatura do webhook. O formato do payload não é documentado, então
+   * `ids` são os ids do gateway achados no corpo (ver collectGatewayIds); aqui só
+   * decidimos QUAL assinatura nossa é a do evento e o que fazer com ela.
+   */
+  async handleGatewayEvent(ev: { name: string; eventId: string | null; ids: string[] }) {
+    if (ev.ids.length === 0) return { received: true }
+
+    const sub = await prisma.subscription.findFirst({
+      where: {
+        OR: [
+          { externalSubscriptionId: { in: ev.ids } },
+          { gatewaySubscriptionId: { in: ev.ids } },
+        ],
+      },
+      orderBy: { startedAt: 'desc' },
+    })
+    if (!sub) {
+      // Renovação que não casa com nenhuma assinatura é cliente pagando sem receber o
+      // Premium: precisa ficar visível, não sumir em silêncio.
+      console.error(`[webhook] evento ${ev.name} sem assinatura correspondente (ids: ${ev.ids.join(', ')})`)
+      return { received: true }
+    }
+
+    // Guarda o id da assinatura recorrente (subs_...) para casar as renovações futuras
+    const gatewaySubId = ev.ids.find((i) => i.startsWith('subs_'))
+    if (gatewaySubId && sub.gatewaySubscriptionId !== gatewaySubId) {
+      await prisma.subscription.update({ where: { id: sub.id }, data: { gatewaySubscriptionId: gatewaySubId } })
+    }
+
+    if (ev.name === 'subscription.completed' || ev.name === 'checkout.completed') {
+      // PENDING, ou CANCELLED por abandono nosso (o checkout hospedado vive mais que
+      // os 30min). EXPIRED/ACTIVE não: um replay de evento antigo reativaria o Premium.
+      if (sub.status === 'PENDING' || sub.status === 'CANCELLED') {
+        await this.reconcileOne(sub)
+      }
+      return { received: true }
+    }
+
+    if (ev.name === 'subscription.renewed') {
+      if (await this.alreadyProcessed('SUBSCRIPTION_RENEWED', ev.eventId)) {
+        return { received: true, duplicate: true }
+      }
+      await this.renewSubscription(sub, ev.eventId)
+      return { received: true }
+    }
+
+    if (ev.name === 'subscription.cancelled') {
+      // Cancelada no gateway (pelo cliente ou após esgotar as retentativas de cobrança).
+      // O período já pago continua valendo até expiresAt; só não haverá nova renovação —
+      // por isso deixa de ser "recorrente": o editor pode reassinar quando quiser.
+      await prisma.subscription.update({ where: { id: sub.id }, data: { recurring: false } })
+      await logEvent({
+        actorId: null,
+        action: 'SUBSCRIPTION_CANCELLED',
+        entityType: 'Subscription',
+        entityId: sub.id,
+        metadata: { eventId: ev.eventId },
+      })
+    }
+
+    return { received: true }
+  }
+
+  /** O gateway repete o mesmo evento (mesmo id) em retentativas; sem isto cada repetição estenderia o Premium de novo. */
+  private async alreadyProcessed(action: 'SUBSCRIPTION_RENEWED', eventId: string | null) {
+    if (!eventId) return false
+    const prev = await prisma.auditLog.findFirst({
+      where: { action, metadata: { path: ['eventId'], equals: eventId } },
+      select: { id: true },
+    })
+    return Boolean(prev)
+  }
+
+  /** Cobrança recorrente paga: estende o Premium por mais um período. */
+  private async renewSubscription(sub: Subscription, eventId: string | null) {
+    const profile = await prisma.editorProfile.findUnique({ where: { id: sub.editorProfileId } })
+    const currentExpiry = profile?.premiumExpiresAt
+    const base = currentExpiry && currentExpiry.getTime() > Date.now() ? currentExpiry.getTime() : Date.now()
+    const expiresAt = new Date(base + PERIOD_DAYS * DAY_MS)
+
+    await prisma.$transaction([
+      prisma.subscription.update({ where: { id: sub.id }, data: { status: 'ACTIVE', expiresAt } }),
+      prisma.editorProfile.update({
+        where: { id: sub.editorProfileId },
+        data: { isPremium: true, premiumExpiresAt: expiresAt },
+      }),
+    ])
+
+    await logEvent({
+      actorId: null,
+      action: 'SUBSCRIPTION_RENEWED',
+      entityType: 'Subscription',
+      entityId: sub.id,
+      metadata: { eventId, expiresAt: expiresAt.toISOString() },
+    })
   }
 
   /**

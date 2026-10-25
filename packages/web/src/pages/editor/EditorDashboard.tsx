@@ -787,24 +787,38 @@ function PremiumSection() {
   // true quando o PIX exibido e uma cobranca que ja existia (reaberta), nao recem-gerada
   const [reopened, setReopened] = useState(false)
 
-  async function load() {
-    setLoading(true)
+  async function load(silent = false) {
+    // silent: conferência em segundo plano (polling) — sem trocar a tela por skeleton
+    if (!silent) setLoading(true)
     try {
       const me = await getMySubscription()
       setData(me)
-      // Cobranca em aberto: mostra o MESMO PIX de novo, sem o editor precisar reassinar
-      if (!me.isPremium && me.pendingCharge && (me.pendingCharge.pixCode || me.pendingCharge.paymentUrl)) {
+      if (me.isPremium) {
+        setCharge(null) // pagou: sai o aviso de checkout e entra a tela de Premium ativo
+      } else if (!silent && me.pendingCharge && (me.pendingCharge.pixCode || me.pendingCharge.paymentUrl)) {
+        // Abriu a tela com uma cobranca em aberto: mostra o MESMO checkout de novo, sem o
+        // editor precisar reassinar. So na carga inicial — o polling nao a reclassifica.
         setCharge({ pixCode: me.pendingCharge.pixCode, paymentUrl: me.pendingCharge.paymentUrl })
         setReopened(true)
       }
     } catch {
-      setError('Não foi possível carregar sua assinatura')
+      if (!silent) setError('Não foi possível carregar sua assinatura')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => { load() }, [])
+
+  // Pagamento no checkout hospedado acontece em OUTRA aba: confere a cada 5s enquanto há
+  // cobrança em aberto, para a tela virar "Premium ativo" sozinha quando o pagamento cair.
+  const waitingPayment = charge !== null && !(data?.isPremium ?? false)
+  useEffect(() => {
+    if (!waitingPayment) return
+    const t = setInterval(() => load(true), 5000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waitingPayment])
 
   async function handleSubscribe() {
     setBusy(true)
@@ -815,7 +829,7 @@ function PremiumSection() {
       if (result.paymentUrl) window.open(result.paymentUrl, '_blank')
       setCharge({ pixCode: result.pixCode, paymentUrl: result.paymentUrl })
       setReopened(result.reopened)
-      await load()
+      await load(true)
     } catch (err) {
       const e = err as { response?: { data?: { message?: string } } }
       setError(e?.response?.data?.message ?? 'Erro ao iniciar assinatura')
@@ -876,6 +890,11 @@ function PremiumSection() {
             ))}
           </ul>
 
+          {data?.subscription?.recurring ? (
+            <p className="mt-6 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+              Sua assinatura renova automaticamente todo mês no cartão. Nada para fazer por aqui.
+            </p>
+          ) : (
           <div className="mt-6">
             <button
               onClick={handleSubscribe}
@@ -900,6 +919,7 @@ function PremiumSection() {
             )}
             {error && <p className="mt-2 text-xs" style={{ color: 'var(--destructive)' }}>{error}</p>}
           </div>
+          )}
         </div>
       </div>
     )
@@ -976,14 +996,14 @@ function PremiumSection() {
           {busy
             ? 'Gerando cobrança...'
             : charge
-              ? 'Gerar nova cobrança'
+              ? 'Gerar novo checkout'
               : `Assinar Premium — R$ ${price.toFixed(2).replace('.', ',')}/mês`}
         </button>
 
         {charge && (charge.pixCode || charge.paymentUrl) && (
           <div className="mt-4 rounded-[8px] px-4 py-3" style={{ background: 'var(--info-soft)', border: '1px solid rgba(59,130,246,0.2)' }}>
             <p className="text-sm font-medium" style={{ color: 'var(--info)' }}>
-              {reopened ? 'Você tem uma cobrança PIX em aberto' : 'Cobrança PIX gerada'}
+              {reopened ? 'Você tem um checkout de pagamento em aberto' : 'Checkout de pagamento aberto'}
             </p>
             {charge.paymentUrl && (
               <a href={charge.paymentUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs underline" style={{ color: '#93C5FD' }}>
@@ -996,7 +1016,7 @@ function PremiumSection() {
               </p>
             )}
             <p className="mt-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              Assim que o pagamento for confirmado, seu perfil vira Premium automaticamente.
+              Pagamento no cartão, com renovação automática todo mês. Assim que for confirmado, seu perfil vira Premium — esta tela atualiza sozinha.
             </p>
           </div>
         )}

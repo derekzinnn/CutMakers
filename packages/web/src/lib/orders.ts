@@ -41,6 +41,8 @@ export interface OrderTransaction {
   status: TransactionStatus
   amount: number
   externalPaymentId: string | null
+  /** PIX em aberto (só para quem paga): QR como data URI + copia e cola */
+  pix: { pixCode: string; pixQrCode: string | null; expiresAt: string | null } | null
   createdAt: string
 }
 

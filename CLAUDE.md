@@ -202,10 +202,21 @@ Gráficos      --chart-1 .. --chart-5
   - REFUND  → Transaction REFUNDED, order → CANCELLED
   - Dispute → RESOLVED_RELEASED/RESOLVED_REFUNDED, notifica ambas as partes
 
-### Webhooks (`/api/webhooks`)
-- `POST /abacatepay` — endpoint público para notificações do Abacatepay
-  - Valida assinatura HMAC-SHA256 via header `x-abacatepay-signature` (se `ABACATEPAY_WEBHOOK_SECRET` configurado)
-  - Em `billing.paid`: Transaction→HELD + notificação para o editor
+### Webhooks (`/api/webhooks`) — AbacatePay API v2
+- `POST /abacatepay?webhookSecret=...` — endpoint público; HTTPS obrigatório no registro (não aceita localhost)
+  - **Origem:** o gateway devolve o segredo que NÓS escolhemos ao registrar, em `?webhookSecret=` — comparado
+    em tempo constante, obrigatório (omitir não pula a checagem); produção sem `ABACATEPAY_WEBHOOK_SECRET` recusa tudo
+  - **Integridade (opcional):** com `ABACATEPAY_WEBHOOK_PUBLIC_KEY`, exige `X-Webhook-Signature` =
+    HMAC-SHA256 do corpo BRUTO em **base64** (não hex)
+  - **O formato do payload de `transparent.*` e `subscription.*` NÃO é documentado.** Por isso o código não confia
+    em campos: varre o JSON atrás de ids (`pix_char_`/`bill_`/`subs_`), acha a linha nossa no banco e **confirma
+    perguntando à API** (`GET /transparents/check`, `GET /subscriptions/checkouts/get`). Corpo "pago" com o
+    gateway dizendo PENDING é ignorado
+  - Eventos tratados: `transparent.completed` (PIX do pedido → Transaction HELD + Order IN_PROGRESS),
+    `subscription.completed`, `subscription.renewed` (+30d, dedup pelo id do evento), `subscription.cancelled`
+    (período pago continua; deixa de ser `recurring`), `checkout.completed`
+  - Reenvio é idempotente (claim otimista). Renovação sem assinatura correspondente → `console.error` (não some)
+- **Rede de segurança:** `pnpm jobs` também reconcilia PIX e assinaturas pendentes consultando a API (webhook perdido)
 
 ### Conversations (`/api/conversations`) — todas exigem auth
 - `POST /order/:orderId` — cria ou retorna a conversa vinculada ao pedido (1 conversa por order, `orderId @unique`)
@@ -220,19 +231,21 @@ Gráficos      --chart-1 .. --chart-5
 
 ### Subscriptions (`/api/subscriptions`) — auth + EDITOR/BOTH
 - `POST /` — editor assina o Premium (R$ 39,90/mês)
-  - Bloqueia se já houver assinatura ACTIVE fora da janela de renovação (últimos 5 dias)
-  - Cria `Subscription` PENDING (`amount` Decimal, `expiresAt` null) + cobrança PIX no Abacatepay
+  - Bloqueia se já houver assinatura ACTIVE fora da janela de renovação (últimos 5 dias) e SEMPRE se ela for
+    `recurring` (renova sozinha no cartão; uma 2ª cobraria em dobro)
+  - Cria `Subscription` PENDING + **checkout hospedado** do produto Premium no AbacatePay v2 (só cartão); guarda
+    `paymentUrl` e `externalSubscriptionId` (bill_...). Cobrança em aberto é REABERTA, não duplicada
   - Dev (sem `ABACATEPAY_API_KEY`): confirma na hora (`devConfirmed: true`)
-  - Retorna `{ paymentUrl, pixCode, pixQrCode, expiresAt, devConfirmed }`
+  - Retorna `{ paymentUrl, pixCode: null, pixQrCode: null, expiresAt: null, devConfirmed, reopened }`
 - `GET /me` — status atual: `{ isPremium, premiumExpiresAt, price, subscription,
-  portfolioLimit, portfolioUsed, portfolioLimitPremium }`
+  portfolioLimit, portfolioUsed, portfolioLimitPremium, pendingCharge }`
 - **Limites do plano** (`src/lib/plans.ts`): portfólio de 5 (grátis) a 20 (premium).
   Vale só para itens novos — quem passou do teto mantém o que tem
 - **Ranking da busca**: `ratingBand` (meia estrela) é o 1º critério, `isPremium` o 2º.
   O plano desempata DENTRO da faixa; não atropela quem tem nota maior
-- Confirmação via webhook `billing.paid`: se o `externalId` não casar com nenhuma `Transaction`,
-  procura `Subscription` por `externalSubscriptionId` → `confirmSubscriptionPayment`
-  (status ACTIVE, `expiresAt` = agora/vencimento + 30d, `EditorProfile.isPremium = true`)
+- Confirmação: webhook `subscription.completed` (ou `getMySubscription`/cron consultando o checkout na API) →
+  `confirmSubscriptionPayment` (ACTIVE, `expiresAt` = agora/vencimento + 30d, `EditorProfile.isPremium = true`).
+  Renovações: `subscription.renewed` estende +30d. Ver "Webhooks" (v2)
 - Expiração: `checkAndExpireSubscriptions()` roda no login — vencidas → EXPIRED + `isPremium = false`
 
 ### Payments (`/api/payments`) — auth
@@ -321,7 +334,9 @@ Ver `packages/api/.env.example`. Precisa:
 - `DATABASE_URL` + `DIRECT_URL` (Supabase)
 - `JWT_SECRET` + `JWT_REFRESH_SECRET`
 - `CLOUDINARY_CLOUD_NAME` + `CLOUDINARY_API_KEY` + `CLOUDINARY_API_SECRET`
-- `ABACATEPAY_API_KEY` + `ABACATEPAY_WEBHOOK_SECRET` (Fase 3 — opcional em dev)
+- `ABACATEPAY_API_KEY` (v2; `abc_dev_...` = sandbox) + `ABACATEPAY_WEBHOOK_SECRET` + `ABACATEPAY_PREMIUM_PRODUCT_ID`
+  (produto "CutMakers Premium", R$ 39,90, ciclo MONTHLY) — sem a chave o sistema roda em modo demonstração
+  (cobrança simulada que confirma na hora). `ABACATEPAY_WEBHOOK_PUBLIC_KEY` é opcional (HMAC)
 - `FRONTEND_URL` (padrão `http://localhost:5173`, usado no returnUrl do Abacatepay)
 - `CORS_ORIGIN` (produção — lista separada por vírgula de origens permitidas; sem a var, libera todas em dev)
 
@@ -894,133 +909,29 @@ Ver `packages/api/.env.example`. Precisa:
        recusam banido (401), desbanir restabelece, access token não serve como refresh.
        Validado por mutação (remover a checagem derruba 3 testes). `test/sessao-ban`
 
+   [x] **AbacatePay v2 (migração da v1, que sai do ar)** — `lib/abacatepay.ts` concentra o HTTP:
+       — **Premium recorrente:** checkout hospedado de assinatura (`POST /v2/subscriptions/create`, só CARTÃO,
+         produto com ciclo MONTHLY). Renovação automática via `subscription.renewed`; `Subscription.recurring`
+         barra o "Renovar" manual (criaria 2ª assinatura e cobraria em dobro). Validado contra o sandbox real
+       — **PIX do pedido:** `POST /v2/transparents/create` (valor livre em centavos; `brCode` + QR). O catálogo
+         do checkout v2 só aceita produto cadastrado, sem valor dinâmico — inviável para pedidos negociados.
+         `Transaction` guarda `pixCode/pixQrCode/chargeExpiresAt`: criador REABRE o mesmo PIX; expirado → novo
+         PIX no mesmo registro (`orderId` é único). UI: `PixPanel` (QR + copia e cola + polling 5s)
+       — Tudo coberto por testes com gateway simulado (`test/gateway-v2.integration.test.ts`)
+   ⚠️ **PIX do pedido ainda NÃO validado no sandbox**: a chave atual não tem `TRANSPARENT:CREATE/READ`
+       (a API responde `401 Insufficient permissions`). Permissões não se editam: criar chave nova.
+       Também falta `WEBHOOK:CREATE` se o painel não tiver tela de Webhooks (registro é por API)
+   ⚠️ **O escrow é só contabilidade.** `releasePayment` e `refundPayment` têm `TODO` e NÃO movem dinheiro no
+       gateway: o valor fica no saldo da plataforma e o editor não recebe de verdade. Falta repasse (payout/PIX
+       para o editor — KYC, chave PIX) e estorno real (`/transparents/refund`). Decisão de produto + permissões
+       `WITHDRAW:*` (hoje NÃO concedidas de propósito)
+   ⚠️ Cliente do PIX usa CPF/telefone de fallback (`ABACATEPAY_FALLBACK_*`); em produção precisa coletar o real
+
    ⏳ Ainda pendentes (decisão/credencial do dono):
    [ ] Disputa pós-conclusão: DECISÃO DE NEGÓCIO pendente. O escrow já foi liberado ao editor
        em COMPLETED, então "estornar" é retirar dinheiro de quem já recebeu — não é PATCH de
        status. Precisa definir QUEM absorve (editor / plataforma / chargeback) e a janela de
        contestação, antes de qualquer código de movimento de dinheiro
-   [ ] Renovação recorrente automática de assinatura (hoje é cobrança única mensal) — requer a
-       API de assinatura recorrente do Abacatepay (credencial + endpoint do dono)
-
-✅ Fase 19 — Sem planos e sem taxa visível ao usuário
-   Decisões de produto: (1) contratação NÃO é por planos/pacotes — 1 projeto = edição de 1 vídeo;
-   (2) usuários (creator/editor) nunca veem taxa da plataforma nem valor líquido — só o valor cheio.
-   [x] EditorPublicProfile: lista Express/Pro/Studio removida → card "Contratar este editor" com
-       "Vídeos [da categoria] a partir de R$ X" (preço de referência acompanha a aba de categoria) + botão Contratar
-   [x] Removidos "Taxa (10%)" / "Editor recebe" / "Você recebe" / "Plataforma retém": NewOrderModal,
-       ProposalFormModal, OrderDetail (proposta, form de contraproposta, aguardando pagamento, pagamento,
-       confirmação de aprovação, 3 sidebars "Financeiro" → "Valor do projeto"), aceite de proposta de solicitação
-   [x] API: DTOs de usuário não retornam mais platformFee/netAmount (proposalToDTO, Order list/detail,
-       Order.transaction, GET /payments/me, resposta do accept de solicitação) — nem na aba Network
-   [x] Contrato TERMS_VERSION 1.2: cabeçalho só "Valor acordado" (contratos já gerados mantêm o texto antigo — snapshot imutável)
-   [x] Termos de Uso: percentual removido (menção genérica de comissão já considerada no valor)
-   ℹ️ Taxa continua no banco (cálculo/escrow) e na visão ADMIN (Financeiro + Auditoria) — interna, não é de usuário
-
-✅ Fase 20 — Endurecimento do auth (skills do Better Auth aplicadas ao auth próprio)
-   Skills instaladas em `.claude/skills/` (`npx skills add better-auth/skills`, travadas em
-   `skills-lock.json`): better-auth-best-practices, better-auth-security-best-practices,
-   email-and-password-best-practices, create-auth, organization-best-practices, two-factor.
-   DECISÃO: NÃO migrar para a biblioteca Better Auth. O auth do CutMakers é JWT próprio (regra nº 1
-   do briefing) com BOTH/ADMIN, refresh, ban, Google; migrar seria reescrever o login inteiro sem
-   ganho. As skills são guias de configuração DA biblioteca — aproveitamos as PRÁTICAS de segurança.
-   [x] Rate limit nas rotas de auth (`rate-limit.middleware.ts`, em memória, sem dependência):
-       login 30/min por IP + 10/15min por e-mail alvo (martelar UMA conta de vários IPs é barrado,
-       sem trancar quem divide IP por NAT), cadastro 5/10min, google 10/min, refresh 30/min,
-       troca de senha 5/15min por usuário. 429 + `Retry-After`. Desligado com NODE_ENV=test ou
-       RATE_LIMIT_DISABLED=true
-   [x] `TRUST_PROXY` (env): atrás do Caddy, sem ele o limite enxerga só o IP do proxy e um atacante
-       bloquearia TODOS os usuários. **Obrigatório em produção** (`TRUST_PROXY=1`)
-   [x] Segredos validados no boot (`lib/env-check.ts`): em produção, JWT_SECRET/JWT_REFRESH_SECRET
-       ausentes, placeholder ou IGUAIS derrubam a subida; <32 chars só avisa
-   [x] Login em tempo constante: e-mail inexistente agora gasta um bcrypt (`dummyCompare`) —
-       antes respondia instantâneo e o tempo revelava quais e-mails têm conta
-   [x] Senha: máx. 72 no cadastro/troca (bcrypt ignora o que passa de 72 bytes em silêncio; recusar é
-       mais honesto que truncar). No login o teto é 256 (guarda de CPU) para não trancar contas antigas
-   [x] Headers de segurança (`security-headers.middleware.ts`): nosniff, X-Frame DENY, CSP restritiva
-       (API só devolve JSON), Referrer-Policy, CORP, HSTS em produção; sem `X-Powered-By`
-   [x] Auditoria: `PASSWORD_CHANGED` (sem a senha) + label na aba Auditoria
-   [x] 15 testes novos (45 de unidade): limitador (janela, por IP, por rota, por e-mail, expiração,
-       desligamento) e validação de segredos. Verificado por HTTP real: 10 tentativas → 401, a 11ª → 429
-       com Retry-After; outra conta segue passando; headers presentes
-   Fora do escopo por exigir credencial/decisão do dono (ver "Próximos"): verificação de e-mail e
-   "esqueci minha senha" (precisam de um provedor de e-mail), 2FA, revogação de sessão na troca de senha
-   (JWT é stateless — precisaria de `tokenVersion` no User + migration)
-
-✅ Fase 21 — Skills de UI + acessibilidade/mobile
-   [x] Skills instaladas em `.claude/skills/` (Emil Kowalski: animação/design eng; Jakub Krehel: better-*,
-       interface-review, break, etc.; frontend-design da Anthropic). Invocáveis via `/nome`
-   [x] Modal: role=dialog, aria-modal, labelledby/describedby, foco preso + restaurado, Esc fecha, `dvh`
-   [x] index.css: tap-highlight off, anel de foco global (:focus-visible), inputs 16px em touch (sem zoom iOS), `.anim-fade`
-   [x] `100vh` → `100dvh` em todo o web; aria-label em 13 botões só-ícone
-   [x] frontend-design NÃO aplicada para reestilizar (conflita com o design system fixo)
-   ⚠️ Pendente: 36 handlers JS `onMouseEnter` geram hover "grudado" no touch (refatorar p/ CSS `@media (hover:hover)`);
-      sem skip-link nem gerência de foco/título na troca de rota
-
-✅ Fase 22 — Identidade visual única + menu com logo-corte
-   [x] Sobras do design antigo eliminadas: 150 refs a `'Syne'`/`'DM Sans'` (fontes que nem carregam mais, caíam em
-       fallback) → `var(--font-heading)` / `var(--font-body)` (definidas em index.css); navy `rgba(13,27,42,…)` → `color-mix` do `--background`
-   [x] Paleta única: neutro + 1 acento (`--brand`). `Avatar` agora é sempre cor da marca (antes paleta azul/roxo/verde…
-       deixava o usuário verde no cabeçalho e laranja no perfil); `#3B82F6` → `var(--info)`
-   [x] AdminPage migrou para `DashboardShell` (tinha sidebar própria: bolinha no lugar do logo, sem colapso, estilo diferente).
-       "Ver como Creator/Editor" virou par de botões no cabeçalho; ~170 linhas de shell duplicado removidas
-   [x] Menu lateral: botão "Reduzir menu" REMOVIDO — o clique é no próprio logo (`CMCutLogo`). Animação: logo-animada-hover.svg do dono (lâmina corta a timeline) no hover e no clique. [antes: tira de filme,
-       descartada por feio]; o menu troca no meio (280ms). Só transform/opacity;
-       com prefers-reduced-motion troca direto. Estado persiste em localStorage
-   [x] Hover em CSS (`.hover-surface` sob `@media (hover:hover)`) começou a substituir os `onMouseEnter` (grudam no touch)
-   ⚠️ Pendente: migrar os ~35 `onMouseEnter/Leave` restantes para CSS; revisar telas uma a uma (Landing, Creator, OrderDetail)
-
-✅ Fase 23 — Visão de admin sem ruído + estado que sobrevive à navegação
-   [x] Sidebar: "Voltar ao admin" saiu (aparecia até no painel admin). Agora um toast fixo no topo
-       ("Visualizando como criador/editor" + "Voltar para admin") só aparece quando o admin está
-       nos dashboards de criador/editor (DashboardShell, via pathname)
-   [x] `usePersistedState` (sessionStorage, por aba): filtros/ordenação/busca/categoria do criador, filtro e pedido aberto
-       nos dashboards, seção do admin. Rolagem do `<main>` salva/restaurada por rota. `limparCache()` (logout)
-       zera tudo — nada vaza para o próximo usuário
-   [x] Auditoria: EDITOR_VERIFIED/UNVERIFIED sem rótulo (apareciam em inglês) → "Editor verificado" / "Verificação removida";
-       "Creator(s)" visível → "Criador(es)"
-✅ Fase 24 — Dashboard do admin com dados reais + date-picker estilo Meta Ads
-   [x] O dashboard era 100% hardcoded (STATS com "0", listas vazias fixas). Agora `GET /api/admin/dashboard?from=&to=`
-       (`admin-dashboard.service.ts`): métricas do período (novos usuários, pedidos criados/concluídos, receita da plataforma,
-       volume), mesmas métricas do período ANTERIOR de mesmo tamanho (delta %), série diária (SQL agrupado por dia),
-       pedidos por status, retrato "agora" (usuários, pedidos em andamento, disputas abertas, escrow, assinantes) e
-       últimos usuários/pedidos do período
-   [x] Dias no fuso de Brasília (UTC-3): "1º de outubro" começa 00:00-03:00; fim exclusivo; máx. 366 dias; 4 testes unitários
-   [x] `ZodError` agora responde 400 (antes era 500 "Erro interno") — vale para todos os endpoints
-   [x] `DateRangePicker` (components/ui) no padrão do Meta Ads: atalhos (Hoje…Mês passado, "Últimos N dias" termina ontem),
-       "Usados recentemente", 2 meses lado a lado (1 em tela estreita), seletores de mês/ano, futuro desabilitado, "Comparar com o
-       período anterior", Cancelar/Atualizar (nada muda até Atualizar). Período escolhido persiste na aba; atalhos são recalculados
-   [x] Gráfico de área em SVG puro (pedidos / usuários / receita) com hover, barras por status
-   ⚠️ Aba "Assinaturas" do admin ainda é placeholder vazio (sem endpoint de listagem)
-✅ Fase 25 — Ajustes de vocabulário, toast e quadro de oportunidades
-   [x] "Jobs"/"Trabalhos concluídos" → "Vídeos entregues" (perfil público, dashboard do editor, card do editor, landing)
-   [x] Toast "Visualizando como…" em laranja translúcido (brand 18% + blur)
-   [x] Quadro de oportunidades (`GET /requests`) agora INCLUI as solicitações do próprio usuário com `isMine: true` — antes eram
-       escondidas e parecia bug (admin/BOTH publica e não vê). O card mostra "Sua solicitação" e não oferece proposta; o envio segue
-       403 (sem auto-proposta: criador = editor quebraria contrato/escrow). Para testar o fluxo, use uma 2ª conta de editor
-✅ Fase 26 — Personas do admin (criador e editor distintos)
-   Problema: "Ver como editor" usava a MESMA conta, então o admin era criador e editor ao mesmo tempo e não podia
-   propor para a própria solicitação (criador = editor quebraria contrato, escrow e avaliação).
-   [x] `User.personaOfId` (+ unique [personaOfId, role]) — migration `20261023200000_personas_do_admin` (coluna nullable, sem perda de dados)
-   [x] `POST /api/admin/personas { kind: 'CREATOR'|'EDITOR' }` (ADMIN): cria sob demanda 1 usuário REAL de cada tipo ("<Admin> (Criador|Editor)",
-       e-mail `persona-…@cutmakers.invalid`, SEM senha — só este endpoint emite token) e devolve token/refresh/user. Auditoria `PERSONA_STARTED`
-   [x] Front (`lib/persona.ts`): "Ver como criador/editor" TROCA a sessão do navegador pela da persona (guarda a do admin em `cm_admin_session`);
-       o toast "Visualizando como…" → "Voltar para admin" restaura. Logout limpa tudo. Personas ficam fora da lista de usuários e das contagens do dashboard
-   [x] Resultado: o admin envia a proposta pela persona editor e aceita pela persona criador — fluxo completo com um login só
-   ℹ️ Solicitações/pedidos antigos criados direto pela conta admin continuam pertencendo a ela (não à persona criador)
-✅ Fase 27 — Exclusão definitiva de usuário (só dev) + alinhamento das ações
-   [x] `DELETE /api/admin/users/:id` (ADMIN) → `user-delete.service.ts`: apaga o usuário e TUDO que depende dele (pedidos, transações,
-       contratos, disputas, conversas/mensagens, entregas, revisões, avaliações, solicitações/propostas, portfólio, favoritos,
-       assinaturas, notificações) em ordem de FK, numa transação única. Auditoria é preservada (ator vira "Sistema") + evento `USER_DELETED`
-   [x] Travas: **recusa em NODE_ENV=production (403)**, recusa contas ADMIN e o próprio admin. Por que existe: em produção o certo é
-       Banir (pedidos/pagamentos/contratos são registro financeiro-jurídico); isto é para limpar contas de teste
-   [x] UI: ícone de lixeira na tabela de usuários, só em `import.meta.env.DEV` (o build de produção nem renderiza), modal que exige
-       digitar o e-mail do usuário para habilitar "Excluir para sempre"
-   [x] Tabela de usuários: ações em 4 slots de largura fixa (ver / verificar / banir / excluir) — antes um botão sumindo empurrava os outros
-   [x] 4 testes de integração (grafo completo sem sobras, auditoria mantida, criador com solicitações, recusas)
-⏳ Próximos (futuro)
-   [ ] E-mail transacional (verificação de e-mail + "esqueci minha senha") — requer provedor (Resend/SES) e credencial do dono
-   [ ] Revogar sessões ao trocar senha (tokenVersion no User + migration; hoje o access token vale até 15min e o refresh até 7d)
-   [ ] 2FA opcional para ADMIN e contas que movimentam dinheiro
    [ ] Mobile React Native (planejado — fase futura)
 ```
 

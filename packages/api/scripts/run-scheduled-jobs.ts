@@ -19,11 +19,20 @@
 import 'dotenv/config'
 import { orderService } from '../src/services/order.service'
 import { subscriptionService } from '../src/services/subscription.service'
+import { paymentService } from '../src/services/payment.service'
 import { prisma } from '../src/lib/prisma'
 
 async function main() {
   const inicio = Date.now()
   console.log(`[jobs] inicio ${new Date().toISOString()}`)
+
+  // 0) Rede de seguranca para WEBHOOK PERDIDO: confere no gateway o que ficou pendente.
+  //    O webhook e o caminho normal; isto garante que um pagamento feito nao fique
+  //    sem efeito se o aviso nao chegar (fora do ar, deploy no meio, segredo errado).
+  const pix = await paymentService.reconcilePendingPayments()
+  console.log(`[jobs] PIX pendentes: ${pix.checked} conferido(s), ${pix.confirmed} confirmado(s)`)
+  const subs = await subscriptionService.reconcilePendingSubscriptions()
+  console.log(`[jobs] assinaturas pendentes: ${subs.checked} conferida(s), ${subs.confirmed} confirmada(s)`)
 
   // 1) Assinaturas vencidas -> EXPIRED + isPremium false
   await subscriptionService.checkAndExpireSubscriptions()

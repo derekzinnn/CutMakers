@@ -126,6 +126,9 @@ const orderDetailInclude = {
       status: true,
       amount: true,
       externalPaymentId: true,
+      pixCode: true,
+      pixQrCode: true,
+      chargeExpiresAt: true,
       createdAt: true,
     },
   },
@@ -681,6 +684,18 @@ export class OrderService {
             status: o.transaction.status,
             amount: Number(o.transaction.amount),
             externalPaymentId: o.transaction.externalPaymentId,
+            // O PIX em aberto só interessa a quem paga (e ao admin, que media): o editor
+            // não precisa do copia-e-cola da cobrança de outra pessoa
+            pix:
+              o.transaction.status === 'PENDING' &&
+              o.transaction.pixCode &&
+              (isAdmin || o.creatorId === viewerId)
+                ? {
+                    pixCode: o.transaction.pixCode,
+                    pixQrCode: o.transaction.pixQrCode,
+                    expiresAt: o.transaction.chargeExpiresAt,
+                  }
+                : null,
             createdAt: o.transaction.createdAt,
           }
         : null,

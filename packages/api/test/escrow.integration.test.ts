@@ -1,26 +1,31 @@
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest'
-import { createHmac } from 'crypto'
 import { testPrisma, limparBanco } from './setup-integration'
 import { criarPedido, criarTransacaoPendente } from './fixtures'
 import { paymentService } from '../src/services/payment.service'
 
 const SECRET = 'segredo-de-teste-integracao'
-const assinar = (raw: string) => 'sha256=' + createHmac('sha256', SECRET).update(raw).digest('hex')
-const eventoPago = (billingId: string) =>
-  JSON.stringify({ event: 'billing.paid', data: { billing: { id: billingId } } })
+// v2: a prova de origem é o ?webhookSecret= da URL
+const assinar = (_raw: string) => ({ querySecret: SECRET })
+// Ids do gateway: prefixo + alfanumérico. O formato do payload de transparent.* não é
+// documentado, por isso o código procura o id em qualquer ponto de `data`.
+const eventoPago = (chargeId: string) =>
+  JSON.stringify({ id: 'log_teste', event: 'transparent.completed', data: { transparent: { id: chargeId } } })
 
 beforeAll(() => {
   process.env.ABACATEPAY_WEBHOOK_SECRET = SECRET
+  delete process.env.ABACATEPAY_WEBHOOK_PUBLIC_KEY
+  // Sem chave não há consulta ao gateway: o evento autenticado vale (modo dev/teste)
+  delete process.env.ABACATEPAY_API_KEY
   delete process.env.NODE_ENV
 })
 beforeEach(async () => {
   await limparBanco()
 })
 
-describe('webhook billing.paid — movimento do escrow', () => {
+describe('webhook transparent.completed — movimento do escrow', () => {
   it('confirma o pagamento: PENDING → HELD e pedido → IN_PROGRESS', async () => {
     const { order, creator, editor } = await criarPedido({ status: 'AWAITING_PAYMENT' })
-    const ch = 'ch_confirma_1'
+    const ch = 'pix_char_confirma1'
     await criarTransacaoPendente(order.id, creator.id, editor.id, ch)
 
     const corpo = eventoPago(ch)
@@ -44,7 +49,7 @@ describe('webhook billing.paid — movimento do escrow', () => {
     // reenvio do gateway após a aprovação "desliberava" o dinheiro e corrompia o
     // resumo financeiro do admin.
     const { order, creator, editor } = await criarPedido({ status: 'AWAITING_PAYMENT' })
-    const ch = 'ch_replay_1'
+    const ch = 'pix_char_replay1'
     await criarTransacaoPendente(order.id, creator.id, editor.id, ch)
     const corpo = eventoPago(ch)
 
@@ -63,7 +68,7 @@ describe('webhook billing.paid — movimento do escrow', () => {
 
   it('reenvio simples não duplica notificação nem reprocessa', async () => {
     const { order, creator, editor } = await criarPedido({ status: 'AWAITING_PAYMENT' })
-    const ch = 'ch_replay_2'
+    const ch = 'pix_char_replay2'
     await criarTransacaoPendente(order.id, creator.id, editor.id, ch)
     const corpo = eventoPago(ch)
 
@@ -86,7 +91,7 @@ describe('webhook billing.paid — movimento do escrow', () => {
 
   it('entregas SIMULTÂNEAS do gateway: só uma processa (lock otimista)', async () => {
     const { order, creator, editor } = await criarPedido({ status: 'AWAITING_PAYMENT' })
-    const ch = 'ch_corrida_1'
+    const ch = 'pix_char_corrida1'
     await criarTransacaoPendente(order.id, creator.id, editor.id, ch)
     const corpo = eventoPago(ch)
 
@@ -107,7 +112,7 @@ describe('webhook billing.paid — movimento do escrow', () => {
 
   it('releasePayment só age sobre HELD — não libera o que está PENDING', async () => {
     const { order, creator, editor } = await criarPedido({ status: 'AWAITING_PAYMENT' })
-    await criarTransacaoPendente(order.id, creator.id, editor.id, 'ch_pendente_1')
+    await criarTransacaoPendente(order.id, creator.id, editor.id, 'pix_char_pendente1')
 
     await paymentService.releasePayment(order.id, creator.id)
 

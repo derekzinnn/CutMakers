@@ -82,7 +82,7 @@ export async function criarTransacaoHeld(orderId: string, payerId: string, payee
       platformFee: amount * 0.1,
       netAmount: amount * 0.9,
       status: 'HELD',
-      externalPaymentId: `ch_teste_${uniq()}`,
+      externalPaymentId: `pix_char_teste${uniq().replace(/-/g, '')}`,
     },
   })
 }

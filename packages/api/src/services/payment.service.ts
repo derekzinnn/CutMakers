@@ -1,51 +1,55 @@
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHash, createHmac, timingSafeEqual } from 'crypto'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { NotFound, Forbidden, BadRequest } from '../lib/errors'
 import { logEvent } from './audit.service'
+import * as gateway from '../lib/abacatepay'
 
-const ABACATEPAY_API_URL = 'https://api.abacatepay.com/v1'
-
-// A Abacatepay exige `customer.cellphone` e `customer.taxId` (CPF/CNPJ) ao criar cobranças.
+// O AbacatePay exige `customer.cellphone` e `customer.taxId` (CPF/CNPJ) no PIX.
 // Como ainda não coletamos esses dados do usuário no cadastro, usamos fallbacks configuráveis
 // via env. Em produção, substituir por dados reais coletados do usuário.
 const ABACATEPAY_FALLBACK_CELLPHONE = process.env.ABACATEPAY_FALLBACK_CELLPHONE ?? '(11) 99999-9999'
 const ABACATEPAY_FALLBACK_TAX_ID = process.env.ABACATEPAY_FALLBACK_TAX_ID ?? '529.982.247-25'
 
+export interface PixChargeResult {
+  externalPaymentId: string | null
+  pixCode: string | null
+  pixQrCode: string | null
+  expiresAt: string | null
+  devMode: boolean
+}
+
+/** Compara strings em tempo constante, sem vazar o tamanho (compara os digests). */
+function safeEqual(a: string, b: string) {
+  const da = createHash('sha256').update(a).digest()
+  const db = createHash('sha256').update(b).digest()
+  return timingSafeEqual(da, db)
+}
+
 export class PaymentService {
-  private get apiKey() {
-    return process.env.ABACATEPAY_API_KEY
-  }
   private get webhookSecret() {
     return process.env.ABACATEPAY_WEBHOOK_SECRET
   }
-  private get frontendUrl() {
-    return process.env.FRONTEND_URL ?? 'http://localhost:5173'
+  /** Chave publica do AbacatePay para o HMAC do corpo (opcional; reforca a integridade). */
+  private get webhookPublicKey() {
+    return process.env.ABACATEPAY_WEBHOOK_PUBLIC_KEY
   }
 
   /**
-   * Cria uma cobrança PIX genérica no Abacatepay (reutilizada por orders e assinaturas).
-   * Em dev (sem ABACATEPAY_API_KEY) retorna um id sintético e sem URL — o chamador
-   * decide como simular a confirmação.
+   * Cria uma cobrança PIX avulsa (pedidos) no AbacatePay v2.
+   * Sem ABACATEPAY_API_KEY (dev) devolve um id sintético — o chamador decide como
+   * simular a confirmação. Assinaturas NÃO passam por aqui: usam checkout hospedado.
    */
   async createPixCharge(params: {
     amount: number
     externalId: string
     productName: string
     customer: { name: string; email: string }
-    returnPath: string
-  }): Promise<{
-    externalPaymentId: string | null
-    paymentUrl: string | null
-    pixCode: string | null
-    pixQrCode: string | null
-    expiresAt: string | null
-    devMode: boolean
-  }> {
-    if (!this.apiKey) {
+    metadata?: Record<string, string>
+  }): Promise<PixChargeResult> {
+    if (!gateway.gatewayEnabled()) {
       return {
         externalPaymentId: `dev_${params.externalId}`,
-        paymentUrl: null,
         pixCode: null,
         pixQrCode: null,
         expiresAt: null,
@@ -53,48 +57,23 @@ export class PaymentService {
       }
     }
 
-    const res = await fetch(`${ABACATEPAY_API_URL}/billing/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
+    const charge = await gateway.createPixCharge({
+      amountCents: Math.round(params.amount * 100),
+      externalId: params.externalId,
+      description: params.productName,
+      customer: {
+        name: params.customer.name,
+        email: params.customer.email,
+        cellphone: ABACATEPAY_FALLBACK_CELLPHONE,
+        taxId: ABACATEPAY_FALLBACK_TAX_ID,
       },
-      body: JSON.stringify({
-        frequency: 'ONE_TIME',
-        methods: ['PIX'],
-        products: [
-          {
-            externalId: params.externalId,
-            name: params.productName.slice(0, 100),
-            quantity: 1,
-            price: Math.round(params.amount * 100),
-          },
-        ],
-        customer: {
-          name: params.customer.name,
-          email: params.customer.email,
-          cellphone: ABACATEPAY_FALLBACK_CELLPHONE,
-          taxId: ABACATEPAY_FALLBACK_TAX_ID,
-        },
-        returnUrl: `${this.frontendUrl}${params.returnPath}`,
-        completionUrl: `${this.frontendUrl}${params.returnPath}`,
-      }),
+      metadata: params.metadata,
     })
-
-    if (!res.ok) {
-      const text = await res.text()
-      throw BadRequest(`Erro ao criar cobrança: ${text}`)
-    }
-
-    const json = (await res.json()) as {
-      data?: { id?: string; url?: string; pixCode?: string; pixQrCode?: string; expiresAt?: string }
-    }
     return {
-      externalPaymentId: json.data?.id ?? null,
-      paymentUrl: json.data?.url ?? null,
-      pixCode: json.data?.pixCode ?? null,
-      pixQrCode: json.data?.pixQrCode ?? null,
-      expiresAt: json.data?.expiresAt ?? null,
+      externalPaymentId: charge.id,
+      pixCode: charge.brCode,
+      pixQrCode: charge.brCodeBase64,
+      expiresAt: charge.expiresAt,
       devMode: false,
     }
   }
@@ -104,7 +83,9 @@ export class PaymentService {
       where: { id: orderId },
       include: {
         creator: { select: { id: true, name: true, email: true } },
-        transaction: { select: { id: true } },
+        transaction: {
+          select: { id: true, status: true, pixCode: true, pixQrCode: true, chargeExpiresAt: true },
+        },
       },
     })
 
@@ -113,7 +94,23 @@ export class PaymentService {
     if (order.status !== 'AWAITING_PAYMENT' && order.status !== 'ACCEPTED') {
       throw BadRequest('Pedido precisa estar aguardando pagamento para iniciar cobrança')
     }
-    if (order.transaction) throw BadRequest('Pagamento já foi iniciado para este pedido')
+
+    // Cobrança já iniciada: se ainda está PENDING e o PIX não expirou, REABRE o mesmo
+    // (o criador fechou o modal, trocou de aba) em vez de bloquear — o QR só existe na
+    // nossa tela, então sem isto ele perderia o acesso ao PIX que acabou de gerar.
+    // Já paga (HELD/RELEASED/...) continua barrada. Expirada: gera outra no mesmo registro.
+    const existing = order.transaction
+    if (existing && existing.status !== 'PENDING') {
+      throw BadRequest('Pagamento já foi iniciado para este pedido')
+    }
+    if (existing?.pixCode && existing.chargeExpiresAt && existing.chargeExpiresAt > new Date()) {
+      return {
+        paymentUrl: null,
+        pixCode: existing.pixCode,
+        pixQrCode: existing.pixQrCode,
+        expiresAt: existing.chargeExpiresAt.toISOString(),
+      }
+    }
 
     // Gate contratual: ambas as partes precisam ter aceitado os termos do pedido.
     // Lazy import evita ciclo de dependência entre payment e agreement services.
@@ -129,17 +126,19 @@ export class PaymentService {
     // valor vai para a coluna Decimal e para o DTO do financeiro
     const netAmount = new Prisma.Decimal(order.budget).minus(order.platformFee).toNumber()
 
-    // Mesma rotina de cobrança usada pelas assinaturas. Em dev (sem
-    // ABACATEPAY_API_KEY) ela devolve devMode: true e um id sintético.
+    // Em dev (sem ABACATEPAY_API_KEY) devolve devMode: true e um id sintético.
+    // Reaproveitar a MESMA externalId numa nova cobrança (PIX expirado) bateria na
+    // idempotência do gateway; o sufixo da tentativa evita devolver a cobrança velha.
     const charge = await this.createPixCharge({
       amount,
-      externalId: order.id,
+      externalId: existing ? `${order.id}-${Date.now()}` : order.id,
       productName: order.title,
       customer: { name: order.creator.name, email: order.creator.email },
-      returnPath: `/orders/${order.id}`,
+      metadata: { orderId: order.id },
     })
 
-    const { externalPaymentId, paymentUrl, pixCode, pixQrCode, expiresAt } = charge
+    const { externalPaymentId, pixCode, pixQrCode, expiresAt } = charge
+    const paymentUrl = null // PIX transparente (v2): não há página hospedada, o QR é nosso
 
     if (charge.devMode) {
       // Dev mode: confirma na hora para o fluxo de demonstração seguir
@@ -190,18 +189,26 @@ export class PaymentService {
       return { paymentUrl, pixCode, pixQrCode, expiresAt }
     }
 
-    const transaction = await prisma.transaction.create({
-      data: {
-        orderId: order.id,
-        payerId: order.creatorId,
-        payeeId: order.editorId,
-        amount,
-        platformFee,
-        netAmount,
-        status: 'PENDING',
-        externalPaymentId,
-      },
-    })
+    const pixData = {
+      externalPaymentId,
+      pixCode,
+      pixQrCode,
+      chargeExpiresAt: expiresAt ? new Date(expiresAt) : null,
+    }
+    const transaction = existing
+      ? await prisma.transaction.update({ where: { id: existing.id }, data: pixData })
+      : await prisma.transaction.create({
+          data: {
+            orderId: order.id,
+            payerId: order.creatorId,
+            payeeId: order.editorId,
+            amount,
+            platformFee,
+            netAmount,
+            status: 'PENDING',
+            ...pixData,
+          },
+        })
 
     await logEvent({
       actorId: requesterId,
@@ -215,13 +222,20 @@ export class PaymentService {
   }
 
   /**
-   * Valida a assinatura HMAC-SHA256 do webhook. Fail-closed por design — este
-   * endpoint é público e move dinheiro, então na dúvida ele recusa:
-   *   - secret configurado → assinatura é OBRIGATÓRIA (omitir o header não pula mais a checagem)
-   *   - produção sem secret → recusa tudo; não existe webhook confiável sem segredo
-   *   - dev sem secret → aceita, para o fluxo de demonstração local continuar funcionando
+   * Autentica o webhook. Fail-closed por design — este endpoint é público e move
+   * dinheiro, então na dúvida ele recusa:
+   *   - produção sem segredo → recusa tudo; não existe webhook confiável sem segredo
+   *   - dev sem segredo → aceita, para o fluxo de demonstração local continuar funcionando
+   *   - com segredo → o `webhookSecret` da URL é OBRIGATÓRIO (prova de origem). Omitir
+   *     o parâmetro não pula a checagem
+   *   - com ABACATEPAY_WEBHOOK_PUBLIC_KEY → a assinatura HMAC-SHA256 (base64) do corpo
+   *     bruto também é obrigatória (prova de integridade)
+   *
+   * O AbacatePay anexa o segredo que escolhemos ao registrar o webhook como
+   * `?webhookSecret=`; o header `X-Webhook-Signature` só garante que o corpo não
+   * foi alterado, por isso ele sozinho nunca basta.
    */
-  private verifyWebhookSignature(rawBody: string, signature: string | undefined) {
+  private verifyWebhook(rawBody: string, auth: { querySecret?: string; signature?: string }) {
     const secret = this.webhookSecret
 
     if (!secret) {
@@ -231,103 +245,146 @@ export class PaymentService {
       return
     }
 
-    if (!signature) throw Forbidden('Assinatura do webhook ausente')
+    if (!auth.querySecret) throw Forbidden('Segredo do webhook ausente')
+    if (!safeEqual(auth.querySecret, secret)) throw Forbidden('Segredo do webhook inválido')
 
-    const digest = createHmac('sha256', secret).update(rawBody).digest('hex')
-    // Alguns gateways enviam "sha256=<hex>", outros só o hex puro
-    const received = signature.startsWith('sha256=') ? signature.slice(7) : signature
+    const publicKey = this.webhookPublicKey
+    if (!publicKey) return
 
-    const expected = Buffer.from(digest, 'hex')
-    const provided = Buffer.from(received, 'hex')
-    // timingSafeEqual lança se os buffers tiverem tamanhos diferentes — compara antes.
-    // Hex malformado resulta em buffer curto e cai neste mesmo guard.
-    if (expected.length !== provided.length || !timingSafeEqual(expected, provided)) {
-      throw Forbidden('Assinatura do webhook inválida')
-    }
+    if (!auth.signature) throw Forbidden('Assinatura do webhook ausente')
+    const expected = createHmac('sha256', publicKey).update(rawBody, 'utf8').digest('base64')
+    if (!safeEqual(auth.signature, expected)) throw Forbidden('Assinatura do webhook inválida')
   }
 
-  async handleWebhook(rawBody: string, signature: string | undefined) {
-    this.verifyWebhookSignature(rawBody, signature)
+  async handleWebhook(rawBody: string, auth: { querySecret?: string; signature?: string }) {
+    this.verifyWebhook(rawBody, auth)
 
-    const event = JSON.parse(rawBody) as {
-      event: string
-      data?: { billing?: { id?: string } }
+    let event: { id?: string; event?: string; data?: unknown }
+    try {
+      event = JSON.parse(rawBody)
+    } catch {
+      throw BadRequest('Payload do webhook inválido')
     }
 
-    if (event.event === 'billing.paid' && event.data?.billing?.id) {
-      const externalId = event.data.billing.id
-      const transaction = await prisma.transaction.findFirst({
-        where: { externalPaymentId: externalId },
-        include: { order: { select: { id: true, status: true, title: true } } },
-      })
+    const name = event.event ?? ''
+    // O formato de transparent.* e subscription.* não é documentado: procuramos os ids
+    // em qualquer ponto do payload e deixamos o banco e a API dizerem o que é nosso
+    const ids = gateway.collectGatewayIds(event.data)
 
-      // Não é pagamento de pedido → pode ser uma assinatura premium
-      if (!transaction) {
-        const subscription = await prisma.subscription.findFirst({
-          where: { externalSubscriptionId: externalId },
-          select: { id: true, status: true },
-        })
-        if (subscription && subscription.status === 'PENDING') {
-          // Lazy import evita ciclo de dependência entre payment e subscription services
-          const { subscriptionService } = await import('./subscription.service')
-          await subscriptionService.confirmSubscriptionPayment(subscription.id)
-        }
-        return { received: true }
+    if (name === 'transparent.completed') return this.confirmPixByGatewayIds(ids)
+
+    if (name.startsWith('subscription.') || name === 'checkout.completed') {
+      // Lazy import evita ciclo de dependência entre payment e subscription services
+      const { subscriptionService } = await import('./subscription.service')
+      return subscriptionService.handleGatewayEvent({ name, eventId: event.id ?? null, ids })
+    }
+
+    return { received: true }
+  }
+
+  /** PIX de pedido pago: acha a transação pelo id do gateway e confirma. */
+  private async confirmPixByGatewayIds(ids: string[]) {
+    if (ids.length === 0) return { received: true }
+
+    const transaction = await prisma.transaction.findFirst({
+      where: { externalPaymentId: { in: ids } },
+      include: { order: { select: { id: true, status: true, title: true } } },
+    })
+    if (!transaction?.externalPaymentId) return { received: true }
+
+    // Não confiamos no corpo do evento para mover dinheiro: perguntamos ao gateway.
+    // Sem chave (dev/teste) não há a quem perguntar, então o evento autenticado vale.
+    if (gateway.gatewayEnabled()) {
+      const charge = await gateway.checkPixCharge(transaction.externalPaymentId)
+      if (charge.status !== 'PAID') return { received: true, ignored: true }
+    }
+
+    const claimed = await this.claimPaidTransaction(transaction)
+    // Reenvio de um pagamento já processado: 200 para o gateway parar de retentar
+    return claimed ? { received: true } : { received: true, duplicate: true }
+  }
+
+  /**
+   * Rede de segurança para webhook perdido: confere no gateway as cobranças PIX ainda
+   * PENDING (e não expiradas há muito) e confirma as que já foram pagas. Roda no cron.
+   */
+  async reconcilePendingPayments() {
+    if (!gateway.gatewayEnabled()) return { checked: 0, confirmed: 0 }
+
+    const pending = await prisma.transaction.findMany({
+      where: { status: 'PENDING', externalPaymentId: { not: null } },
+      include: { order: { select: { id: true, status: true, title: true } } },
+      orderBy: { createdAt: 'asc' },
+      take: 100,
+    })
+
+    let confirmed = 0
+    for (const transaction of pending) {
+      try {
+        const charge = await gateway.checkPixCharge(transaction.externalPaymentId!)
+        if (charge.status === 'PAID' && (await this.claimPaidTransaction(transaction))) confirmed++
+      } catch {
+        // uma cobrança com erro não impede as demais; a próxima rodada tenta de novo
       }
+    }
+    return { checked: pending.length, confirmed }
+  }
 
-      // Idempotência: gateways reenviam webhooks (retry automático, reenvio manual
-      // pelo painel, replay). Sem guard, um reenvio depois da aprovação regravaria
-      // RELEASED → HELD e corromperia o resumo financeiro.
-      //
-      // O updateMany com `status: 'PENDING'` no where é o lock otimista: só a
-      // primeira entrega encontra a linha nesse estado e a reivindica. Duas
-      // entregas simultâneas disputam a mesma row e exatamente uma vence.
-      // Tudo dentro de uma única transação — ou o escrow e o pedido avançam
-      // juntos, ou nada avança.
-      const claimed = await prisma.$transaction(async (tx) => {
-        const claim = await tx.transaction.updateMany({
-          where: { id: transaction.id, status: 'PENDING' },
-          data: { status: 'HELD' },
-        })
-        if (claim.count === 0) return false
+  /**
+   * PENDING → HELD, uma única vez.
+   *
+   * Idempotência: gateways reenviam webhooks (retry automático, reenvio manual pelo
+   * painel, replay). Sem guard, um reenvio depois da aprovação regravaria RELEASED →
+   * HELD e corromperia o resumo financeiro. O updateMany com `status: 'PENDING'` no
+   * where é o lock otimista: só a primeira entrega encontra a linha nesse estado e a
+   * reivindica. Tudo numa transação — ou o escrow e o pedido avançam juntos, ou nada.
+   */
+  private async claimPaidTransaction(transaction: {
+    id: string
+    orderId: string
+    payeeId: string
+    externalPaymentId: string | null
+    order: { status: string; title: string }
+  }) {
+    const claimed = await prisma.$transaction(async (tx) => {
+      const claim = await tx.transaction.updateMany({
+        where: { id: transaction.id, status: 'PENDING' },
+        data: { status: 'HELD' },
+      })
+      if (claim.count === 0) return false
 
-        await tx.notification.create({
-          data: {
-            userId: transaction.payeeId,
-            type: 'PAYMENT_CONFIRMED',
-            title: 'Pagamento confirmado — pode iniciar o projeto!',
-            body: `Pagamento recebido para "${transaction.order.title}". Você já pode iniciar o trabalho.`,
-            relatedOrderId: transaction.orderId,
-          },
-        })
-
-        // Fluxo novo (negociação/solicitação): o pagamento libera o início do trabalho.
-        // Fluxo legado (ACCEPTED) já tinha o pedido em andamento.
-        if (transaction.order.status === 'AWAITING_PAYMENT') {
-          await tx.order.update({
-            where: { id: transaction.orderId },
-            data: { status: 'IN_PROGRESS' },
-          })
-        }
-
-        return true
+      await tx.notification.create({
+        data: {
+          userId: transaction.payeeId,
+          type: 'PAYMENT_CONFIRMED',
+          title: 'Pagamento confirmado — pode iniciar o projeto!',
+          body: `Pagamento recebido para "${transaction.order.title}". Você já pode iniciar o trabalho.`,
+          relatedOrderId: transaction.orderId,
+        },
       })
 
-      // Reenvio de um pagamento já processado: responde 200 para o gateway parar
-      // de retentar, sem duplicar notificação nem mexer no escrow.
-      if (!claimed) return { received: true, duplicate: true }
+      // Fluxo novo (negociação/solicitação): o pagamento libera o início do trabalho.
+      // Fluxo legado (ACCEPTED) já tinha o pedido em andamento.
+      if (transaction.order.status === 'AWAITING_PAYMENT') {
+        await tx.order.update({
+          where: { id: transaction.orderId },
+          data: { status: 'IN_PROGRESS' },
+        })
+      }
+      return true
+    })
 
-      // Evento de sistema — confirmado pelo webhook do Abacatepay
+    if (claimed) {
+      // Evento de sistema — confirmado pelo gateway
       await logEvent({
         actorId: null,
         action: 'PAYMENT_CONFIRMED',
         entityType: 'Transaction',
         entityId: transaction.id,
-        metadata: { orderId: transaction.orderId, externalPaymentId: externalId },
+        metadata: { orderId: transaction.orderId, externalPaymentId: transaction.externalPaymentId },
       })
     }
-
-    return { received: true }
+    return claimed
   }
 
   /**

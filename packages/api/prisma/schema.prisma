@@ -320,6 +320,11 @@ model Transaction {
   netAmount         Decimal           @db.Decimal(10, 2)
   status            TransactionStatus @default(PENDING)
   externalPaymentId String?
+  // PIX em aberto (brCode + QR) — guardado para o criador REABRIR a cobranca. A v2 do
+  // gateway nao tem pagina hospedada para o PIX transparente: o QR e mostrado por nos
+  pixCode           String?
+  pixQrCode         String?
+  chargeExpiresAt   DateTime?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -341,7 +346,13 @@ model Subscription {
   startedAt              DateTime           @default(now())
   expiresAt              DateTime?
   externalSubscriptionId String?
-  // Dados da cobranca PIX em aberto — guardados para o editor REABRIR a cobranca
+  // Id da assinatura recorrente no gateway (subs_...), distinto do checkout (bill_...)
+  gatewaySubscriptionId  String?
+  // true = criada pelo checkout de assinatura do gateway, que RENOVA SOZINHO todo ciclo.
+  // Nessas a renovacao manual e barrada (criaria uma 2a assinatura e cobraria em dobro).
+  // As antigas (PIX unico) e as de demonstracao ficam false e renovam manualmente.
+  recurring              Boolean            @default(false)
+  // Dados da cobranca em aberto — guardados para o editor REABRIR a cobranca
   // (ver o mesmo PIX de novo) em vez de ser bloqueado ate ela expirar
   paymentUrl             String?
   pixCode                String?
@@ -353,6 +364,7 @@ model Subscription {
   @@index([status, expiresAt])
   // Webhook de assinatura resolve pelo id do gateway
   @@index([externalSubscriptionId])
+  @@index([gatewaySubscriptionId])
 }
 
 model Conversation {

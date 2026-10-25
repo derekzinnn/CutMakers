@@ -25,6 +25,7 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconLock,
+  IconCopy,
 } from '@tabler/icons-react'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -485,17 +486,123 @@ function NegotiationSection({
   )
 }
 
+// ─── PIX em aberto ────────────────────────────────────────────────────────────
+
+/**
+ * Cobrança PIX do pedido (AbacatePay v2 não tem página hospedada para o PIX avulso:
+ * o QR e o copia-e-cola são mostrados aqui). Confere o pagamento sozinho a cada 5s, então
+ * o criador não precisa recarregar a página depois de pagar no app do banco.
+ */
+function PixPanel({
+  pix,
+  onRefresh,
+  onRegenerate,
+  busy,
+}: {
+  pix: { pixCode: string; pixQrCode: string | null; expiresAt: string | null }
+  onRefresh: () => void
+  onRegenerate: () => void
+  busy: boolean
+}) {
+  const [copied, setCopied] = useState(false)
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setNow(Date.now())
+      onRefresh()
+    }, 5000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const expiresMs = pix.expiresAt ? new Date(pix.expiresAt).getTime() : null
+  const expired = expiresMs !== null && expiresMs <= now
+  const minutesLeft = expiresMs !== null ? Math.max(0, Math.ceil((expiresMs - now) / 60000)) : null
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(pix.pixCode)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // clipboard bloqueado: o código segue selecionável na caixa abaixo
+    }
+  }
+
+  if (expired) {
+    return (
+      <div className="space-y-3 rounded-[10px] p-4 text-center" style={{ background: 'var(--warning-soft)', border: '1px solid var(--warning-border)' }}>
+        <p className="text-sm font-semibold text-white">Este PIX expirou</p>
+        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+          Gere um novo para concluir o pagamento. Se você já pagou, aguarde alguns instantes: a confirmação chega sozinha.
+        </p>
+        <button
+          onClick={onRegenerate}
+          disabled={busy}
+          className="inline-flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
+          style={{ background: 'var(--brand)', color: 'white', border: 'none', opacity: busy ? 0.7 : 1 }}
+        >
+          {busy ? <IconLoader2 size={15} className="animate-spin" /> : <IconRefresh size={15} stroke={1.5} />}
+          Gerar novo PIX
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4 rounded-[10px] p-4" style={{ background: 'var(--info-soft)', border: '1px solid var(--border)' }}>
+      <div className="flex flex-col items-center gap-3">
+        {pix.pixQrCode ? (
+          <img
+            src={pix.pixQrCode}
+            alt="QR Code PIX"
+            width={192}
+            height={192}
+            className="rounded-[8px] bg-white p-2"
+          />
+        ) : null}
+        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+          Escaneie no app do seu banco ou use o copia e cola
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <p className="break-all rounded-[6px] px-3 py-2 text-[11px] leading-relaxed" style={{ background: 'var(--surface-subtle)', color: 'var(--foreground)', border: '1px solid var(--border)' }}>
+          {pix.pixCode}
+        </p>
+        <button
+          onClick={copy}
+          className="flex w-full items-center justify-center gap-2 rounded-[8px] py-2.5 text-sm font-semibold"
+          style={{ background: 'var(--brand)', color: 'white', border: 'none', cursor: 'pointer' }}
+        >
+          {copied ? <IconCheck size={15} stroke={2} /> : <IconCopy size={15} stroke={1.5} />}
+          {copied ? 'Copiado!' : 'Copiar código PIX'}
+        </button>
+      </div>
+
+      <div className="flex items-center justify-center gap-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+        <IconLoader2 size={13} className="animate-spin" />
+        Aguardando confirmação do pagamento
+        {minutesLeft !== null && <span>· expira em {minutesLeft} min</span>}
+      </div>
+    </div>
+  )
+}
+
 // ─── Awaiting Payment Section ─────────────────────────────────────────────────
 
 function AwaitingPaymentSection({
   order,
   perspective,
   onPayment,
+  onRefresh,
   payError,
 }: {
   order: OrderDetailDTO
   perspective: 'creator' | 'editor' | 'admin'
   onPayment: () => Promise<void>
+  onRefresh: () => void
   payError: string | null
 }) {
   const [busy, setBusy] = useState(false)
@@ -573,6 +680,8 @@ function AwaitingPaymentSection({
             {busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconCreditCard size={16} stroke={1.5} />}
             {busy ? 'Gerando cobrança...' : 'Pagar via PIX'}
           </button>
+        ) : order.transaction?.pix ? (
+          <PixPanel pix={order.transaction.pix} onRefresh={onRefresh} onRegenerate={handlePay} busy={busy} />
         ) : (
           <div className="rounded-[8px] px-4 py-3 text-center" style={{ background: 'var(--info-soft)', border: '1px solid rgba(59,130,246,0.2)' }}>
             <p className="text-sm font-medium" style={{ color: 'var(--info)' }}>Pagamento iniciado</p>
@@ -1734,8 +1843,9 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [conversation, setConversation] = useState<ConversationDTO | null>(null)
 
-  async function load() {
-    setLoading(true)
+  async function load(silent = false) {
+    // silent: atualização em segundo plano (polling do PIX) — sem piscar o skeleton
+    if (!silent) setLoading(true)
     setError(null)
     try {
       const data = await getOrder(orderId)
@@ -1948,7 +2058,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
                     </div>
                   </ContentSection>
                 )}
-                <AwaitingPaymentSection order={order} perspective={perspective} onPayment={handlePayment} payError={payError} />
+                <AwaitingPaymentSection order={order} perspective={perspective} onPayment={handlePayment} onRefresh={() => load(true)} payError={payError} />
               </>
             )}
             {order.status !== 'NEGOTIATING' && order.status !== 'AWAITING_PAYMENT' && order.status !== 'DISPUTED' && (
@@ -2010,7 +2120,7 @@ export function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               <NegotiationSection order={order} perspective={perspective} currentUserId={user.id} onRefresh={load} />
             )}
             {order.status === 'AWAITING_PAYMENT' && (
-              <AwaitingPaymentSection order={order} perspective={perspective} onPayment={handlePayment} payError={payError} />
+              <AwaitingPaymentSection order={order} perspective={perspective} onPayment={handlePayment} onRefresh={() => load(true)} payError={payError} />
             )}
             <ContentSection title="Briefing">
               <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>{order.description}</p>
