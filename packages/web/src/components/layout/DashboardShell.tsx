@@ -6,10 +6,11 @@ import { useState, useEffect, useRef } from 'react'
 import {
   IconLogout, IconBell, IconCheck, IconPackage, IconMessage2, IconTruck,
   IconCoin, IconX, IconAlertCircle,
-  IconSend, IconFileText, IconGavel,
+  IconSend, IconFileText, IconGavel, IconInfoCircle,
 } from '@tabler/icons-react'
 import type { AuthUser } from '@/hooks/use-auth'
 import { CMCutLogo } from '@/components/ui/CMLogo'
+import { usePublicConfig } from '@/hooks/use-public-config'
 import { fetchNotifications, markAllRead, markOneRead, type NotificationDTO } from '@/lib/notifications'
 
 const SIDEBAR_COLLAPSED_KEY = 'cm_sidebar_collapsed'
@@ -292,6 +293,7 @@ export function DashboardShell({
 }: Props) {
   const navigate = useNavigate()
   const location = useLocation()
+  const config = usePublicConfig()
   const mainRef = useRef<HTMLElement>(null)
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1',
@@ -562,6 +564,20 @@ export function DashboardShell({
 
       {/* ── Conteúdo ── */}
       <div className="flex flex-1 flex-col">
+        {config?.paymentsSimulated && (
+          <div
+            role="status"
+            className="flex items-center justify-center gap-2 px-6 py-2 text-xs font-medium"
+            style={{
+              background: 'var(--brand-soft)',
+              color: 'var(--brand)',
+              borderBottom: '1px solid var(--brand-border)',
+            }}
+          >
+            <IconInfoCircle size={14} stroke={1.75} />
+            Ambiente de demonstração — pagamentos simulados, nenhum valor real é cobrado.
+          </div>
+        )}
         {banner}
 
         <header

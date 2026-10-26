@@ -13,6 +13,7 @@ import { adminRoutes } from './admin.routes'
 import { paymentRoutes } from './payment.routes'
 import { projectRequestRoutes } from './project-request.routes'
 import { favoriteRoutes } from './favorite.routes'
+import { configRoutes } from './config.routes'
 
 export const routes: Router = Router()
 
@@ -31,3 +32,4 @@ routes.use('/admin', adminRoutes)
 routes.use('/payments', paymentRoutes)
 routes.use('/requests', projectRequestRoutes)
 routes.use('/favorites', favoriteRoutes)
+routes.use('/config', configRoutes)

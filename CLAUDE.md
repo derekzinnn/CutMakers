@@ -882,6 +882,12 @@ Ver `packages/api/.env.example`. Precisa:
    [x] Cron de verdade: `scripts/run-scheduled-jobs.ts` (`pnpm jobs`) roda
        checkAndExpireSubscriptions + autoApproveStaleDeliveries de forma determinística.
        O trigger no login continua como rede de segurança. Agendar a cada 15min no crontab do VPS
+   [x] **Modo demonstração:** sem `ABACATEPAY_API_KEY` a cobrança é simulada e `GET /api/config`
+       devolve `paymentsSimulated:true` → `DashboardShell` mostra a faixa "Ambiente de demonstração —
+       pagamentos simulados". Dados de exemplo: `pnpm demo:seed | demo:reset | demo:remove`
+       (`scripts/seed-demo.ts`; 2 criadores + 3 editores `@demo.cutmakers`, pedidos em todas as
+       etapas, 1 Premium). Senha: `DEMO_PASSWORD` ou aleatória impressa 1x (nunca fixa). A remoção
+       só apaga contas do domínio demo e ABORTA se houver pedido com usuário real
    [x] CI (`.github/workflows/ci.yml`): typecheck + build + testes de unidade a cada push/PR;
        integração roda só se o secret TEST_DATABASE_URL estiver configurado no runner (senão PULA)
    [x] Edição de solicitação TRAVA orçamento/prazo/descrição após a 1ª proposta PENDING
