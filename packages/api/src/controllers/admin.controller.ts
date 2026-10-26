@@ -4,6 +4,7 @@ import { adminService } from '../services/admin.service'
 import { getDashboard } from '../services/admin-dashboard.service'
 import { startPersona } from '../services/persona.service'
 import { deleteUser } from '../services/user-delete.service'
+import { deleteOrder } from '../services/order-delete.service'
 
 const roleEnum = z.enum(['CREATOR', 'EDITOR', 'BOTH', 'ADMIN'])
 const orderStatusEnum = z.enum([
@@ -125,6 +126,15 @@ export const adminController = {
   async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
       await deleteUser(req.user!.sub, req.params.id as string)
+      res.status(204).end()
+    } catch (err) {
+      next(err)
+    }
+  },
+
+  async deleteOrder(req: Request, res: Response, next: NextFunction) {
+    try {
+      await deleteOrder(req.user!.sub, req.params.id as string)
       res.status(204).end()
     } catch (err) {
       next(err)

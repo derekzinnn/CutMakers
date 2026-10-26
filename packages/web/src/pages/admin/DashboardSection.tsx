@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   IconBriefcase,
   IconCheck,
@@ -88,7 +88,19 @@ function StatCard({
 /** Gráfico de área em SVG puro (sem dependência). Hover mostra o valor do dia. */
 function AreaChart({ points, money }: { points: { date: string; value: number }[]; money?: boolean }) {
   const [hover, setHover] = useState<number | null>(null)
-  const W = 800
+  // Largura medida do painel: o viewBox acompanha os pixels reais. Com 800 fixo o SVG escalava pela
+  // altura e ficava centralizado, sobrando faixa vazia dos dois lados em telas largas.
+  const boxRef = useRef<HTMLDivElement>(null)
+  const [W, setW] = useState(800)
+  useEffect(() => {
+    const el = boxRef.current
+    if (!el) return
+    const medir = () => setW(Math.max(280, Math.round(el.clientWidth)))
+    medir()
+    const ro = new ResizeObserver(medir)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   const H = 220
   const pad = { l: 8, r: 8, t: 12, b: 24 }
   const max = Math.max(1, ...points.map((p) => p.value))
@@ -102,7 +114,7 @@ function AreaChart({ points, money }: { points: { date: string; value: number }[
   const hp = hover !== null ? points[hover] : null
 
   return (
-    <div className="relative">
+    <div ref={boxRef} className="relative w-full">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="h-[220px] w-full"

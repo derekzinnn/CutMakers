@@ -5,8 +5,8 @@ import { useCached } from './use-cached'
 export interface PublicConfig {
   /** Sem chave do gateway: cobranças são simuladas e confirmam na hora */
   paymentsSimulated: boolean
-  /** Exclusão definitiva de usuário liberada neste ambiente (a API é quem decide) */
-  userDeletionEnabled: boolean
+  /** Exclusão definitiva de usuário/pedido liberada neste ambiente (a API é quem decide) */
+  hardDeleteEnabled: boolean
 }
 
 export function usePublicConfig() {

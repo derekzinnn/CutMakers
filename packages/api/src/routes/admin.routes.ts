@@ -22,6 +22,8 @@ adminRoutes.patch('/editors/:id/unverify', adminController.unverifyEditor)
 
 // Pedidos
 adminRoutes.get('/orders', adminController.listOrders)
+// Exclusão definitiva: mesma trava do usuário (fora de produção, ou ALLOW_USER_DELETION=true)
+adminRoutes.delete('/orders/:id', adminController.deleteOrder)
 
 // Disputas
 adminRoutes.get('/disputes', adminController.listDisputes)

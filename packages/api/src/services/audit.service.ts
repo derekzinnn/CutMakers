@@ -22,6 +22,7 @@ export type AuditAction =
   | 'USER_BANNED'
   | 'USER_UNBANNED'
   | 'USER_DELETED'
+  | 'ORDER_DELETED'
   | 'PASSWORD_CHANGED'
   | 'PERSONA_STARTED'
   | 'EDITOR_VERIFIED'

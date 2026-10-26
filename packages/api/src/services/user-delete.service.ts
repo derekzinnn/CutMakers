@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma'
 import { BadRequest, Forbidden, NotFound } from '../lib/errors'
 import { logEvent } from './audit.service'
+import { hardDeleteEnabled } from '../lib/hard-delete'
 
 /**
  * Exclusão DEFINITIVA de usuário — só para desenvolvimento.
@@ -14,16 +15,10 @@ import { logEvent } from './audit.service'
  * Travas: recusa em NODE_ENV=production (salvo ALLOW_USER_DELETION=true), recusa contas ADMIN e recusa o próprio admin.
  */
 
-/**
- * Fora de produção sempre liberada. Em produção só com ALLOW_USER_DELETION=true (opt-in explícito,
- * para limpar contas de teste antes do lançamento). Desligue assim que houver usuários reais.
- */
-export function userDeletionEnabled(): boolean {
-  return process.env.NODE_ENV !== 'production' || process.env.ALLOW_USER_DELETION === 'true'
-}
+
 
 export async function deleteUser(adminId: string, targetId: string) {
-  if (!userDeletionEnabled()) {
+  if (!hardDeleteEnabled()) {
     throw Forbidden('A exclusão de usuários está desativada em produção. Use a suspensão.')
   }
   if (adminId === targetId) throw BadRequest('Você não pode excluir a própria conta')

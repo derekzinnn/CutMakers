@@ -44,6 +44,7 @@ import {
   banUser,
   unbanUser,
   deleteUserPermanently,
+  deleteOrderPermanently,
   verifyEditor,
   unverifyEditor,
   listAdminOrders,
@@ -393,7 +394,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                   <span />
                 )}
                 {/* Exclusão definitiva: a API diz se está liberada (dev, ou produção com ALLOW_USER_DELETION) */}
-                {config?.userDeletionEnabled && u.role !== 'ADMIN' ? (
+                {config?.hardDeleteEnabled && u.role !== 'ADMIN' ? (
                   <button
                     onClick={() => setDeleteTarget(u)}
                     title="Excluir definitivamente"
@@ -514,6 +515,11 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   const [status, setStatus] = useState<OrderStatus | 'ALL'>('ALL')
   const [page, setPage] = useState(1)
   const [resolveTarget, setResolveTarget] = useState<AdminDispute | null>(null)
+  const config = usePublicConfig()
+  const [deleteTarget, setDeleteTarget] = useState<AdminOrder | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const { dado: pagina, carregando: loading, recarregar: load } = useCached<{
     orders: AdminOrder[]
@@ -531,6 +537,32 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   useEffect(() => { setPage(1) }, [status])
 
   const disputeByOrderId = new Map(disputes.map((d) => [d.order.id, d]))
+
+  const deleteConfirmed = deleteConfirm.trim().toLowerCase() === (deleteTarget ? shortId(deleteTarget.id).toLowerCase() : ' ')
+
+  function closeDelete() {
+    if (deleteBusy) return
+    setDeleteTarget(null)
+    setDeleteConfirm('')
+    setDeleteError(null)
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleteBusy(true)
+    setDeleteError(null)
+    try {
+      await deleteOrderPermanently(deleteTarget.id)
+      setDeleteTarget(null)
+      setDeleteConfirm('')
+      await load()
+    } catch (e) {
+      const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message
+      setDeleteError(msg ?? 'Não foi possível excluir o pedido.')
+    } finally {
+      setDeleteBusy(false)
+    }
+  }
 
   return (
     <div className="rounded-card p-6" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
@@ -606,7 +638,18 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                 <span style={{ color: 'var(--foreground)' }}>{money(o.budget)}</span>
                 <span><OrderStatusBadge status={o.status} /></span>
                 <span style={{ color: 'var(--muted-foreground)' }}>{fmtDate(o.createdAt)}</span>
-                <div className="flex justify-end">
+                <div className="flex items-center justify-end gap-2">
+                  {config?.hardDeleteEnabled && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(o) }}
+                      title="Excluir definitivamente"
+                      aria-label="Excluir pedido definitivamente"
+                      className="flex h-7 w-7 items-center justify-center rounded-[6px]"
+                      style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--muted-foreground)', cursor: 'pointer' }}
+                    >
+                      <IconTrash size={14} stroke={1.5} />
+                    </button>
+                  )}
                   {isDisputed && dispute ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); setResolveTarget(dispute) }}
@@ -632,6 +675,62 @@ function OrdersSection({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
         onClose={() => setResolveTarget(null)}
         onResolved={async () => { setResolveTarget(null); await load() }}
       />
+
+      {/* Exclusão definitiva: exige digitar o código do pedido para não apagar por engano */}
+      <Modal
+        open={deleteTarget !== null}
+        onClose={closeDelete}
+        title="Excluir pedido definitivamente"
+        subtitle={deleteTarget ? `${deleteTarget.title} · ${shortId(deleteTarget.id)}` : undefined}
+        footer={
+          <>
+            <button
+              onClick={closeDelete}
+              disabled={deleteBusy}
+              className="rounded-[8px] px-4 py-2 text-sm"
+              style={{ background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border)', cursor: deleteBusy ? 'not-allowed' : 'pointer' }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDelete}
+              disabled={deleteBusy || !deleteConfirmed}
+              className="flex items-center gap-2 rounded-[8px] px-4 py-2 text-sm font-semibold"
+              style={{
+                background: 'var(--destructive)', color: 'white', border: 'none', fontFamily: 'var(--font-heading)',
+                cursor: deleteBusy || !deleteConfirmed ? 'not-allowed' : 'pointer',
+                opacity: deleteBusy || !deleteConfirmed ? 0.5 : 1,
+              }}
+            >
+              {deleteBusy && <IconLoader2 size={14} className="animate-spin" />}
+              Excluir para sempre
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <p>
+            Apaga o pedido e <strong>tudo que depende dele</strong>: contrato, pagamento, entregas, arquivos, conversa,
+            avaliação e notificações. Se ele já estava concluído, a nota e o total de trabalhos do editor são recalculados.
+            Não dá para desfazer.
+          </p>
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+            Pedidos com pagamento real no gateway não podem ser excluídos: use reembolso ou disputa.
+          </p>
+          <label className="block text-xs" style={{ color: 'var(--muted-foreground)' }}>
+            Digite o código <strong style={{ color: 'var(--foreground)' }}>{deleteTarget ? shortId(deleteTarget.id) : ''}</strong> para confirmar
+            <input
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              className="mt-1.5 w-full rounded-[8px] px-3 py-2 text-sm outline-none"
+              style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+            />
+          </label>
+          {deleteError && <p style={{ color: 'var(--destructive)' }}>{deleteError}</p>}
+        </div>
+      </Modal>
     </div>
   )
 }
@@ -848,6 +947,7 @@ const AUDIT_ACTIONS: Record<string, { label: string; color: string }> = {
   USER_UNBANNED: { label: 'Usuário reativado', color: 'var(--success)' },
   PASSWORD_CHANGED: { label: 'Senha alterada', color: 'var(--warning)' },
   USER_DELETED: { label: 'Usuário excluído', color: 'var(--destructive)' },
+  ORDER_DELETED: { label: 'Pedido excluído', color: 'var(--destructive)' },
   PERSONA_STARTED: { label: 'Admin entrou como criador/editor', color: 'var(--info)' },
   EDITOR_VERIFIED: { label: 'Editor verificado', color: 'var(--success)' },
   EDITOR_UNVERIFIED: { label: 'Verificação removida', color: 'var(--warning)' },

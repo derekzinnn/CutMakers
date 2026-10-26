@@ -24,9 +24,9 @@ describe('GET /api/config', () => {
   it('exclusão de usuário: desligada em produção, ligada só com ALLOW_USER_DELETION=true', async () => {
     vi.stubEnv('NODE_ENV', 'production')
     vi.stubEnv('ALLOW_USER_DELETION', '')
-    expect((await request(app).get('/api/config')).body.userDeletionEnabled).toBe(false)
+    expect((await request(app).get('/api/config')).body.hardDeleteEnabled).toBe(false)
 
     vi.stubEnv('ALLOW_USER_DELETION', 'true')
-    expect((await request(app).get('/api/config')).body.userDeletionEnabled).toBe(true)
+    expect((await request(app).get('/api/config')).body.hardDeleteEnabled).toBe(true)
   })
 })

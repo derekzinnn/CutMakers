@@ -33,9 +33,14 @@ export async function banUser(id: string): Promise<void> {
   await api.patch(`/admin/users/${id}/ban`)
 }
 
-/** Exclusão definitiva — só funciona fora de produção (a API recusa com 403 em produção) */
+/** Exclusão definitiva — a API recusa com 403 se não estiver liberada neste ambiente */
 export async function deleteUserPermanently(id: string): Promise<void> {
   await api.delete(`/admin/users/${id}`)
+}
+
+/** Exclusão definitiva de pedido — mesma trava; recusa (409) pedido com pagamento real no gateway */
+export async function deleteOrderPermanently(id: string): Promise<void> {
+  await api.delete(`/admin/orders/${id}`)
 }
 
 export async function unbanUser(id: string): Promise<void> {
@@ -54,6 +59,7 @@ export async function unverifyEditor(id: string): Promise<void> {
 
 export interface AdminOrder {
   id: string
+  title: string
   status: OrderStatus
   budget: number
   createdAt: string

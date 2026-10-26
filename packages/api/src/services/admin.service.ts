@@ -147,6 +147,7 @@ export class AdminService {
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
+          title: true,
           status: true,
           budget: true,
           createdAt: true,
@@ -160,6 +161,7 @@ export class AdminService {
     return {
       orders: orders.map((o) => ({
         id: o.id,
+        title: o.title,
         status: o.status,
         budget: Number(o.budget),
         createdAt: o.createdAt,
