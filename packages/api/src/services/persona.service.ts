@@ -44,6 +44,16 @@ export async function startPersona(adminId: string, kind: PersonaKind) {
     })
   }
 
+  // A persona editor já nasce com perfil: aparece na busca e pode ser contratada na hora, sem o
+  // admin precisar abrir o painel de editor antes (o perfil era criado só nesse primeiro acesso).
+  if (kind === 'EDITOR') {
+    await prisma.editorProfile.upsert({
+      where: { userId: persona.id },
+      update: {},
+      create: { userId: persona.id },
+    })
+  }
+
   await logEvent({
     actorId: adminId,
     action: 'PERSONA_STARTED',
