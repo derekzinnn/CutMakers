@@ -8,6 +8,7 @@ import { disputeToDTO } from './dispute.service'
 import { agreementToDTO, AUTO_APPROVE_DAYS } from './agreement.service'
 import { logEvent } from './audit.service'
 import { platformFeeAsNumber } from '../lib/fees'
+import { canBeHiredAsEditor } from '../middlewares/role.middleware'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -176,7 +177,7 @@ export class OrderService {
       select: { id: true, role: true },
     })
     if (!editor) throw BadRequest('Editor não encontrado')
-    if (editor.role !== 'EDITOR' && editor.role !== 'BOTH') {
+    if (!canBeHiredAsEditor(editor.role)) {
       throw BadRequest('Usuário selecionado não é editor')
     }
 

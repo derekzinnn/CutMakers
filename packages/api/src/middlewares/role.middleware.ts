@@ -43,3 +43,11 @@ export function requireRole(...allowedRoles: Role[]) {
  */
 export const EDITOR_ROLES = ['EDITOR', 'BOTH', 'ADMIN'] as const
 export const CREATOR_ROLES = ['CREATOR', 'BOTH', 'ADMIN'] as const
+
+/**
+ * Este usuario pode ser CONTRATADO como editor? Mesma regra de EDITOR_ROLES, para as checagens de
+ * servico (alvo de um pedido, aceite de proposta). Sem isto o admin aparecia na busca de editores
+ * (tem perfil) mas o pedido para ele falhava com "nao e editor".
+ */
+export const canBeHiredAsEditor = (role: string): boolean =>
+  (EDITOR_ROLES as readonly string[]).includes(role)

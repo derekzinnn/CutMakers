@@ -4,6 +4,7 @@ import { NotFound, Forbidden, BadRequest, Conflict } from '../lib/errors'
 import { logEvent } from './audit.service'
 import { platformFeeOf } from '../lib/fees'
 import { agreementService } from './agreement.service'
+import { canBeHiredAsEditor } from '../middlewares/role.middleware'
 
 // ─── Marketplace invertido ─────────────────────────────────────────────────────
 // Creator publica uma ProjectRequest (OPEN) → editores enviam RequestProposals →
@@ -362,7 +363,7 @@ export class ProjectRequestService {
         if (editor.banned) {
           throw Conflict('Este editor foi suspenso. Recuse a proposta e escolha outra.')
         }
-        if (editor.role !== 'EDITOR' && editor.role !== 'BOTH') {
+        if (!canBeHiredAsEditor(editor.role)) {
           throw Conflict('Este usuário não é mais um editor. Recuse a proposta e escolha outra.')
         }
 
