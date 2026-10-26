@@ -14,6 +14,7 @@ beforeEach(async () => {
 
 const NODE_ENV_ORIGINAL = process.env.NODE_ENV
 afterEach(() => {
+  delete process.env.ALLOW_USER_DELETION
   process.env.NODE_ENV = NODE_ENV_ORIGINAL
 })
 
@@ -94,5 +95,18 @@ describe('exclusão de usuário (dev)', () => {
     process.env.NODE_ENV = 'production'
     await expect(deleteUser(admin.id, creator.id)).rejects.toThrow(/produção/)
     expect(await testPrisma.user.findUnique({ where: { id: creator.id } })).not.toBeNull()
+  })
+
+  it('em produção só exclui com o opt-in ALLOW_USER_DELETION=true', async () => {
+    const admin = await criarAdmin()
+    const creator = await criarCreator()
+
+    process.env.NODE_ENV = 'production'
+    process.env.ALLOW_USER_DELETION = 'false'
+    await expect(deleteUser(admin.id, creator.id)).rejects.toThrow(/produção/)
+
+    process.env.ALLOW_USER_DELETION = 'true'
+    await deleteUser(admin.id, creator.id)
+    expect(await testPrisma.user.findUnique({ where: { id: creator.id } })).toBeNull()
   })
 })

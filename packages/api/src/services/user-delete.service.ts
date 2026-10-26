@@ -11,11 +11,15 @@ import { logEvent } from './audit.service'
  * depende do usuário, na ordem das chaves estrangeiras, numa transação única (ou apaga tudo,
  * ou nada).
  *
- * Travas: recusa em NODE_ENV=production, recusa contas ADMIN e recusa o próprio admin.
+ * Travas: recusa em NODE_ENV=production (salvo ALLOW_USER_DELETION=true), recusa contas ADMIN e recusa o próprio admin.
  */
 
+/**
+ * Fora de produção sempre liberada. Em produção só com ALLOW_USER_DELETION=true (opt-in explícito,
+ * para limpar contas de teste antes do lançamento). Desligue assim que houver usuários reais.
+ */
 export function userDeletionEnabled(): boolean {
-  return process.env.NODE_ENV !== 'production'
+  return process.env.NODE_ENV !== 'production' || process.env.ALLOW_USER_DELETION === 'true'
 }
 
 export async function deleteUser(adminId: string, targetId: string) {

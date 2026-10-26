@@ -35,6 +35,7 @@ import { DashboardSection } from './DashboardSection'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 import { useAuth } from '@/hooks/use-auth'
 import { usePersistedState } from '@/hooks/use-persisted-state'
+import { usePublicConfig } from '@/hooks/use-public-config'
 import { enterPersona } from '@/lib/persona'
 import { STATUS_LABELS, STATUS_COLORS, TRANSACTION_LABELS, type OrderStatus, type TransactionStatus } from '@/lib/orders'
 import { resolveDispute } from '@/lib/disputes'
@@ -192,6 +193,7 @@ const ROLE_FILTERS: { value: UserRole | 'ALL'; label: string }[] = [
 ]
 
 function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
+  const config = usePublicConfig()
   const [rawSearch, setRawSearch] = useState('')
   const search = useDebounced(rawSearch)
   const [role, setRole] = useState<UserRole | 'ALL'>('ALL')
@@ -390,11 +392,11 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
                 ) : (
                   <span />
                 )}
-                {/* Exclusão definitiva: só aparece em modo de desenvolvimento (o build de produção remove) */}
-                {import.meta.env.DEV && u.role !== 'ADMIN' ? (
+                {/* Exclusão definitiva: a API diz se está liberada (dev, ou produção com ALLOW_USER_DELETION) */}
+                {config?.userDeletionEnabled && u.role !== 'ADMIN' ? (
                   <button
                     onClick={() => setDeleteTarget(u)}
-                    title="Excluir definitivamente (apenas dev)"
+                    title="Excluir definitivamente"
                     aria-label="Excluir usuário definitivamente"
                     className="flex h-7 w-7 items-center justify-center rounded-[6px]"
                     style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)', color: 'var(--muted-foreground)', cursor: 'pointer' }}
@@ -411,7 +413,7 @@ function UsersSection({ onViewUser }: { onViewUser: (u: AdminUser) => void }) {
         </div>
       )}
 
-      {/* Modal de exclusão definitiva (dev): exige digitar o e-mail para não apagar por engano */}
+      {/* Modal de exclusão definitiva: exige digitar o e-mail para não apagar por engano */}
       <Modal
         open={deleteTarget !== null}
         onClose={closeDelete}
