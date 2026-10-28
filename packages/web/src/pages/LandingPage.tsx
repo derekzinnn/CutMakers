@@ -1170,6 +1170,8 @@ function CTA({ onRegister }: { onRegister: () => void }) {
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
 function Footer() {
+  const navigate = useNavigate()
+  const legalLinks: Record<string, string> = { 'Termos de uso': '/termos', Privacidade: '/privacidade' }
   const cols = [
     { t: 'Produto', items: ['Como funciona', 'Categorias', 'Editores em destaque', 'Preços'] },
     { t: 'Para editores', items: ['Virar editor', 'Plano premium', 'Diretrizes', 'Suporte'] },
@@ -1219,6 +1221,7 @@ function Footer() {
                 <span
                   key={i}
                   style={{ fontFamily: C.dm, fontSize: 13.5, color: C.text60, cursor: 'pointer' }}
+                  onClick={legalLinks[i] ? () => navigate(legalLinks[i]) : undefined}
                   onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = C.text60)}
                 >

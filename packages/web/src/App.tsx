@@ -8,6 +8,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })))
 const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
+const PrivacyPage = lazy(() => import('./pages/LegalPage').then((m) => ({ default: m.PrivacyPage })))
+const TermsPage = lazy(() => import('./pages/LegalPage').then((m) => ({ default: m.TermsPage })))
 const AdminPage = lazy(() => import('./pages/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
 const EditorDashboard = lazy(() => import('./pages/editor/EditorDashboard').then((m) => ({ default: m.EditorDashboard })))
 const CreatorDashboard = lazy(() => import('./pages/creator/CreatorDashboard').then((m) => ({ default: m.CreatorDashboard })))
@@ -64,6 +66,8 @@ export default function App() {
           {/* Públicas */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/privacidade" element={<PrivacyPage />} />
+          <Route path="/termos" element={<TermsPage />} />
 
           {/* Perfil público do editor — qualquer autenticado pode ver */}
           <Route
