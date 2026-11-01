@@ -77,6 +77,7 @@ Legenda: ✅ concluída · 🟡 em andamento · ⏳ próxima · 💤 backlog
 | 13–18 | Hardening de segurança, testes (unidade + integração), migrations, Premium real, "ver como", cache/paginação | ✅ |
 | 14 (cont.) | CI, cron real, modo demonstração, Google login (gated), favoritos, conta do criador, AbacatePay v2 | ✅ |
 | 24, 26 | Dashboard admin com período comparado · personas do admin no "ver como" (citadas no código; sem bloco no log) | ✅ |
+| — | Landing refeita com padrões do acervo da Biig (branch `feat/landing-acervo`) | 🟡 aguardando revisão do Derek |
 | — | PIX do pedido validado no sandbox (chave sem `TRANSPARENT:CREATE/READ`) | ⏳ precisa de chave nova |
 | — | Repasse real ao editor e estorno (escrow hoje é só contábil) | ⏳ decisão de produto |
 | — | Disputa pós-conclusão (quem absorve o estorno, janela de contestação) | ⏳ decisão de negócio |
@@ -90,6 +91,7 @@ Pendente local: pasta `memory/` não versionada — decidir se vai para o git.
 
 Formato: `AAAA-MM-DD — decisão — motivo` (mais recente no topo). Histórico completo em `docs/contexto-completo.md` → "Progresso".
 
+- 2026-11-01 — Landing refeita em `pages/landing/` (copy em `content.ts`), com padrões do acervo da Biig e a mesma identidade; saem números, logos e editores inventados, e a vitrine passa a usar `GET /editors` — prova social falsa num marketplace de pagamento protegido mina a confiança.
 - 2026-10-31 — CLAUDE.md enxugado; original (981 linhas) movido com `git mv` para `docs/contexto-completo.md` — reduzir contexto por sessão.
 - Migração AbacatePay v1 → v2 (v1 sai do ar); PIX transparente por pedido (checkout v2 não aceita valor dinâmico).
 - Admin lê a conversa do pedido (mediação) mas não envia — mensagem de admin viraria prova na disputa que ele julga.
