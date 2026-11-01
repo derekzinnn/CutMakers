@@ -1,78 +1,10 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { IconArrowRight, IconCheck } from '@tabler/icons-react'
-import { formatMoney } from '@/lib/format'
-import { AUDIENCES, AUTO_APPROVE_DAYS, PLATFORM_FEE_RATE } from './content'
+import { AUDIENCES } from './content'
 import { SectionHead } from './SectionHead'
 
 type Side = keyof typeof AUDIENCES
 const SIDES: Side[] = ['creator', 'editor']
-
-const MIN = 50
-const MAX = 3000
-const STEP = 10
-
-/**
- * Calculadora com as regras reais (padrão do simulador do site de energia
- * solar do acervo, mas sem estimativa: taxa e prazo são os do backend).
- */
-function Calculator({ side }: { side: Side }) {
-  const [value, setValue] = useState(480)
-  const fee = Math.round(value * PLATFORM_FEE_RATE * 100) / 100
-  const fill = `${((value - MIN) / (MAX - MIN)) * 100}%`
-  const inputId = useId()
-
-  const rows =
-    side === 'editor'
-      ? [
-          { label: 'Valor combinado do pedido', value: formatMoney(value) },
-          { label: `Taxa CutMakers (${PLATFORM_FEE_RATE * 100}%)`, value: `− ${formatMoney(fee)}` },
-        ]
-      : [
-          { label: 'Valor combinado com o editor', value: formatMoney(value) },
-          { label: 'Taxa para o criador', value: formatMoney(0) },
-        ]
-
-  const total = side === 'editor' ? value - fee : value
-
-  return (
-    <div className="rounded-2xl border border-border bg-background p-6 sm:p-8">
-      <label htmlFor={inputId} className="text-sm font-semibold text-foreground">
-        {side === 'editor' ? 'Quanto você recebe' : 'Quanto você paga'}
-      </label>
-      <input
-        id={inputId}
-        type="range"
-        min={MIN}
-        max={MAX}
-        step={STEP}
-        value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
-        className="lp-range mt-5"
-        style={{ ['--fill' as string]: fill }}
-        aria-valuetext={formatMoney(value)}
-      />
-      <dl className="mt-6 space-y-3 text-sm">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-center justify-between gap-4">
-            <dt className="text-muted-foreground">{r.label}</dt>
-            <dd className="font-semibold tabular-nums text-foreground">{r.value}</dd>
-          </div>
-        ))}
-        <div className="flex items-end justify-between gap-4 border-t border-border pt-4">
-          <dt className="font-semibold text-foreground">{side === 'editor' ? 'Você recebe' : 'Total'}</dt>
-          <dd className="font-heading text-3xl font-extrabold tabular-nums tracking-tight text-brand" aria-live="polite">
-            {formatMoney(total)}
-          </dd>
-        </div>
-      </dl>
-      <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-        {side === 'editor'
-          ? `Liberado quando o criador aprova a entrega, ou automaticamente após ${AUTO_APPROVE_DAYS} dias sem resposta.`
-          : 'Fica retido na plataforma e só vai para o editor quando você aprova a entrega.'}
-      </p>
-    </div>
-  )
-}
 
 export function Audiences({ onRegister }: { onRegister: () => void }) {
   const [side, setSide] = useState<Side>('creator')
@@ -132,25 +64,16 @@ export function Audiences({ onRegister }: { onRegister: () => void }) {
       </div>
 
       <div
+        key={side}
         id={`${baseId}-panel`}
         role="tabpanel"
         aria-labelledby={`${baseId}-tab-${side}`}
-        className="grid items-start gap-10 lg:grid-cols-[1.1fr_1fr]"
+        className="anim-fade-up grid items-start gap-8 rounded-2xl border border-border bg-card p-6 sm:p-10 lg:grid-cols-[1fr_1.1fr] lg:gap-12"
       >
-        <div key={side} className="anim-fade-up">
+        <div>
           <h3 className="text-[clamp(1.5rem,3vw,2rem)] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground">
             {content.title}
           </h3>
-          <ul className="mt-6 space-y-3.5">
-            {content.points.map((p) => (
-              <li key={p} className="flex items-start gap-3 text-[15px] leading-relaxed text-muted-foreground">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-soft">
-                  <IconCheck size={13} stroke={2.6} className="text-brand" />
-                </span>
-                {p}
-              </li>
-            ))}
-          </ul>
           <button
             type="button"
             onClick={onRegister}
@@ -160,7 +83,16 @@ export function Audiences({ onRegister }: { onRegister: () => void }) {
           </button>
         </div>
 
-        <Calculator side={side} />
+        <ul className="space-y-4">
+          {content.points.map((p) => (
+            <li key={p} className="flex items-start gap-3 text-[15px] leading-relaxed text-muted-foreground">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-soft">
+                <IconCheck size={13} stroke={2.6} className="text-brand" />
+              </span>
+              {p}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   )

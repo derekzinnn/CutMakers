@@ -8,8 +8,6 @@
  * sistema realmente faz.
  */
 
-/** api/src/lib/fees.ts → PLATFORM_FEE_RATE */
-export const PLATFORM_FEE_RATE = 0.1
 /** api/src/services/agreement.service.ts → AUTO_APPROVE_DAYS */
 export const AUTO_APPROVE_DAYS = 7
 /** api/src/services/subscription.service.ts → PREMIUM_MONTHLY_PRICE */
@@ -117,7 +115,7 @@ export const AUDIENCES = {
       'Cadastro grátis, sem mensalidade',
       'Portfólio e avaliações antes de contratar',
       'Publique uma solicitação e receba propostas',
-      'Pague só o valor combinado, sem taxa por cima',
+      'Pagamento retido até você aprovar a entrega',
       'Favoritos para voltar ao editor que acertou',
     ],
     cta: 'Encontrar editor',
@@ -130,7 +128,7 @@ export const AUDIENCES = {
       'Oportunidades: propostas para pedidos publicados pelos criadores',
       'Contrato com escopo, prazo e número de revisões',
       `Premium por R$ ${PREMIUM_MONTHLY_PRICE.toFixed(2).replace('.', ',')}/mês: destaque no feed e selo Premium`,
-      `Taxa de ${PLATFORM_FEE_RATE * 100}% só sobre trabalho concluído`,
+      'Chat, entregas e revisões organizados por pedido',
     ],
     cta: 'Criar perfil de editor',
   },
@@ -144,10 +142,6 @@ export const FAQ = [
   {
     q: 'Quando o editor recebe?',
     a: `Quando o criador aprova a entrega. Se o criador não responder em ${AUTO_APPROVE_DAYS} dias corridos, a entrega é aprovada automaticamente, como diz o contrato.`,
-  },
-  {
-    q: 'Quanto custa usar a CutMakers?',
-    a: `Para o criador, nada além do valor combinado com o editor. Para o editor, ${PLATFORM_FEE_RATE * 100}% sobre cada trabalho concluído. O Premium do editor é opcional.`,
   },
   {
     q: 'Meu vídeo bruto passa por vocês?',
