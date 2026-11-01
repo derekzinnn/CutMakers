@@ -1,3 +1,14 @@
+---
+nome: CutMakers
+area: universidade
+fase: em-desenvolvimento
+repo: derekzinnn/CutMakers
+producao: a-confirmar
+stack: pnpm workspaces, Express + Prisma, Vite + React, Supabase Postgres
+deploy: a-definir
+responsavel: Derek
+---
+
 # CutMakers
 
 ## Visão geral
