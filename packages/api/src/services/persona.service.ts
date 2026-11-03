@@ -62,7 +62,7 @@ export async function startPersona(adminId: string, kind: PersonaKind) {
     metadata: { persona: kind },
   })
 
-  const { token, refreshToken } = authService.generateTokens(persona.id, persona.role)
+  const { token, refreshToken } = authService.generateTokens(persona.id, persona.role, persona.tokenVersion)
   return {
     token,
     refreshToken,

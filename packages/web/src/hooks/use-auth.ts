@@ -27,6 +27,15 @@ export function useAuth() {
     setUser(newUser)
   }
 
+  // Troca de senha emite um par de tokens novo (a versão antiga para de valer no
+  // próximo refresh — ver auth.controller.ts). Sem isto a pessoa que acabou de trocar
+  // a própria senha seria deslogada na expiração do access token em até 15min.
+  function refreshTokens(newToken: string, newRefreshToken: string) {
+    localStorage.setItem('token', newToken)
+    localStorage.setItem('refreshToken', newRefreshToken)
+    setToken(newToken)
+  }
+
   // Reflete edicoes de perfil (nome/avatar/bio) sem precisar relogar
   function updateUser(patch: Partial<AuthUser>) {
     setUser((prev) => {
@@ -45,5 +54,5 @@ export function useAuth() {
     setUser(null)
   }
 
-  return { user, token, login, logout, updateUser, isAuthenticated: !!token }
+  return { user, token, login, logout, updateUser, refreshTokens, isAuthenticated: !!token }
 }

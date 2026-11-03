@@ -14,8 +14,17 @@ export async function updateMe(payload: UpdateMePayload): Promise<AuthUser> {
 }
 
 /** Troca a senha (exige a atual). */
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  await api.patch('/auth/password', { currentPassword, newPassword })
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ token: string; refreshToken: string }> {
+  // A troca invalida a sessão (tokenVersion sobe no backend) e devolve um par de
+  // tokens novo já na versão atual, pra esta aba não ser deslogada também.
+  const { data } = await api.patch<{ token: string; refreshToken: string }>('/auth/password', {
+    currentPassword,
+    newPassword,
+  })
+  return data
 }
 
 /** Login/cadastro com o ID token do Google. */

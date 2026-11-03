@@ -29,7 +29,11 @@ beforeEach(async () => {
 
 async function tokensDe(userId: string, role: 'CREATOR' | 'EDITOR' = 'CREATOR') {
   const { AuthService } = await import('../src/services/auth.service')
-  return new AuthService().generateTokens(userId, role)
+  // tokenVersion precisa vir do banco, não de um fixo: o refresh recusa um token cuja
+  // versão não bate com a coluna atual (ver "troca de senha"/vínculo Google), e um
+  // valor fixo errado faria os testes abaixo falhar por um motivo que não é o testado.
+  const user = await testPrisma.user.findUniqueOrThrow({ where: { id: userId } })
+  return new AuthService().generateTokens(userId, role, user.tokenVersion)
 }
 
 describe('banimento encerra a sessão', () => {
