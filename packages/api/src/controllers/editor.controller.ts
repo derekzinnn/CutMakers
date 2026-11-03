@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
+import { cloudinaryUrl } from '../lib/validation'
 import { EditorService } from '../services/editor.service'
 
 const editorService = new EditorService()
@@ -15,7 +16,7 @@ const listQuerySchema = z.object({
 const updateProfileSchema = z.object({
   name: z.string().min(2, 'Nome muito curto').max(80).optional(),
   bio: z.string().max(500, 'Bio deve ter no máximo 500 caracteres').optional(),
-  avatarUrl: z.string().url('URL de avatar inválida').or(z.literal('')).optional(),
+  avatarUrl: cloudinaryUrl('Avatar').or(z.literal('')).optional(),
   categoryIds: z.array(z.string().uuid('ID de categoria inválido')).max(10).optional(),
 })
 

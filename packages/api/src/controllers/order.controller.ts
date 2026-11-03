@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { OrderService } from '../services/order.service'
 import { PaymentService } from '../services/payment.service'
 import { BadRequest } from '../lib/errors'
+import { cloudinaryUrl, httpUrl } from '../lib/validation'
 
 const orderService = new OrderService()
 const paymentService = new PaymentService()
@@ -10,7 +11,7 @@ const paymentService = new PaymentService()
 // ─── Schemas de validação ────────────────────────────────────────────────────
 
 const fileSchema = z.object({
-  fileUrl: z.string().url(),
+  fileUrl: cloudinaryUrl('fileUrl'),
   fileName: z.string().min(1).max(255),
   fileType: z.string().min(1).max(50),
 })
@@ -51,7 +52,10 @@ const updateStatusSchema = z.object({
 })
 
 const createDeliverySchema = z.object({
-  videoUrl: z.string().url('URL do vídeo inválida'),
+  // Não restrito ao Cloudinary de propósito: o front oferece "colar link" como
+  // alternativa ao upload (Drive, YouTube, Vimeo — ver OrderDetail.tsx). Só
+  // bloqueia esquema perigoso (javascript:, data:); qualquer host http(s) vale.
+  videoUrl: httpUrl('URL do vídeo'),
   message: z.string().max(2000).optional(),
 })
 
@@ -171,7 +175,7 @@ export class OrderController {
     try {
       const filesSchema = z.object({
         files: z.array(z.object({
-          fileUrl: z.string().url(),
+          fileUrl: cloudinaryUrl('fileUrl'),
           fileName: z.string().min(1),
           fileType: z.string().min(1),
         })).min(1),
