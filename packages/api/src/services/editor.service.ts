@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import { NotFound } from '../lib/errors'
+import { BadRequest, NotFound } from '../lib/errors'
 import { prisma } from '../lib/prisma'
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ export class EditorService {
         select: { id: true },
       })
       if (valid.length !== data.categoryIds.length) {
-        throw new Error('Uma ou mais categorias não existem')
+        throw BadRequest('Uma ou mais categorias não existem')
       }
     }
 
