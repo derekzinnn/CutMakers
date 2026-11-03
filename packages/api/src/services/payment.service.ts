@@ -457,15 +457,27 @@ export class PaymentService {
 
   // Chamado internamente quando um order é marcado como COMPLETED.
   // actorId: quem disparou (creator aprovando, admin) — null em fluxos automáticos.
-  async releasePayment(orderId: string, actorId: string | null = null) {
-    const transaction = await prisma.transaction.findUnique({
+  //
+  // `db` aceita um Prisma.TransactionClient (mesmo padrão de agreement.service.ts e
+  // revision.service.ts) pra participar da MESMA transação que muda o status do
+  // pedido — ver order.service.ts updateStatus/autoApproveStaleDeliveries. Sem isso,
+  // um crash entre "status = COMPLETED" e "transaction = RELEASED" (ou vice-versa)
+  // deixava o pedido concluído com o pagamento ainda retido, sem nada detectando a
+  // inconsistência.
+  //
+  // Nota pro TODO abaixo: quando a chamada real ao Abacatepay entrar aqui, ela NÃO
+  // pode ficar dentro da transação (I/O de rede não deve segurar uma transação de
+  // banco aberta) — nessa hora isto precisa virar um fluxo de duas fases (grava
+  // RELEASING dentro da tx, chama o gateway fora, confirma RELEASED depois).
+  async releasePayment(orderId: string, actorId: string | null = null, db: Prisma.TransactionClient = prisma) {
+    const transaction = await db.transaction.findUnique({
       where: { orderId },
       select: { id: true, status: true, amount: true, netAmount: true },
     })
     if (!transaction || transaction.status !== 'HELD') return
 
     // TODO: chamar API Abacatepay para transferir valor líquido ao editor
-    await prisma.transaction.update({
+    await db.transaction.update({
       where: { id: transaction.id },
       data: { status: 'RELEASED' },
     })
