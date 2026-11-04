@@ -15,11 +15,10 @@ export function requireRole(...allowedRoles: Role[]) {
     }
 
     if (!allowedRoles.includes(req.user.role as Role)) {
-      return res.status(403).json({
-        message: 'Acesso negado para esta role',
-        required: allowedRoles,
-        current: req.user.role,
-      })
+      // Sem listar a role exigida nem a atual no corpo: não é segredo, mas também
+      // não tem por que a API ecoar de volta o que o requireRole() de cada rota
+      // já define no código-fonte (minimizar o que a resposta revela).
+      return res.status(403).json({ message: 'Acesso negado para esta role' })
     }
 
     next()

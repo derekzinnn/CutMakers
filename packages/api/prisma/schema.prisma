@@ -105,6 +105,11 @@ model User {
   avatarUrl       String?
   bio             String?
   banned          Boolean   @default(false)
+  // Incrementado ao trocar a senha e ao vincular login Google a uma conta que tinha
+  // senha. O refresh token carrega a versão no momento em que foi emitido; se não bater
+  // com esta coluna, a sessão é recusada. É o que derruba sessões abertas com uma
+  // credencial que acabou de ser invalidada (ver auth.controller.ts).
+  tokenVersion    Int       @default(0)
   // Aceite dos Termos de Uso da plataforma no cadastro
   termsAcceptedAt DateTime?
   // Persona do admin: usuário REAL (criador ou editor) que pertence a uma conta ADMIN. Existe para o admin
@@ -115,8 +120,6 @@ model User {
   personas        User[]    @relation("AdminPersonas")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-
-  @@unique([personaOfId, role])
 
   editorProfile          EditorProfile?
   favorites              Favorite[]        @relation("CreatorFavorites")
@@ -137,6 +140,8 @@ model User {
   auditLogs              AuditLog[]
   projectRequests        ProjectRequest[]
   requestProposals       RequestProposal[]
+
+  @@unique([personaOfId, role])
 }
 
 model EditorProfile {

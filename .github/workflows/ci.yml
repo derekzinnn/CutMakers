@@ -17,9 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Versão lida do "packageManager" do package.json da raiz (pnpm@9.15.9) — não
+      # fixar `version:` aqui também: o action recusa rodar com as duas declaradas
+      # (ainda que concordem), e essa duplicação foi o que já quebrou o CI uma vez.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:

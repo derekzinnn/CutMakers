@@ -909,7 +909,7 @@ function FavoritesSection({
 // ─── Minha conta ──────────────────────────────────────────────────────────────
 
 function AccountSection() {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, refreshTokens } = useAuth()
   const [name, setName] = useState(user?.name ?? '')
   const [bio, setBio] = useState(user?.bio ?? '')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatarUrl ?? null)
@@ -963,7 +963,8 @@ function AccountSection() {
     setSavingPwd(true)
     setPwdMsg(null)
     try {
-      await changePassword(currentPassword, newPassword)
+      const tokens = await changePassword(currentPassword, newPassword)
+      refreshTokens(tokens.token, tokens.refreshToken)
       setPwdMsg({ ok: true, text: 'Senha alterada.' })
       setCurrentPassword('')
       setNewPassword('')

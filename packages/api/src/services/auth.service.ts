@@ -7,6 +7,10 @@ let dummyHash: Promise<string> | undefined
 interface TokenPayload {
   sub: string
   role: string
+  // Versão da conta no momento em que o token foi emitido (User.tokenVersion).
+  // O refresh recusa um token cuja versão não bate com a atual — é o que derruba
+  // sessões abertas quando a senha troca ou um login Google invalida a antiga.
+  tv: number
 }
 
 export class AuthService {
@@ -28,8 +32,8 @@ export class AuthService {
     await bcrypt.compare(password, await dummyHash)
   }
 
-  generateTokens(userId: string, role: string) {
-    const payload: TokenPayload = { sub: userId, role }
+  generateTokens(userId: string, role: string, tokenVersion: number) {
+    const payload: TokenPayload = { sub: userId, role, tv: tokenVersion }
 
     const secret: Secret = process.env.JWT_SECRET!
     const refreshSecret: Secret = process.env.JWT_REFRESH_SECRET!

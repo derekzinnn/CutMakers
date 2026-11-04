@@ -321,25 +321,28 @@ export class OrderService {
       )
     }
 
-    // Claim otimista: a transição só vale se o pedido ainda estiver no status que
-    // acabamos de validar. Sem isso, dois cliques em "Aprovar entrega" passavam os
-    // dois pela validação e incrementavam totalJobs em dobro (mesma classe de bug
-    // da varredura de auto-aprovação).
-    const claim = await prisma.order.updateMany({
-      where: { id: orderId, status: order.status },
-      data: { status: newStatus },
-    })
-    if (claim.count === 0) {
-      throw Conflict('O status do pedido mudou enquanto você agia. Recarregue a página.')
-    }
-
-    if (newStatus === 'COMPLETED') {
-      await paymentService.releasePayment(orderId, userId)
-      await prisma.editorProfile.updateMany({
-        where: { userId: order.editorId },
-        data: { totalJobs: { increment: 1 } },
+    // Claim otimista + efeitos de COMPLETED na MESMA transação: o pagamento e o
+    // contador do editor têm que mudar junto com o status, ou nenhum dos três muda.
+    // Antes, o claim (updateMany) e os dois efeitos eram chamadas separadas — um
+    // crash entre elas (ou qualquer erro no releasePayment/totalJobs) deixava o
+    // pedido COMPLETED com o pagamento ainda retido, sem nada detectando isso.
+    await prisma.$transaction(async (tx) => {
+      const claim = await tx.order.updateMany({
+        where: { id: orderId, status: order.status },
+        data: { status: newStatus },
       })
-    }
+      if (claim.count === 0) {
+        throw Conflict('O status do pedido mudou enquanto você agia. Recarregue a página.')
+      }
+
+      if (newStatus === 'COMPLETED') {
+        await paymentService.releasePayment(orderId, userId, tx)
+        await tx.editorProfile.updateMany({
+          where: { userId: order.editorId },
+          data: { totalJobs: { increment: 1 } },
+        })
+      }
+    })
 
     if (newStatus === 'CANCELLED') {
       await logEvent({ actorId: userId, action: 'ORDER_CANCELLED', entityType: 'Order', entityId: orderId })
@@ -495,13 +498,18 @@ export class OrderService {
       // Claim otimista dentro da transação: só quem efetivamente move
       // DELIVERED→COMPLETED executa os efeitos. Antes, duas varreduras simultâneas
       // (dois logins, duas instâncias) incrementavam totalJobs duas vezes pela
-      // mesma entrega e notificavam em dobro.
-      const processed = await prisma.$transaction(async (tx) => {
+      // mesma entrega e notificavam em dobro. releasePayment entra na MESMA
+      // transação pelo mesmo motivo de updateStatus: sem isso, um crash entre o
+      // claim e a liberação do pagamento aprovava o pedido sem soltar o escrow.
+      await prisma.$transaction(async (tx) => {
         const claim = await tx.order.updateMany({
           where: { id: order.id, status: 'DELIVERED' },
           data: { status: 'COMPLETED' },
         })
-        if (claim.count === 0) return false
+        // Outra varredura (ou o próprio creator aprovando) chegou primeiro
+        if (claim.count === 0) return
+
+        await paymentService.releasePayment(order.id, null, tx)
 
         await tx.editorProfile.updateMany({
           where: { userId: order.editorId },
@@ -526,14 +534,7 @@ export class OrderService {
             },
           ],
         })
-
-        return true
       })
-
-      // Outra varredura (ou o próprio creator aprovando) chegou primeiro
-      if (!processed) continue
-
-      await paymentService.releasePayment(order.id)
     }
 
     return { processed: stale.length }

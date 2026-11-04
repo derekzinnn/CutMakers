@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { PortfolioService } from '../services/portfolio.service'
 import { BadRequest } from '../lib/errors'
+import { cloudinaryUrl } from '../lib/validation'
 
 const portfolioService = new PortfolioService()
 
@@ -19,8 +20,8 @@ const createSchema = z
     categoryId: z.string().uuid('categoryId inválido').optional(),
     // Categoria livre (opção "Outros" no form) — find-or-create no service
     categoryName: z.string().trim().min(2, 'Categoria muito curta').max(40).optional(),
-    videoUrl: z.string().url('videoUrl inválida'),
-    thumbnailUrl: z.string().url().optional(),
+    videoUrl: cloudinaryUrl('videoUrl'),
+    thumbnailUrl: cloudinaryUrl('thumbnailUrl').optional(),
     basePrice: z.number().positive('Preço deve ser positivo'),
   })
   .refine((d) => d.categoryId || d.categoryName, {
@@ -33,8 +34,8 @@ const updateSchema = z.object({
   description: z.string().max(1000).optional(),
   categoryId: z.string().uuid().optional(),
   categoryName: z.string().trim().min(2).max(40).optional(),
-  videoUrl: z.string().url().optional(),
-  thumbnailUrl: z.string().url().optional(),
+  videoUrl: cloudinaryUrl('videoUrl').optional(),
+  thumbnailUrl: cloudinaryUrl('thumbnailUrl').optional(),
   basePrice: z.number().positive().optional(),
 })
 

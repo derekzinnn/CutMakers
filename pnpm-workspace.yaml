@@ -1,5 +1,10 @@
 packages:
   - 'packages/*'
+# O campo `overrides` aqui é só pnpm 10+: o CI usa pnpm 9 (.github/workflows/ci.yml)
+# e silenciosamente IGNORA este bloco, o que já quebrou o `pnpm install --frozen-lockfile`
+# do CI uma vez (o lockfile gerado localmente com overrides não batia com o que o pnpm 9
+# do CI esperava). Os overrides moraram pro `pnpm.overrides` do package.json da raiz, que
+# os dois entendem — ver lá.
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
