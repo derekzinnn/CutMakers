@@ -3,9 +3,9 @@ nome: CutMakers
 area: universidade
 fase: em-desenvolvimento
 repo: derekzinnn/CutMakers
-producao: a-confirmar
+producao: https://cutmakers.derek.dev.br
 stack: pnpm workspaces, Express + Prisma, Vite + React, Supabase Postgres
-deploy: a-definir
+deploy: manual (git pull na VPS) — push na main não publica nada sozinho
 responsavel: Derek
 ---
 
@@ -77,7 +77,8 @@ Legenda: ✅ concluída · 🟡 em andamento · ⏳ próxima · 💤 backlog
 | 13–18 | Hardening de segurança, testes (unidade + integração), migrations, Premium real, "ver como", cache/paginação | ✅ |
 | 14 (cont.) | CI, cron real, modo demonstração, Google login (gated), favoritos, conta do criador, AbacatePay v2 | ✅ |
 | 24, 26 | Dashboard admin com período comparado · personas do admin no "ver como" (citadas no código; sem bloco no log) | ✅ |
-| — | Landing refeita com padrões do acervo da Biig (branch `feat/landing-acervo`) | 🟡 aguardando revisão do Derek |
+| — | Landing refeita com padrões do acervo da Biig (mesma identidade visual) | ✅ |
+| — | Check-up de segurança: 7 correções (ver Log de decisões) | ✅ |
 | — | PIX do pedido validado no sandbox (chave sem `TRANSPARENT:CREATE/READ`) | ⏳ precisa de chave nova |
 | — | Repasse real ao editor e estorno (escrow hoje é só contábil) | ⏳ decisão de produto |
 | — | Disputa pós-conclusão (quem absorve o estorno, janela de contestação) | ⏳ decisão de negócio |
@@ -91,6 +92,16 @@ Pendente local: pasta `memory/` não versionada — decidir se vai para o git.
 
 Formato: `AAAA-MM-DD — decisão — motivo` (mais recente no topo). Histórico completo em `docs/contexto-completo.md` → "Progresso".
 
+- 2026-11-03 — Check-up de segurança (7 correções, PR #2): handler assíncrono sem `next(err)` derrubava a API inteira num
+  erro de banco ou corrida (auth/editor controllers); `tokenVersion` em `User` derruba sessão aberta na troca de senha e no
+  vínculo de login Google (que também passa a invalidar a senha antiga — fechava um sequestro de conta por e-mail);
+  `avatarUrl`/`videoUrl`/`fileUrl` validados contra esquema perigoso (`javascript:`, `data:`) e, onde é upload de verdade,
+  exigem o host do Cloudinary; rate limit em `POST /uploads/signature`; aprovação de pedido (status + escrow + contador do
+  editor) virou uma transação só; 403 do `requireRole` não ecoa mais a role exigida/atual; `pnpm audit --prod` de 1 crítica
+  + 17 altas para 0 crítica + 1 alta (zod fica pra depois — só corrige na v4, breaking change). CI ficou quebrado no meio do
+  processo (overrides de dependência em `pnpm-workspace.yaml`, que só pnpm 10+ lê — o CI roda pnpm 9 fixo); corrigido com
+  `pnpm.overrides` de volta no `package.json` e `packageManager: pnpm@9.15.9` fixando a versão pros dois lados pararem de
+  divergir.
 - 2026-11-01 — Landing refeita em `pages/landing/` (copy em `content.ts`), com padrões do acervo da Biig e a mesma identidade; saem números, logos e editores inventados, e a vitrine passa a usar `GET /editors` — prova social falsa num marketplace de pagamento protegido mina a confiança.
 - 2026-10-31 — CLAUDE.md enxugado; original (981 linhas) movido com `git mv` para `docs/contexto-completo.md` — reduzir contexto por sessão.
 - Migração AbacatePay v1 → v2 (v1 sai do ar); PIX transparente por pedido (checkout v2 não aceita valor dinâmico).
