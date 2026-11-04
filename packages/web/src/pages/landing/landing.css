@@ -1,0 +1,246 @@
+/*
+ * Landing pública. Só tokens do preset (var(--brand), var(--card)…), nada de hex.
+ *
+ * O movimento segue a pegada dos sites da Biig: uma peça central com o material
+ * do negócio (aqui, a timeline de edição) e o resto quase parado. CSS puro, sem
+ * biblioteca; o JS só escreve variáveis (--t, --p, --d). Tudo para sob
+ * prefers-reduced-motion.
+ */
+
+html:has(.lp-root) {
+  scroll-behavior: smooth;
+}
+
+.lp-root section[id] {
+  scroll-margin-top: 76px;
+}
+
+/* ─── Cabeçalho: transparente no topo, sólido ao rolar, com barra de leitura ── */
+.lp-header {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  border-bottom: 1px solid transparent;
+}
+.lp-header[data-solid='true'] {
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom-color: var(--border);
+}
+/* A barra de leitura é a agulha da timeline: cresce com a rolagem da página */
+.lp-progress {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 100%;
+  background: var(--brand);
+  transform-origin: left;
+  transform: scaleX(var(--p, 0));
+}
+
+/* ─── Hero: timeline de edição ──────────────────────────────────────────────── */
+.lp-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--brand-soft), transparent 62%);
+}
+
+.lp-texture {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--surface-subtle) 0 14px,
+    transparent 14px 28px
+  );
+}
+
+.lp-tl {
+  --t: 0;
+}
+.lp-tl-tracks {
+  position: relative;
+}
+.lp-track {
+  position: relative;
+  height: 26px;
+}
+/* Sempre absolute (left/width vêm do componente). Não misturar com a utility
+   `absolute`/`relative` do Tailwind: armadilha do acervo (johnnie-jack), a regra
+   que vem por último vence e o clipe cai no fluxo. */
+.lp-clip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.lp-clip[data-kind='video'] {
+  background: color-mix(in oklab, var(--brand) 22%, var(--card));
+  border-color: var(--brand-border);
+}
+.lp-clip[data-kind='caption'] {
+  background: color-mix(in oklab, var(--info) 18%, var(--card));
+}
+/* Marca de corte: aparece quando a agulha passa pelo clipe */
+.lp-clip::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  background: var(--foreground);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.lp-clip[data-cut='true']::after {
+  opacity: 0.7;
+}
+.lp-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  padding: 0 4px;
+}
+.lp-wave span {
+  flex: 1;
+  border-radius: 1px;
+  background: color-mix(in oklab, var(--success) 55%, var(--card));
+}
+.lp-playhead {
+  position: absolute;
+  top: -10px;
+  bottom: -4px;
+  left: calc(var(--t) * 100%);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--brand);
+  pointer-events: none;
+}
+.lp-playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4px;
+  width: 10px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+
+.lp-stage {
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+.lp-stage[data-done='true'] {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+/* ─── Faixa infinita de formatos ────────────────────────────────────────────── */
+.lp-ticker {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+.lp-ticker-track {
+  display: flex;
+  width: max-content;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-ticker-track {
+    animation: lp-ticker 38s linear infinite;
+  }
+}
+@keyframes lp-ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ─── Necessidades: preenchimento que sobe de baixo no hover ────────────────── */
+.lp-need {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: border-color 0.2s ease;
+}
+.lp-need::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--brand-soft);
+  transform: translateY(101%);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lp-need .lp-need-arrow {
+  transition: transform 0.2s ease;
+}
+@media (hover: hover) {
+  .lp-need:hover {
+    border-color: var(--brand-border);
+  }
+  .lp-need:hover::before {
+    transform: translateY(0);
+  }
+  .lp-need:hover .lp-need-arrow {
+    transform: translateX(3px);
+  }
+}
+.lp-need:focus-visible::before {
+  transform: translateY(0);
+}
+
+/* ─── Como funciona: painéis empilhados (position: sticky, sem pin de lib) ──── */
+.lp-step {
+  position: sticky;
+  --d: 0;
+  transform-origin: 50% 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-step {
+    transform: scale(calc(1 - var(--d) * 0.05));
+    filter: brightness(calc(1 - var(--d) * 0.45));
+  }
+}
+.lp-tab-fill {
+  transform-origin: left;
+  transform: scaleX(var(--p, 0));
+}
+
+/* ─── Editores (dados reais) ────────────────────────────────────────────────── */
+.lp-editor {
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+@media (hover: hover) {
+  .lp-editor:hover {
+    border-color: var(--brand-border);
+    transform: translateY(-2px);
+  }
+}
+
+/* ─── FAQ ───────────────────────────────────────────────────────────────────── */
+.lp-faq summary {
+  list-style: none;
+  cursor: pointer;
+}
+.lp-faq summary::-webkit-details-marker {
+  display: none;
+}
+.lp-faq .lp-faq-icon {
+  transition: transform 0.2s ease;
+}
+.lp-faq[open] .lp-faq-icon {
+  transform: rotate(45deg);
+}
+
+/* ─── Barra fixa no celular (aparece depois do hero) ────────────────────────── */
+.lp-mobilebar {
+  transition: transform 0.25s ease;
+  transform: translateY(110%);
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+.lp-mobilebar[data-show='true'] {
+  transform: translateY(0);
+}
